@@ -459,6 +459,15 @@
       form.reset();
     });
   }
+  /* Request line is subscriber-only: gate behind signup (cybercrowd-list). */
+  try {
+    const list = JSON.parse(localStorage.getItem("cybercrowd-list") || "[]");
+    if (!list.length) {
+      const form = $("requestForm"), gate = $("requestGate");
+      if (form) form.hidden = true;
+      if (gate) gate.hidden = false;
+    }
+  } catch (_) {}
   wireForm("requestForm", "formMsg", (f) => {
     const song = f.querySelector("#reqSong").value.trim();
     const name = f.querySelector("#reqName").value.trim() || "Midnight caller";
