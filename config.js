@@ -122,7 +122,7 @@ window.STATION_CONFIG = {
     },
     {
       name: "Archivist", price: "$5/mo",
-      blurb: "Keep the vault alive. Your name on the donor wall.",
+      blurb: "Keep the vault alive. Your name in the Hall of Donors.",
       perks: ["Everything in Listener", "Donor wall credit", "Sunday shout-out priority"],
     },
     {
