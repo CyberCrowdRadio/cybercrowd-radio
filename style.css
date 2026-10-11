@@ -455,6 +455,11 @@ a { color: var(--brass-hi); }
 .chat-dock[data-state="open"] { right: 14px; bottom: 14px; height: 420px; max-height: 70vh; }
 .chat-dock[data-state="closed"] { transform: translateX(120%); opacity: 0; pointer-events: none; }
 .chat-dock[data-state="undocked"] { height: 420px; max-height: 70vh; cursor: default; }
+/* Booth monitor: undocked chat gets big readable text for reading on-air */
+.chat-dock[data-state="undocked"] .chat-msgs li { font-size: 20px; line-height: 1.6; }
+.chat-dock[data-state="undocked"] .chat-msgs .who { font-size: 14px; }
+.chat-dock[data-state="undocked"] .chat-msgs .sys { font-size: 17px; }
+.chat-dock[data-state="undocked"] .chat-form input { font-size: 17px; padding: 14px; }
 .chat-dock.fullscreen {
   left: 0 !important; right: 0 !important; top: 0 !important; bottom: 0 !important;
   width: 100% !important; max-width: none; height: 100dvh !important; max-height: none;
