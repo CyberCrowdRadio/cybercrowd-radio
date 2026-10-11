@@ -28,6 +28,7 @@
           <label for="signupPass">Password</label>
           <input id="signupPass" name="password" type="password" placeholder="Pick a password" required minlength="8" maxlength="120" autocomplete="new-password" />
         </div>
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAAFT4WC4u5rb2Gr56" data-theme="dark"></div>
         <button class="btn-brass btn-join" type="submit">Join the Crowd</button>
       </form>
 
@@ -46,6 +47,7 @@
     <p class="footer-copy">© <span id="year">2026</span> Cybercrowd Radio. All wax reserved.</p>
   </footer>
 
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <script>
     (function () {
       document.getElementById("year").textContent = new Date().getFullYear();
@@ -53,6 +55,12 @@
       var done = document.getElementById("signupDone");
       form.addEventListener("submit", function (e) {
         e.preventDefault();
+        /* Turnstile must verify before signup completes. */
+        var token = form.querySelector('[name="cf-turnstile-response"]');
+        if (!token || !token.value) {
+          alert("Hold on — prove you're human first.");
+          return;
+        }
         var email = document.getElementById("signupEmail").value.trim();
         if (!email) return;
         /* Email capture only. The password is NOT stored anywhere —

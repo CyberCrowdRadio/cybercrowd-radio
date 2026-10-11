@@ -133,6 +133,16 @@ window.STATION_CONFIG = {
   ],
   stripePublishableKey: "", // paste when Stripe is configured — "" = join collects email only
 
+  /* ---------- station store ----------
+     James makes it himself — DIY, not print-on-demand.
+     Add entries here; they appear on store.html automatically.
+     { name: "Shirt", blurb: "...", price: "$25", img: "merch/shirt.jpg" } */
+  merch: [],
+
+  /* ---------- Cloudflare Turnstile ----------
+     Human verification on signup. Site key is public — safe to embed. */
+  turnstileSiteKey: "0x4AAAAAAFT4WC4u5rb2Gr56",
+
   /* ---------- CybercrowdCoin tipping ----------
      Planned. Not live yet. */
   tipping: { enabled: false, coin: "CybercrowdCoin" },
