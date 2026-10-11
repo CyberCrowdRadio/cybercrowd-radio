@@ -33,8 +33,8 @@
       </form>
 
       <div class="signup-done" id="signupDone" hidden>
-        <p class="done-big">You're on the list.</p>
-        <p class="done-sub">Full accounts are coming. For now — the station is yours.</p>
+        <p class="done-big">Welcome, <span id="userHandle">friend</span>.</p>
+        <p class="done-sub">That's your handle — your résumé starts here. Full accounts are coming. For now — the station is yours.</p>
         <a class="enter-btn" href="station.html">ENTER THE STATION</a>
       </div>
 
@@ -63,13 +63,23 @@
         }
         var email = document.getElementById("signupEmail").value.trim();
         if (!email) return;
-        /* Email capture only. The password is NOT stored anywhere —
-           there is no account system yet, and we won't fake one. */
+        /* Generate a handle (e.g. kd909) — no "profiles" here, just a handle
+           and a résumé. The password is NOT stored anywhere. */
+        function makeHandle() {
+          var letters = "abcdefghjkmnpqrstuvwxyz";
+          var h = "";
+          for (var i = 0; i < 2; i++) h += letters[Math.floor(Math.random() * letters.length)];
+          for (var i = 0; i < 3; i++) h += Math.floor(Math.random() * 10);
+          return h;
+        }
+        var handle = makeHandle();
         try {
           var list = JSON.parse(localStorage.getItem("cybercrowd-list") || "[]");
           if (list.indexOf(email) === -1) list.push(email);
           localStorage.setItem("cybercrowd-list", JSON.stringify(list));
+          localStorage.setItem("cybercrowd-handle", handle);
         } catch (err) { /* storage unavailable — still let them in */ }
+        document.getElementById("userHandle").textContent = handle;
         form.hidden = true;
         done.hidden = false;
         done.querySelector(".enter-btn").focus();
