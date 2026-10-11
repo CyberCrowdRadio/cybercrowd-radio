@@ -523,6 +523,7 @@ a { color: var(--brass-hi); }
     width: 100%; max-width: none; height: 100dvh; max-height: none; border-radius: 0;
   }
   .receiver-controls { flex-wrap: wrap; }
+  .chat-tab { top: auto; bottom: 96px; right: 12px; border-radius: 10px; border-right: 1px solid var(--brass); }
   .receiver-meta { flex: 1 1 100%; order: -1; margin-bottom: 4px; }
   .email-row { flex-direction: column; }
   .brand-word { font-size: 11px; letter-spacing: 1px; }
