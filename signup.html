@@ -78,6 +78,9 @@
           if (list.indexOf(email) === -1) list.push(email);
           localStorage.setItem("cybercrowd-list", JSON.stringify(list));
           localStorage.setItem("cybercrowd-handle", handle);
+          var handles = JSON.parse(localStorage.getItem("cybercrowd-handles") || "[]");
+          handles.push(handle);
+          localStorage.setItem("cybercrowd-handles", JSON.stringify(handles.slice(-5)));
         } catch (err) { /* storage unavailable — still let them in */ }
         document.getElementById("userHandle").textContent = handle;
         form.hidden = true;

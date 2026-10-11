@@ -26,6 +26,14 @@
       <p class="enter-note">This button starts the station.</p>
     </section>
 
+    <!-- ============ WELCOME FEED + JESTER ============ -->
+    <section class="welcome-row" aria-label="Welcome to the crowd">
+      <div class="welcome-feed" id="welcomeFeed" aria-live="polite"></div>
+      <div class="jester-slot" id="jesterSlot" aria-label="Station jester">
+        <span class="jester-ph">🃏</span>
+      </div>
+    </section>
+
     <!-- ============ LISTEN NOW ============ -->
     <section class="landing-section" aria-label="Listen now">
       <p class="eyebrow">Straight from the vault</p>
@@ -95,6 +103,19 @@
       } else {
         soon.hidden = false;
       }
+
+      /* Welcome feed: last 5 handles pop in as plain words (no boxes).
+         Newest on top; older than five roll off. */
+      try {
+        var handles = JSON.parse(localStorage.getItem("cybercrowd-handles") || "[]").slice(-5);
+        var feed = document.getElementById("welcomeFeed");
+        handles.reverse().forEach(function (h) {
+          var p = document.createElement("p");
+          p.className = "welcome-word";
+          p.textContent = "Welcome, " + h;
+          feed.appendChild(p);
+        });
+      } catch (err) { /* no feed without storage */ }
     })();
   </script>
 </body>

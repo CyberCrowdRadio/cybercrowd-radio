@@ -475,6 +475,16 @@ a { color: var(--brass-hi); }
 .store-empty { text-align: center; padding: 48px 20px; border: 1px dashed rgba(201,162,39,0.4); border-radius: 14px; margin: 32px 0; }
 .store-empty-big { font-family: var(--serif); font-size: 28px; color: var(--cream); margin: 0 0 10px; }
 .store-empty-sub { color: var(--cream-dim); margin: 0 0 20px; }
+
+/* ============ WELCOME FEED + JESTER ============ */
+.welcome-row { display: flex; gap: 24px; align-items: center; margin: 40px 0; min-height: 180px; }
+.welcome-feed { flex: 1; display: flex; flex-direction: column; gap: 8px; }
+.welcome-word { font-family: var(--serif); font-size: 24px; color: var(--cream); margin: 0; animation: pop-in 0.5s ease; }
+.welcome-word:first-child { color: var(--brass-hi); }
+@keyframes pop-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+.jester-slot { width: 140px; height: 180px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 1px dashed rgba(201,162,39,0.4); border-radius: 14px; }
+.jester-slot img { width: 100%; height: 100%; object-fit: contain; }
+.jester-ph { font-size: 64px; opacity: 0.6; }
 .chat-dock.fullscreen {
   left: 0 !important; right: 0 !important; top: 0 !important; bottom: 0 !important;
   width: 100% !important; max-width: none; height: 100dvh !important; max-height: none;
