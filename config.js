@@ -23,7 +23,7 @@ window.STATION_CONFIG = {
   /* ---------- Patreon (landing page money section) ----------
      Paste James's Patreon page URL here when he provides it.
      Empty ("") = the support button shows but is disabled/honest. */
-  patreonUrl: "",
+  patreonUrl: "https://www.patreon.com/c/cybercrowd",
 
   /* ---------- live stream ----------
      Paste your Icecast/Shoutcast mount here when the broadcast is up,
