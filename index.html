@@ -3,320 +3,99 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Cybercrowd Radio — A Museum With a Transmitter</title>
-  <meta name="description" content="Cybercrowd Radio — caretaker, archive, receiver of lost LPs. 5,500 records strong. Every donor credited by name, like a museum plaque under the exhibit." />
+  <title>Cybercrowd Radio — Enter the Station</title>
+  <meta name="description" content="Cybercrowd Radio — a museum with a transmitter. Caretaker. Archive. Receiver of lost LPs." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='8' y='8' width='84' height='84' rx='6' fill='%231a120b' stroke='%23c9a227' stroke-width='5'/><circle cx='50' cy='50' r='22' fill='none' stroke='%23c9a227' stroke-width='4'/><circle cx='50' cy='50' r='5' fill='%23a93226'/></svg>" />
 </head>
-<body>
-  <a class="skip" href="#listen">Skip to the player</a>
+<body class="landing">
 
-  <!-- ============ TOP BAR ============ -->
-  <header class="topbar">
-    <a class="brand" href="#top" aria-label="Cybercrowd Radio home">
-      <span class="brand-seal" aria-hidden="true">CR</span>
-      <span class="brand-word">CYBERCROWD&nbsp;RADIO</span>
-    </a>
-    <nav class="nav" aria-label="Primary">
-      <a href="#listen">Listen</a>
-      <a href="#easel">The Easel</a>
-      <a href="#channels">Channels</a>
-      <a href="#shows">Shows</a>
-      <a href="#archive">Archive</a>
-      <a href="#request">Request Line</a>
-      <a href="#join">Join</a>
-    </nav>
-    <div class="topbar-right">
-      <span class="onair-pill" id="onairPill" role="status" aria-live="polite">
-        <span class="onair-lamp" aria-hidden="true"></span>
-        <span id="onairText">STANDBY</span>
-      </span>
-      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">☰</button>
-    </div>
-  </header>
-  <nav class="mobile-nav" id="mobileNav" aria-label="Mobile">
-    <a href="#listen">Listen</a>
-    <a href="#easel">The Easel</a>
-    <a href="#channels">Channels</a>
-    <a href="#shows">Shows</a>
-    <a href="#archive">Archive</a>
-    <a href="#request">Request Line</a>
-    <a href="#join">Join</a>
-  </nav>
+  <main class="landing-wrap">
 
-  <main id="top">
-    <!-- ============ HERO / LISTEN ============ -->
-    <section class="hero" id="listen" aria-label="Listen live">
-      <div class="hero-inner">
-        <p class="eyebrow">A museum with a transmitter</p>
-        <h1 class="station-name">Cybercrowd<br />Radio</h1>
-        <p class="mission">Caretaker. Archive. Receiver of lost LPs.</p>
-        <p class="lede">5,500 records strong. Followers mail in forgotten vinyl, and every spin credits the donor by name — like a museum plaque under the exhibit. Thanks to Bobby Sue, we have this for you.</p>
+    <!-- ============ OPENER ============ -->
+    <section class="landing-hero" aria-label="Cybercrowd Radio entrance">
+      <p class="eyebrow">A museum with a transmitter</p>
+      <h1 class="landing-name">Cybercrowd<br />Radio</h1>
+      <p class="mission">Caretaker. Archive. Receiver of lost LPs.</p>
+      <p class="landing-lede">5,500 records strong. Forgotten vinyl, mailed in and spun on the air — every donor credited by name.</p>
 
-        <!-- The receiver: a 1950s-style tuner, honest about signal -->
-        <div class="receiver" role="region" aria-label="Live radio receiver">
-          <div class="receiver-face">
-            <div class="dial-window">
-              <div class="dial-scale" aria-hidden="true"></div>
-              <div class="dial-needle" id="dialNeedle" aria-hidden="true"></div>
-              <p class="dial-readout" id="dialReadout">CYBER FM</p>
-            </div>
-            <div class="receiver-controls">
-              <button class="power-btn" id="playBtn" aria-label="Play live stream">
-                <svg id="iconPlay" viewBox="0 0 24 24" width="30" height="30" aria-hidden="true"><path d="M8 5v14l11-7z" fill="currentColor"/></svg>
-                <svg id="iconPause" viewBox="0 0 24 24" width="30" height="30" aria-hidden="true" style="display:none"><path d="M6 5h4v14H6zM14 5h4v14h-4z" fill="currentColor"/></svg>
-              </button>
-              <div class="receiver-meta">
-                <p class="now-playing" id="nowPlaying">Standby — the needle drops when we go live</p>
-                <p class="signal-state" id="streamState">SIGNAL&nbsp;OFFLINE</p>
-              </div>
-              <label class="vol" for="volSlider">VOL
-                <input type="range" id="volSlider" min="0" max="100" value="80" aria-label="Volume" />
-              </label>
-            </div>
-          </div>
-          <p class="receiver-note" id="playerNote">One 15-second teaser is the invitation — the live show is the thing. Hit play when we're on the air.</p>
-        </div>
-      </div>
+      <a class="enter-btn" href="signup.html">ENTER</a>
+      <p class="enter-note">This button starts the station.</p>
     </section>
 
-    <!-- adWorm banner: top -->
-    <div class="adworm-banner" data-adworm="banner-top" role="complementary" aria-label="Advertisement"></div>
-
-    <!-- ============ TICKER ============ -->
-    <div class="ticker" aria-hidden="true">
-      <div class="ticker-track" id="tickerTrack"></div>
-    </div>
-
-    <!-- ============ THE EASEL ============ -->
-    <section class="section" id="easel" aria-label="The easel — live cameras">
-      <div class="section-head">
-        <p class="eyebrow">Hands on the screen</p>
-        <h2>The&nbsp;Easel</h2>
-        <p class="section-sub">The screen is the easel. Four squares are the canvas — <strong>touch, hold, drag, let go</strong> to move them. Tap a camera below to load it. The chat is a dock: open, closed, or undocked and dragged anywhere. The sound never changes — only the layout.</p>
-      </div>
-
-      <div class="easel-wrap">
-        <div class="easel" id="easel">
-          <div class="video-square" data-cam="studio" tabindex="0" role="button" aria-label="Studio camera. Drag to move, double-tap to enlarge.">
-            <span class="vs-label">Studio Cam</span>
-            <span class="vs-state">Feed connects when the studio goes live</span>
-            <span class="vs-hint" aria-hidden="true">drag me</span>
-          </div>
-          <div class="video-square" data-cam="turntable" tabindex="0" role="button" aria-label="Turntable camera. Drag to move, double-tap to enlarge.">
-            <span class="vs-label">Turntable Cam</span>
-            <span class="vs-state">Feed connects when the studio goes live</span>
-            <span class="vs-hint" aria-hidden="true">drag me</span>
-          </div>
-          <div class="video-square" data-cam="vault" tabindex="0" role="button" aria-label="Vault camera. Drag to move, double-tap to enlarge.">
-            <span class="vs-label">Vault Cam</span>
-            <span class="vs-state">Feed connects when the studio goes live</span>
-            <span class="vs-hint" aria-hidden="true">drag me</span>
-          </div>
-          <div class="video-square" data-cam="crowd" tabindex="0" role="button" aria-label="Crowd camera. Drag to move, double-tap to enlarge.">
-            <span class="vs-label">Crowd Cam</span>
-            <span class="vs-state">Feed connects when the studio goes live</span>
-            <span class="vs-hint" aria-hidden="true">drag me</span>
-          </div>
-        </div>
-
-        <div class="cam-strip" id="camStrip" role="listbox" aria-label="Choose a camera">
-          <button class="cam-chip is-active" data-cam="studio" role="option" aria-selected="true">Studio</button>
-          <button class="cam-chip" data-cam="turntable" role="option" aria-selected="false">Turntable</button>
-          <button class="cam-chip" data-cam="vault" role="option" aria-selected="false">Vault</button>
-          <button class="cam-chip" data-cam="crowd" role="option" aria-selected="false">Crowd</button>
-        </div>
-        <p class="easel-note">Double-tap a square to enlarge it full-easel. Double-tap again to shrink it back.</p>
-      </div>
+    <!-- ============ LISTEN NOW ============ -->
+    <section class="landing-section" aria-label="Listen now">
+      <p class="eyebrow">Straight from the vault</p>
+      <h2 class="landing-h2">Listen&nbsp;Now</h2>
+      <p class="landing-sub"><strong>"Still Lethal"</strong> — the Thursday opener. Made with Suno AI. Press play, it never leaves this page.</p>
+      <div class="suno-stack" id="sunoStack"></div>
     </section>
 
-    <!-- ============ CHANNELS ============ -->
-    <section class="section" id="channels" aria-label="Live channels">
-      <div class="section-head">
-        <p class="eyebrow">Pick your room</p>
-        <h2>Live&nbsp;Channels</h2>
-        <p class="section-sub">YouTube-style — choose a channel, stay in the building.</p>
-      </div>
-      <div class="channels" id="channelsGrid"></div>
+    <!-- ============ KEEP THE SIGNAL ALIVE ============ -->
+    <section class="landing-section landing-money" aria-label="Support the station">
+      <p class="eyebrow">Money keeps the needle down</p>
+      <h2 class="landing-h2">Keep&nbsp;the&nbsp;Signal&nbsp;Alive</h2>
+      <p class="landing-sub">The signal is free. The archive runs on the crowd. Back the station and keep the wax spinning.</p>
+      <p class="money-cta" id="patreonWrap">
+        <a class="btn-patreon" id="patreonBtn" href="#" hidden>Support on Patreon</a>
+        <span class="money-soon" id="patreonSoon" hidden>Patreon page coming soon — the tip jar is being built.</span>
+      </p>
     </section>
 
-    <!-- adWorm banner: mid -->
-    <div class="adworm-banner" data-adworm="banner-mid" role="complementary" aria-label="Advertisement"></div>
-
-    <!-- ============ SHOWS ============ -->
-    <section class="section section-alt" id="shows" aria-label="Weekly shows">
-      <div class="section-head">
-        <p class="eyebrow">The weekly cycle</p>
-        <h2>On&nbsp;the&nbsp;Air</h2>
-        <p class="section-sub">Every night has a sound. <span class="live-now" id="liveNow" hidden>● <span id="liveNowName"></span> is on now</span></p>
-      </div>
-      <div class="shows" id="showsGrid"></div>
-      <details class="retired">
-        <summary>Retired originals — kept in the archive as segments</summary>
-        <ul id="retiredList"></ul>
-      </details>
-    </section>
-
-    <!-- ============ ARCHIVE / MAIL-IN LPs ============ -->
-    <section class="section" id="archive" aria-label="The archive — mail in your LPs">
-      <div class="section-head">
-        <p class="eyebrow">The caretaker's desk</p>
-        <h2>Receiver&nbsp;of&nbsp;Lost&nbsp;LPs</h2>
-      </div>
-      <div class="archive-grid">
-        <div class="archive-copy">
-          <p class="lede">Got a forgotten record gathering dust? Mail it in.</p>
-          <p id="archiveCopy">It joins the archive forever — and every time it spins on the air, your name gets the credit, like a museum plaque under the exhibit.</p>
-          <p class="credit-example">"Thanks to Bobby Sue, we have this for you."</p>
-          <p class="mail-line" id="mailLine">Mailing address coming soon — the caretaker's desk is still being built.</p>
-        </div>
-        <form class="archive-form" id="donorForm">
-          <h3>Log a donation</h3>
-          <p class="form-sub">Tell us what's coming. Your plaque gets engraved when it arrives.</p>
-          <div class="field">
-            <label for="donorName">Your name (as credited on air)</label>
-            <input id="donorName" name="name" type="text" placeholder="Bobby Sue" required maxlength="60" />
-          </div>
-          <div class="field">
-            <label for="donorRecord">Artist — Record</label>
-            <input id="donorRecord" name="record" type="text" placeholder="e.g. Fleetwood Mac — Rumours" required maxlength="120" />
-          </div>
-          <button class="btn-brass" type="submit">Log it with the caretaker</button>
-          <p class="form-msg" id="donorMsg" role="status" aria-live="polite" hidden></p>
-        </form>
-      </div>
-      <div class="donor-wall">
-        <h3>The Donor Wall</h3>
-        <p class="form-sub">Every donor becomes part of the archive forever. Brass plaques, no exceptions.</p>
-        <ul class="plaques" id="donorWall"></ul>
-      </div>
-    </section>
-
-    <!-- adWorm banner: lower -->
-    <div class="adworm-banner" data-adworm="banner-lower" role="complementary" aria-label="Advertisement"></div>
-
-    <!-- ============ REQUEST LINE ============ -->
-    <section class="section section-alt" id="request" aria-label="Request line">
-      <div class="section-head">
-        <p class="eyebrow">Two-way, always</p>
-        <h2>Request&nbsp;&amp;&nbsp;Dedicate</h2>
-        <p class="section-sub">You call it, we dig it out of the crates. Dedicate it to somebody — the station answers back.</p>
-      </div>
-      <form class="request-form" id="requestForm">
-        <div class="field">
-          <label for="reqName">Your name</label>
-          <input id="reqName" name="name" type="text" placeholder="Midnight caller" required maxlength="60" />
-        </div>
-        <div class="field">
-          <label for="reqSong">Artist — Song</label>
-          <input id="reqSong" name="song" type="text" placeholder="e.g. The Clash — London Calling" required maxlength="120" />
-        </div>
-        <div class="field">
-          <label for="reqShout">Dedication <span class="opt">(who's it for?)</span></label>
-          <input id="reqShout" name="shout" type="text" placeholder="For my dad, who taught me this one…" maxlength="140" />
-        </div>
-        <button class="btn-brass" type="submit">Send it to the booth</button>
-        <p class="form-msg" id="formMsg" role="status" aria-live="polite" hidden></p>
-      </form>
-    </section>
-
-    <!-- ============ JOIN ============ -->
-    <section class="section" id="join" aria-label="Join the station">
-      <div class="section-head">
-        <p class="eyebrow">Keep the vault alive</p>
-        <h2>Become&nbsp;a&nbsp;Keeper</h2>
-        <p class="section-sub">The signal is free, always. Keepers fund the archive.</p>
-      </div>
-      <div class="tiers" id="tiersGrid"></div>
-      <form class="email-capture" id="emailForm">
-        <h3>Get the Sunday caretaker letter</h3>
-        <p class="form-sub">One email a week: what spun, who donated, what's coming.</p>
-        <div class="email-row">
-          <label class="sr-only" for="emailAddr">Email address</label>
-          <input id="emailAddr" name="email" type="email" placeholder="you@example.com" required maxlength="120" />
-          <button class="btn-brass" type="submit">Sign me up</button>
-        </div>
-        <p class="form-msg" id="emailMsg" role="status" aria-live="polite" hidden></p>
-      </form>
-    </section>
-
-    <!-- adWorm banner: foot -->
-    <div class="adworm-banner" data-adworm="banner-foot" role="complementary" aria-label="Advertisement"></div>
-
-    <!-- ============ ADVERTISE ============ -->
-    <section class="section section-alt" id="advertise" aria-label="Advertise with adWorm">
-      <div class="section-head">
-        <p class="eyebrow">adWorm</p>
-        <h2>Put&nbsp;Your&nbsp;Name&nbsp;on&nbsp;the&nbsp;Wall</h2>
-        <p class="section-sub">Eight independent blocks. Four corner squares, four long banners — each its own revenue stream. <strong>No flashing, ever.</strong></p>
-      </div>
-      <div class="adworm-pricing">
-        <div class="price-card">
-          <p class="price">$5.99</p>
-          <p class="price-name">One Pop</p>
-          <p class="price-note">A single block, one lane. Never called a booster.</p>
-        </div>
-        <div class="price-card">
-          <p class="price">$20<span>/mo</span></p>
-          <p class="price-name">Four Corners</p>
-          <p class="price-note">All four corner squares, all month.</p>
-        </div>
-        <div class="price-card featured">
-          <p class="price">$300<span>/mo</span></p>
-          <p class="price-name">All Eight</p>
-          <p class="price-note">Every block on the station. The whole wall.</p>
-        </div>
-      </div>
-      <p class="dashboard-note">Advertisers get a dashboard: per-block performance and aggregate demographic patterns. <strong>Never who clicked</strong> — individual identity stays private, always.</p>
-      <p class="advertise-cta"><a class="btn-brass" href="#request" id="advertiseBtn">Claim a block</a></p>
-    </section>
   </main>
 
-  <!-- ============ FOOTER ============ -->
-  <footer class="footer">
+  <footer class="landing-foot">
     <p class="footer-brand">CYBERCROWD&nbsp;RADIO</p>
-    <p class="footer-tag">A museum with a transmitter.</p>
-    <nav class="footer-nav" aria-label="Footer">
-      <a href="#listen">Listen</a><a href="#easel">The Easel</a><a href="#channels">Channels</a><a href="#shows">Shows</a><a href="#archive">Archive</a><a href="#request">Request Line</a><a href="#join">Join</a>
-    </nav>
     <p class="footer-copy">© <span id="year">2026</span> Cybercrowd Radio. All wax reserved.</p>
   </footer>
 
-  <!-- ============ adWorm corners: 4 fixed squares ============ -->
-  <div class="adworm-corner" data-adworm="corner-nw" role="complementary" aria-label="Advertisement"></div>
-  <div class="adworm-corner" data-adworm="corner-ne" role="complementary" aria-label="Advertisement"></div>
-  <div class="adworm-corner" data-adworm="corner-sw" role="complementary" aria-label="Advertisement"></div>
-  <div class="adworm-corner" data-adworm="corner-se" role="complementary" aria-label="Advertisement"></div>
-
-  <!-- ============ CHAT DOCK ============ -->
-  <button class="chat-tab" id="chatTab" aria-label="Open chat" hidden>
-    <span aria-hidden="true">&gt;</span>
-  </button>
-  <aside class="chat-dock" id="chatDock" aria-label="Station chat" data-state="open">
-    <div class="chat-head" id="chatHead">
-      <span class="chat-title">Booth Chat</span>
-      <div class="chat-controls">
-        <button id="chatMinBtn" aria-label="Close chat">–</button>
-        <button id="chatUndockBtn" aria-label="Undock chat — drag it anywhere">⤢</button>
-      </div>
-    </div>
-    <div class="chat-body">
-      <ul class="chat-msgs" id="chatMsgs" aria-live="polite"></ul>
-      <form class="chat-form" id="chatForm">
-        <label class="sr-only" for="chatInput">Message the booth</label>
-        <input id="chatInput" type="text" placeholder="Say it to the booth…" maxlength="240" autocomplete="off" />
-        <button type="submit" aria-label="Send">➤</button>
-      </form>
-      <p class="chat-note">Chat connects when the station goes live. Drag the header to move me.</p>
-    </div>
-  </aside>
-
-  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
-
   <script src="config.js"></script>
-  <script src="app.js"></script>
+  <script>
+    (function () {
+      var cfg = window.STATION_CONFIG || {};
+      document.getElementById("year").textContent = new Date().getFullYear();
+
+      /* Suno embeds — built from config, never link away */
+      var tracks = cfg.sunoTracks || [
+        { id: "274004e1-671b-4195-b47c-01adc55afca0", title: "Still Lethal", note: "Thursday opener — cut 1" },
+        { id: "e1324f91-ee29-47f0-ae8d-cc738befa683", title: "Still Lethal", note: "Thursday opener — cut 2" }
+      ];
+      var stack = document.getElementById("sunoStack");
+      tracks.forEach(function (t) {
+        var card = document.createElement("div");
+        card.className = "suno-card";
+        var label = document.createElement("p");
+        label.className = "suno-label";
+        label.textContent = t.title + " — " + t.note;
+        var frame = document.createElement("iframe");
+        frame.src = "https://suno.com/embed/" + t.id;
+        frame.width = "100%";
+        frame.height = "240";
+        frame.setAttribute("frameborder", "0");
+        frame.setAttribute("allow", "autoplay; encrypted-media; fullscreen");
+        frame.setAttribute("allowfullscreen", "");
+        frame.setAttribute("loading", "lazy");
+        frame.setAttribute("referrerpolicy", "no-referrer-when-downgrade");
+        frame.title = t.title + " on Suno";
+        card.appendChild(label);
+        card.appendChild(frame);
+        stack.appendChild(card);
+      });
+
+      /* Patreon — honest when the URL isn't set yet */
+      var url = (cfg.patreonUrl || "").trim();
+      var btn = document.getElementById("patreonBtn");
+      var soon = document.getElementById("patreonSoon");
+      if (url) {
+        btn.href = url;
+        btn.hidden = false;
+      } else {
+        soon.hidden = false;
+      }
+    })();
+  </script>
 </body>
 </html>

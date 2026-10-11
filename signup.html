@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Join the Crowd — Cybercrowd Radio</title>
+  <meta name="description" content="Join the Cybercrowd Radio list. One step to the station." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='8' y='8' width='84' height='84' rx='6' fill='%231a120b' stroke='%23c9a227' stroke-width='5'/><circle cx='50' cy='50' r='22' fill='none' stroke='%23c9a227' stroke-width='4'/><circle cx='50' cy='50' r='5' fill='%23a93226'/></svg>" />
+</head>
+<body class="landing">
+
+  <main class="landing-wrap">
+    <section class="signup-card" aria-label="Join the crowd">
+      <p class="eyebrow">One step to the station</p>
+      <h1 class="landing-h1">Join&nbsp;the&nbsp;Crowd</h1>
+      <p class="landing-sub">Drop your email. You're on the list — full accounts come later.</p>
+
+      <form class="signup-form" id="signupForm">
+        <div class="field">
+          <label for="signupEmail">Email</label>
+          <input id="signupEmail" name="email" type="email" placeholder="you@example.com" required maxlength="120" autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="signupPass">Password</label>
+          <input id="signupPass" name="password" type="password" placeholder="Pick a password" required minlength="8" maxlength="120" autocomplete="new-password" />
+        </div>
+        <button class="btn-brass btn-join" type="submit">Join the Crowd</button>
+      </form>
+
+      <div class="signup-done" id="signupDone" hidden>
+        <p class="done-big">You're on the list.</p>
+        <p class="done-sub">Full accounts are coming. For now — the station is yours.</p>
+        <a class="enter-btn" href="station.html">ENTER THE STATION</a>
+      </div>
+
+      <p class="back-line"><a href="index.html">← Back to the entrance</a></p>
+    </section>
+  </main>
+
+  <footer class="landing-foot">
+    <p class="footer-brand">CYBERCROWD&nbsp;RADIO</p>
+    <p class="footer-copy">© <span id="year">2026</span> Cybercrowd Radio. All wax reserved.</p>
+  </footer>
+
+  <script>
+    (function () {
+      document.getElementById("year").textContent = new Date().getFullYear();
+      var form = document.getElementById("signupForm");
+      var done = document.getElementById("signupDone");
+      form.addEventListener("submit", function (e) {
+        e.preventDefault();
+        var email = document.getElementById("signupEmail").value.trim();
+        if (!email) return;
+        /* Email capture only. The password is NOT stored anywhere —
+           there is no account system yet, and we won't fake one. */
+        try {
+          var list = JSON.parse(localStorage.getItem("cybercrowd-list") || "[]");
+          if (list.indexOf(email) === -1) list.push(email);
+          localStorage.setItem("cybercrowd-list", JSON.stringify(list));
+        } catch (err) { /* storage unavailable — still let them in */ }
+        form.hidden = true;
+        done.hidden = false;
+        done.querySelector(".enter-btn").focus();
+      });
+    })();
+  </script>
+</body>
+</html>

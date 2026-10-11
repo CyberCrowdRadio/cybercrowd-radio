@@ -9,7 +9,21 @@ window.STATION_CONFIG = {
   tagline: "A museum with a transmitter.",
   mission: "Caretaker. Archive. Receiver of lost LPs.",
   vaultCount: "5,500",
-  dialLabel: "CYBER FM",
+  dialLabel: "CYBERCROWD RADIO",
+
+  /* ---------- Suno tracks (landing page) ----------
+     James's Suno AI tracks, embedded on the landing page via
+     https://suno.com/embed/{id} — stays on the page, never links away.
+     "Still Lethal" is the Thursday opener. */
+  sunoTracks: [
+    { id: "274004e1-671b-4195-b47c-01adc55afca0", title: "Still Lethal", note: "Thursday opener — cut 1" },
+    { id: "e1324f91-ee29-47f0-ae8d-cc738befa683", title: "Still Lethal", note: "Thursday opener — cut 2" },
+  ],
+
+  /* ---------- Patreon (landing page money section) ----------
+     Paste James's Patreon page URL here when he provides it.
+     Empty ("") = the support button shows but is disabled/honest. */
+  patreonUrl: "",
 
   /* ---------- live stream ----------
      Paste your Icecast/Shoutcast mount here when the broadcast is up,
