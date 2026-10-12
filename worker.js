@@ -89,7 +89,9 @@ async function sendVerificationEmail(serverToken, to, link, handle) {
       MessageStream: "outbound",
     }),
   });
-  return res.ok;
+  let detail = "";
+  try { detail = await res.text(); } catch (e) {}
+  return { ok: res.ok, status: res.status, detail: detail.slice(0, 200) };
 }
 
 export default {
@@ -127,8 +129,8 @@ export default {
         const token = await makeVerifyToken(email, env.EMAIL_SIGNING_SECRET);
         const link = url.origin + "/verify.html?token=" + encodeURIComponent(token);
         const sent = await sendVerificationEmail(env.POSTMARK_SERVER_TOKEN, email, link, handle);
-        if (!sent) {
-          return Response.json({ success: false, error: "email failed" }, { status: 502 });
+        if (!sent.ok) {
+          return Response.json({ success: false, error: "email failed", pmStatus: sent.status, pmDetail: sent.detail }, { status: 502 });
         }
         return Response.json({ success: true });
       } catch (e) {
