@@ -27,43 +27,101 @@
     }
     .human-box.checked { background: #c9a227; }
     .human-box.checked::after { content: "✓"; font-weight: 700; }
+    .signup-stage {
+      display: grid;
+      grid-template-columns: 1fr minmax(320px, 430px) 1fr;
+      gap: 28px; align-items: center;
+      max-width: 1180px; margin: 0 auto; padding: 0 20px;
+    }
+    .signup-card { margin: 0; }
+    .names-pane { overflow: hidden; max-height: 340px; position: relative; }
+    .names-pane::before, .names-pane::after {
+      content: ""; position: absolute; left: 0; right: 0; height: 60px; z-index: 1;
+      pointer-events: none;
+    }
+    .names-pane::before { top: 0; background: linear-gradient(#0d0a06, transparent); }
+    .names-pane::after { bottom: 0; background: linear-gradient(transparent, #0d0a06); }
+    .names-track { animation: namescroll 22s linear infinite; }
+    .names-track p {
+      font: 500 15px/1.5 "IBM Plex Mono", monospace;
+      color: #c9a227; margin: 0 0 14px; white-space: nowrap;
+    }
+    .names-empty { color: #8a7a5c; font: 400 14px/1.6 Inter, sans-serif; }
+    @keyframes namescroll {
+      from { transform: translateY(0); }
+      to { transform: translateY(-50%); }
+    }
+    .jester-pane { text-align: center; }
+    .jester-video {
+      width: 100%; max-width: 300px; border-radius: 14px;
+      border: 1px solid #c9a227; display: block; margin: 0 auto;
+    }
+    .jester-says {
+      margin-top: 12px; font: italic 400 17px/1.5 "DM Serif Display", serif;
+      color: #f5ead0;
+    }
+    .jester-name {
+      font: 600 11px/1.6 "IBM Plex Mono", monospace;
+      letter-spacing: .25em; color: #c9a227; text-transform: uppercase;
+    }
+    @media (max-width: 900px) {
+      .signup-stage { grid-template-columns: 1fr; gap: 32px; }
+      .signup-card { order: 1; }
+      .jester-pane { order: 2; }
+      .names-pane { order: 3; max-height: 220px; }
+    }
   </style>
 </head>
 <body class="landing">
 
   <main class="landing-wrap">
-    <section class="signup-card" aria-label="Join the crowd">
-      <p class="eyebrow">One step to the station</p>
-      <h1 class="landing-h1">Join&nbsp;the&nbsp;Crowd</h1>
-      <p class="landing-sub">Drop your email. You're on the list — full accounts come later.</p>
+    <div class="signup-stage">
 
-      <form class="signup-form" id="signupForm">
-        <div class="field">
-          <label for="signupEmail">Email</label>
-          <input id="signupEmail" name="email" type="email" placeholder="you@example.com" required maxlength="120" autocomplete="email" />
-        </div>
-        <div class="field">
-          <label for="signupPass">Password</label>
-          <input id="signupPass" name="password" type="password" placeholder="Pick a password" required minlength="8" maxlength="120" autocomplete="new-password" />
-        </div>
-        <div class="field">
-          <button type="button" class="human-btn" id="humanBtn">
-            <span class="human-box" id="humanBox" aria-hidden="true"></span>
-            <span id="humanLabel">Tap to prove you're human</span>
-          </button>
-          <div id="turnstileBox" aria-hidden="true"></div>
-        </div>
-        <button class="btn-brass btn-join" type="submit">Join the Crowd</button>
-      </form>
+      <aside class="names-pane" aria-label="Welcome to the crowd">
+        <div class="names-track" id="namesTrack"></div>
+      </aside>
 
-      <div class="signup-done" id="signupDone" hidden>
-        <p class="done-big">Welcome, <span id="userHandle">friend</span>.</p>
-        <p class="done-sub">That's your handle — your résumé starts here. Full accounts are coming. For now — the station is yours.</p>
-        <a class="enter-btn" href="station.html">ENTER THE STATION</a>
-      </div>
+      <section class="signup-card" aria-label="Join the crowd">
+        <p class="eyebrow">One step to the station</p>
+        <h1 class="landing-h1">Join&nbsp;the&nbsp;Crowd</h1>
+        <p class="landing-sub">Drop your email. You're on the list — full accounts come later.</p>
 
-      <p class="back-line"><a href="index.html">← Back to the entrance</a></p>
-    </section>
+        <form class="signup-form" id="signupForm">
+          <div class="field">
+            <label for="signupEmail">Email</label>
+            <input id="signupEmail" name="email" type="email" placeholder="you@example.com" required maxlength="120" autocomplete="email" />
+          </div>
+          <div class="field">
+            <label for="signupPass">Password</label>
+            <input id="signupPass" name="password" type="password" placeholder="Pick a password" required minlength="8" maxlength="120" autocomplete="new-password" />
+          </div>
+          <div class="field">
+            <button type="button" class="human-btn" id="humanBtn">
+              <span class="human-box" id="humanBox" aria-hidden="true"></span>
+              <span id="humanLabel">Tap to prove you're human</span>
+            </button>
+            <div id="turnstileBox" aria-hidden="true"></div>
+          </div>
+          <button class="btn-brass btn-join" type="submit">Join the Crowd</button>
+        </form>
+
+        <div class="signup-done" id="signupDone" hidden>
+          <p class="done-big">Welcome, <span id="userHandle">friend</span>.</p>
+          <p class="done-sub">That's your handle — your résumé starts here. Full accounts are coming. For now — the station is yours.</p>
+          <a class="enter-btn" href="station.html">ENTER THE STATION</a>
+        </div>
+
+        <p class="back-line"><a href="index.html">← Back to the entrance</a></p>
+      </section>
+
+      <aside class="jester-pane" aria-label="Atomic Kricket">
+        <video class="jester-video" src="jester.mp4" poster="jester-poster.jpg"
+               autoplay muted loop playsinline></video>
+        <p class="jester-says">"Fill this out!"</p>
+        <p class="jester-name">Atomic Kricket</p>
+      </aside>
+
+    </div>
   </main>
 
   <footer class="landing-foot">
@@ -115,6 +173,22 @@
         }
       });
 
+      (function () {
+        var track = document.getElementById("namesTrack");
+        var handles = [];
+        try {
+          handles = JSON.parse(localStorage.getItem("cybercrowd-handles") || "[]").slice(-8).reverse();
+        } catch (err) {}
+        if (!handles.length) {
+          track.innerHTML = '<p class="names-empty">The crowd is gathering —<br>your name could be here.</p>';
+          return;
+        }
+        var html = handles.map(function (h) {
+          return "<p>Welcome, " + h.replace(/</g, "&lt;") + "</p>";
+        }).join("");
+        track.innerHTML = html + html;
+      })();
+
       function makeHandle() {
         var letters = "abcdefghjkmnpqrstuvwxyz";
         var h = "";
@@ -160,6 +234,9 @@
             if (list.indexOf(email) === -1) list.push(email);
             localStorage.setItem("cybercrowd-list", JSON.stringify(list));
             localStorage.setItem("cybercrowd-handle", handle);
+            var handles = JSON.parse(localStorage.getItem("cybercrowd-handles") || "[]");
+            handles.push(handle);
+            localStorage.setItem("cybercrowd-handles", JSON.stringify(handles.slice(-20)));
           } catch (err) {}
           document.getElementById("userHandle").textContent = handle;
           done.querySelector(".done-sub").textContent =
