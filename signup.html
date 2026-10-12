@@ -222,7 +222,7 @@
             humanLabel.textContent = "Tap to prove you're human";
             humanBtn.disabled = false;
             alert(data && data.error === "not human"
-              ? "Verification didn't pass — tap again and retry."
+              ? "Verification didn't pass — tap again and retry. [debug: " + (data.codes || []).join(",") + "]"
               : "Couldn't send the confirmation email — try again in a minute.");
             return;
           }
