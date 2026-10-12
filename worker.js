@@ -47,16 +47,20 @@ async function checkVerifyToken(token, secret) {
 }
 
 /* ---- Turnstile server-side check ---- */
-async function turnstileOk(token, secret, ip) {
+async function turnstileCheck(token, secret, ip) {
   const form = new FormData();
   form.append("secret", secret);
   form.append("response", token);
   if (ip) form.append("remoteip", ip);
-  const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
-    method: "POST", body: form,
-  });
-  const data = await res.json();
-  return !!data.success;
+  try {
+    const res = await fetch("https://challenges.cloudflare.com/turnstile/v0/siteverify", {
+      method: "POST", body: form,
+    });
+    const data = await res.json();
+    return { ok: !!data.success, codes: data["error-codes"] || [] };
+  } catch (e) {
+    return { ok: false, codes: ["fetch-failed"] };
+  }
 }
 
 /* ---- Postmark send ---- */
@@ -92,18 +96,20 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    /* Standalone Turnstile check (kept for diagnostics). */
     if (url.pathname === "/api/verify-turnstile" && request.method === "POST") {
       try {
         const body = await request.json();
-        const ok = body && body.token
-          ? await turnstileOk(body.token, env.TURNSTILE_SECRET_KEY, request.headers.get("CF-Connecting-IP"))
-          : false;
-        return Response.json({ success: ok });
+        const check = body && body.token
+          ? await turnstileCheck(body.token, env.TURNSTILE_SECRET_KEY, request.headers.get("CF-Connecting-IP"))
+          : { ok: false, codes: ["no-token"] };
+        return Response.json({ success: check.ok, codes: check.codes });
       } catch (e) {
-        return Response.json({ success: false }, { status: 500 });
+        return Response.json({ success: false, codes: ["exception"] }, { status: 500 });
       }
     }
 
+    /* Signup: verify human, then send the verification email. */
     if (url.pathname === "/api/signup" && request.method === "POST") {
       try {
         const body = await request.json();
@@ -113,10 +119,10 @@ export default {
           return Response.json({ success: false, error: "bad email" }, { status: 400 });
         }
         const human = body && body.turnstileToken
-          ? await turnstileOk(body.turnstileToken, env.TURNSTILE_SECRET_KEY, request.headers.get("CF-Connecting-IP"))
-          : false;
-        if (!human) {
-          return Response.json({ success: false, error: "not human" }, { status: 403 });
+          ? await turnstileCheck(body.turnstileToken, env.TURNSTILE_SECRET_KEY, request.headers.get("CF-Connecting-IP"))
+          : { ok: false, codes: ["no-token"] };
+        if (!human.ok) {
+          return Response.json({ success: false, error: "not human", codes: human.codes }, { status: 403 });
         }
         const token = await makeVerifyToken(email, env.EMAIL_SIGNING_SECRET);
         const link = url.origin + "/verify.html?token=" + encodeURIComponent(token);
@@ -130,11 +136,13 @@ export default {
       }
     }
 
+    /* Email link confirmation. */
     if (url.pathname === "/api/verify-email" && request.method === "GET") {
       const email = await checkVerifyToken(url.searchParams.get("token") || "", env.EMAIL_SIGNING_SECRET || "");
       return Response.json(email ? { success: true, email } : { success: false });
     }
 
+    /* Everything else: the static station site. */
     return env.ASSETS.fetch(request);
   },
 };
