@@ -62,32 +62,32 @@ window.STATION_CONFIG = {
     {
       name: "2 for Tuesday", days: "Tuesday", day: [2], start: 18, end: 21,
       time: "6PM – 9PM",
-      blurb: "Two cuts, same artist, back to back. Double or nothing.",
+      blurb: "4x2's — two-fers, four rounds. Two cuts, same artist, back to back.",
     },
     {
-      name: "B-Sides Only", days: "Wednesday", day: [3], start: 20, end: 24,
+      name: "Broadside Wednesday", days: "Wednesday", day: [3], start: 20, end: 24,
       time: "8PM – 12AM",
-      blurb: "Deep vault, rare pressings, collector energy. The flipsides nobody plays.",
+      blurb: "B-sides only or deep cuts. No mainstream — the flipsides and the buried gold.",
     },
     {
-      name: "Welcome to Thursday", days: "Thursday", day: [4], start: 20, end: 24,
-      time: "8PM – 12AM",
-      blurb: "All #1 tracks — every album's opener, open to close. \"Still Lethal\" kicks the door in. (James picks the definitive cut.)",
+      name: "Wolfman Jack Show", days: "Thursday", day: [4], start: 20, end: 23,
+      time: "8PM – 11PM",
+      blurb: "James's 3-hour Wolfman Jack show. Atomic Kricket rides along. \"Still Lethal\" kicks the door in.",
     },
     {
       name: "Double Barrel Fridays", days: "Friday", day: [5], start: 17, end: 19,
       time: "5PM – 7PM",
-      blurb: "Both barrels. Twice the wax, half the mercy.",
+      blurb: "Double barrel: 2 songs, 2 different albums — one young, one old.",
     },
     {
       name: "Cleaning Lady Land", days: "Saturday", day: [6], start: 18, end: 19,
       time: "6PM – 7PM",
-      blurb: "One-hour specials. Dust off the strange ones.",
+      blurb: "One-hour special. Fun songs — hips and tips.",
     },
     {
       name: "Mail-in LPs", days: "Sunday", day: [0], start: 9, end: 12,
       time: "9AM – 12PM",
-      blurb: "The caretaker show. Your forgotten records, played on the air — every spin credits the donor by name.",
+      blurb: "The caretaker show. Your forgotten records, played on the air — every spin credits the donor by name. Plus Sunday gossip.",
     },
   ],
 
