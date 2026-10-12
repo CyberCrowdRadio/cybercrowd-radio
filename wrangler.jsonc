@@ -1,0 +1,1 @@
+{"$schema":"node_modules/wrangler/config-schema.json","assets":{"binding":"ASSETS","directory":"."},"compatibility_date":"2026-10-12","main":"worker.js","name":"cybercrowd-radio","observability":{"enabled":true}}
