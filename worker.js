@@ -17,7 +17,7 @@ async function hmacKey(secret) {
   return crypto.subtle.importKey(
     "raw", new TextEncoder().encode(secret),
     { name: "HMAC", hash: "SHA-256" }, false, ["sign"]
-  );
+  );x
 }
 function hex(bytes) {
   return [...new Uint8Array(bytes)].map(b => b.toString(16).padStart(2, "0")).join("");
