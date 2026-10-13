@@ -45,7 +45,7 @@
         <p class="tipjar-title">Tip the station</p>
         <img class="tipjar-qr" src="crwd-tip-qr.png" alt="Scan to tip CRWD" />
         <a class="btn-brass tipjar-btn" id="buyCrwdBtn" href="#" target="_blank" rel="noopener">Buy CRWD</a>
-        <button class="btn-brass tipjar-btn" id="copyTipBtn" type="button">Copy tip address</button>
+        <a class="btn-brass tipjar-btn" id="tipCrwdBtn" href="#">Tip CRWD</a>
       </div>
     </section>
 
@@ -124,19 +124,13 @@
       var tipAddr = (cfg.crwdTipAddress || "").trim();
       var buyBtn = document.getElementById("buyCrwdBtn");
       if (buyBtn && mint) buyBtn.href = "https://jup.ag/swap/SOL-" + mint;
-      var copyBtn = document.getElementById("copyTipBtn");
-      if (copyBtn) copyBtn.addEventListener("click", function () {
-        if (!tipAddr) return;
-        var done = function () { copyBtn.textContent = "Copied!"; setTimeout(function(){ copyBtn.textContent = "Copy tip address"; }, 2000); };
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(tipAddr).then(done, done);
-        } else {
-          var ta = document.createElement("textarea");
-          ta.value = tipAddr; document.body.appendChild(ta); ta.select();
-          try { document.execCommand("copy"); } catch (e) {}
-          document.body.removeChild(ta); done();
-        }
-      });
+      var tipBtn = document.getElementById("tipCrwdBtn");
+      if (tipBtn && tipAddr && mint) {
+        tipBtn.href = "solana:" + tipAddr
+          + "?spl-token=" + mint
+          + "&label=" + encodeURIComponent("Cybercrowd Radio")
+          + "&message=" + encodeURIComponent("Tip the station");
+      }
 
       /* Welcome feed: last 5 handles pop in as plain words (no boxes).
          Newest on top; older than five roll off. */
