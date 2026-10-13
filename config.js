@@ -25,6 +25,12 @@ window.STATION_CONFIG = {
      Empty ("") = the support button shows but is disabled/honest. */
   patreonUrl: "https://www.patreon.com/c/cybercrowd",
 
+  /* ---------- CybercrowdCoin tip jar (landing page) ----------
+     crwdMint: the CRWD token mint address (for the Jupiter buy link).
+     crwdTipAddress: James's receive address (for the tip jar QR + copy). */
+  crwdMint: "BsAPNnPmitdbVvpz3v5t9VxMbgD1pksb3Z2yDYSfmoon",
+  crwdTipAddress: "D5Qg7PNgSChKxn7WQnqt8Se9qoQkXF5VcTqoWNT5ZjFR",
+
   /* ---------- live stream ----------
      Paste your Icecast/Shoutcast mount here when the broadcast is up,
      e.g. "https://stream.example.com:8000/live".
@@ -81,7 +87,7 @@ window.STATION_CONFIG = {
     },
     {
       name: "Cleaning Lady Land", days: "Saturday", day: [6], start: 18, end: 19,
-      time: "6PM – 7PM",
+      time: "6PM – 9PM",
       blurb: "One-hour special. Fun songs — hips and tips.",
     },
     {
