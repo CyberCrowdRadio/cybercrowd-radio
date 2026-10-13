@@ -81,6 +81,16 @@
       var cfg = window.STATION_CONFIG || {};
       document.getElementById("year").textContent = new Date().getFullYear();
 
+      /* Members skip the signup: if this browser has a saved email,
+         ENTER goes straight to the station. */
+      try {
+        var list = JSON.parse(localStorage.getItem("cybercrowd-list") || "[]");
+        if (list.length > 0) {
+          var enterBtn = document.querySelector(".enter-btn");
+          if (enterBtn) enterBtn.href = "station.html";
+        }
+      } catch (err) { /* no storage — normal signup flow */ }
+      
       /* Suno embeds — built from config, never link away */
       var tracks = cfg.sunoTracks || [
         { id: "274004e1-671b-4195-b47c-01adc55afca0", title: "Still Lethal", note: "Thursday opener — cut 1" },
