@@ -485,6 +485,11 @@ a { color: var(--brass-hi); }
 .jester-slot { width: 140px; height: 180px; flex-shrink: 0; display: flex; align-items: center; justify-content: center; border: 1px dashed rgba(201,162,39,0.4); border-radius: 14px; }
 .jester-slot img { width: 100%; height: 100%; object-fit: contain; }
 .jester-ph { font-size: 64px; opacity: 0.6; }
+/* Tip jar: QR + buy + copy. Replaces the joker placeholder. */
+.tipjar { width: 170px; flex-shrink: 0; display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 14px 10px; border: 1px solid rgba(201,162,39,0.5); border-radius: 14px; background: rgba(20,16,11,0.6); }
+.tipjar-title { font: 600 12px/1.4 "IBM Plex Mono", monospace; letter-spacing: 0.18em; text-transform: uppercase; color: #c9a227; margin: 0; }
+.tipjar-qr { width: 120px; height: 120px; border-radius: 8px; background: #fff; padding: 4px; }
+.tipjar-btn { width: 100%; text-align: center; padding: 10px 8px; font-size: 13px; }
 .chat-dock.fullscreen {
   left: 0 !important; right: 0 !important; top: 0 !important; bottom: 0 !important;
   width: 100% !important; max-width: none; height: 100dvh !important; max-height: none;
