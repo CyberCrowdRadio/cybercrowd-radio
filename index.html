@@ -38,11 +38,14 @@
       <p class="enter-note">This button starts the station.</p>
     </section>
 
-    <!-- ============ WELCOME FEED + JESTER ============ -->
+    <!-- ============ WELCOME FEED + TIP JAR ============ -->
     <section class="welcome-row" aria-label="Welcome to the crowd">
       <div class="welcome-feed" id="welcomeFeed" aria-live="polite"></div>
-      <div class="jester-slot" id="jesterSlot" aria-label="Station jester">
-        <span class="jester-ph">🃏</span>
+      <div class="tipjar" id="tipjar" aria-label="Tip jar — buy and tip CRWD">
+        <p class="tipjar-title">Tip the station</p>
+        <img class="tipjar-qr" src="crwd-tip-qr.png" alt="Scan to tip CRWD" />
+        <a class="btn-brass tipjar-btn" id="buyCrwdBtn" href="#" target="_blank" rel="noopener">Buy CRWD</a>
+        <button class="btn-brass tipjar-btn" id="copyTipBtn" type="button">Copy tip address</button>
       </div>
     </section>
 
@@ -115,6 +118,25 @@
       } else {
         soon.hidden = false;
       }
+
+      /* Tip jar: buy CRWD via Jupiter, copy tip address */
+      var mint = (cfg.crwdMint || "").trim();
+      var tipAddr = (cfg.crwdTipAddress || "").trim();
+      var buyBtn = document.getElementById("buyCrwdBtn");
+      if (buyBtn && mint) buyBtn.href = "https://jup.ag/swap/SOL-" + mint;
+      var copyBtn = document.getElementById("copyTipBtn");
+      if (copyBtn) copyBtn.addEventListener("click", function () {
+        if (!tipAddr) return;
+        var done = function () { copyBtn.textContent = "Copied!"; setTimeout(function(){ copyBtn.textContent = "Copy tip address"; }, 2000); };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(tipAddr).then(done, done);
+        } else {
+          var ta = document.createElement("textarea");
+          ta.value = tipAddr; document.body.appendChild(ta); ta.select();
+          try { document.execCommand("copy"); } catch (e) {}
+          document.body.removeChild(ta); done();
+        }
+      });
 
       /* Welcome feed: last 5 handles pop in as plain words (no boxes).
          Newest on top; older than five roll off. */
