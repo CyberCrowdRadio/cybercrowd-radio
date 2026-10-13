@@ -1,1 +1,1 @@
-{"$schema":"node_modules/wrangler/config-schema.json","assets":{"binding":"ASSETS","directory":"."},"compatibility_date":"2026-10-12","main":"worker.js","name":"cybercrowd-radio","observability":{"enabled":true}}
+{"$schema":"node_modules/wrangler/config-schema.json","assets":{"binding":"ASSETS","directory":"."},"compatibility_date":"2026-10-12","main":"worker.js","name":"cybercrowd-radio","observability":{"enabled":true},"r2_buckets":[{"binding":"MEMBERS","bucket_name":"cybercrowd-members"},{"binding":"MEDIA","bucket_name":"cybercrowd-media"}]}
