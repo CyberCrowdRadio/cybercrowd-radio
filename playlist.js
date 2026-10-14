@@ -102,38 +102,53 @@
   }
 
   function playCurrent(offset) {
-    if (!playing || qi >= queue.length) { stopRadio(); return; }
-    offset = offset || 0;
-    var e = queue[qi];
-    stopAll();
-    setNow('Now playing: ' + e.track.title);
-    djSay('trackStarted');
-    if (window.CCRadioAnnouncer && window.CCRadioAnnouncer.sayTitle) {
-      try { window.CCRadioAnnouncer.sayTitle(e.track.title); } catch (ex) {}
+    try {
+      if (!playing) return;
+      if (qi >= queue.length) { buildQueue(); }
+      offset = offset || 0;
+      var e = queue[qi];
+      stopAll();
+      setNow('Now playing: ' + e.track.title);
+      try { if (window.CCRadioAnnouncer && window.CCRadioAnnouncer.sayTitle) window.CCRadioAnnouncer.sayTitle(e.track.title); } catch (ex) {}
+      var dur = (e.track.duration || 210) * 1000;
+      if (e.kind === 'Suno') {
+        var f = document.createElement('iframe');
+        f.src = sunoEmbed(e.track.embed_id) + '?t=' + Date.now();
+        f.width = '100%'; f.height = '140';
+        f.style.borderRadius = '12px';
+        f.frameBorder = '0';
+        f.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+        if (playerEl) playerEl.appendChild(f);
+        // Advance when the song should be over. ALWAYS advances.
+        sunoTimer = setTimeout(function () { if (playing) nextTrack(); }, dur);
+      } else {
+        try {
+          audio = new Audio(e.track.audio_url);
+          audio.addEventListener('ended', function () { if (playing) nextTrack(); });
+          audio.addEventListener('error', function () { if (playing) nextTrack(); });
+          if (offset > 0 && offset < (e.track.duration || 210)) { try { audio.currentTime = offset; } catch (ex) {} }
+          audio.play().catch(function () { if (playing) nextTrack(); });
+          // Safety: if audio stalls, force advance
+          sunoTimer = setTimeout(function () { if (playing) nextTrack(); }, dur + 15000);
+        } catch (ex) { if (playing) nextTrack(); }
+      }
+      updateBtn();
+    } catch (ex) {
+      // Never get stuck — always move to next
+      setTimeout(function () { if (playing) nextTrack(); }, 3000);
     }
-    if (e.kind === 'Suno') {
-      var f = document.createElement('iframe');
-      f.src = sunoEmbed(e.track.embed_id);
-      f.width = '100%'; f.height = '140';
-      f.style.borderRadius = '12px';
-      f.frameBorder = '0';
-      f.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
-      playerEl.appendChild(f);
-      // Suno embeds don't fire end events — advance on a timer (3:30 default).
-      sunoTimer = setTimeout(nextTrack, 210000);
-    } else {
-      audio = new Audio(e.track.audio_url);
-      audio.addEventListener('ended', nextTrack);
-      if (offset > 0 && offset < (e.track.duration || 210)) { try { audio.currentTime = offset; } catch (ex) {} }
-      audio.play().catch(function () { nextTrack(); });
-    }
-    updateBtn();
   }
 
   function nextTrack() {
-    qi++;
-    if (qi >= queue.length) { buildQueue(); } // loop the station
-    playCurrent();
+    try {
+      if (!playing) return;
+      qi++;
+      if (qi >= queue.length) { buildQueue(); }
+      playCurrent();
+    } catch (ex) {
+      qi = 0;
+      setTimeout(function () { if (playing) playCurrent(); }, 2000);
+    }
   }
 
   function startRadio() {
