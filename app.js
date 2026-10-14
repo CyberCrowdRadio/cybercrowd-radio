@@ -123,7 +123,6 @@
       const li = document.createElement("li");
       li.className = "plaque plaque-empty";
       li.textContent = "The first plaque is waiting for a name.";
-      donorWall.innerHTML = "";
       donorWall.appendChild(li);
       return;
     }
@@ -199,7 +198,9 @@
   }
 
   playBtn.addEventListener("click", async () => {
-    const url = (cfg.streamUrl || "").trim();
+    // Live stream first. If offline, fall back to the standby song.
+    const url = (cfg.streamUrl || "").trim() || (cfg.standbySong || "").trim();
+    const isStandby = !(cfg.streamUrl || "").trim() && !!(cfg.standbySong || "").trim();
     if (!url) {
       say("The stream isn't live yet — the needle drops when we go on the air. Check back soon.");
       return;
@@ -216,7 +217,14 @@
         });
       }
       if (playing) { audio.pause(); setLive(false); }
-      else { await audio.play(); setLive(true); }
+      else {
+        await audio.play();
+        setLive(true);
+        // Standby song: show its title instead of "listening live".
+        if (isStandby && cfg.standbySongTitle) {
+          nowPlaying.textContent = `Standby song — ${cfg.standbySongTitle}`;
+        }
+      }
     } catch (_) {
       setLive(false);
       say("Couldn't reach the stream — it may be offline. Try again in a bit.");
@@ -257,6 +265,7 @@
     let startX = 0, startY = 0, moved = false, lastTap = 0;
 
     sq.addEventListener("pointerdown", (e) => {
+      // double-tap enlarges; single quick tap does nothing
       const t = Date.now();
       if (t - lastTap < 320 && !moved) {
         sq.classList.toggle("enlarged");
@@ -297,6 +306,7 @@
     sq.addEventListener("pointerup", endDrag);
     sq.addEventListener("pointercancel", endDrag);
 
+    // keyboard: arrows reorder, Enter enlarges
     sq.addEventListener("keydown", (e) => {
       const i = squares.indexOf(sq);
       if (e.key === "Enter" || e.key === " ") {
@@ -345,7 +355,7 @@
   const chatForm = $("chatForm");
   const chatInput = $("chatInput");
   const isMobile = () => window.matchMedia("(max-width: 860px)").matches;
-  let dockedPos = null;
+  let dockedPos = null; // remembered {left, top} when undocked
 
   function chatSay(who, text, sys) {
     const li = document.createElement("li");
@@ -356,6 +366,8 @@
   }
   chatSay(null, "The booth is quiet until we go live. Leave a message — the station answers back.", true);
 
+  // Mobile starts with chat closed behind the ">" tab (full-screen when opened).
+  // Desktop starts docked open.
   if (isMobile()) setChatState("closed");
 
   function setChatState(state) {
@@ -393,6 +405,7 @@
     }
   });
 
+  // drag the dock by its header (touch + mouse)
   let cDrag = null;
   chatHead.addEventListener("pointerdown", (e) => {
     if (e.target.closest("button")) return;
@@ -429,11 +442,13 @@
     if (!text) return;
     chatSay("You", text.replace(/</g, "&lt;"));
     chatInput.value = "";
+    // Local echo until the live backend lands — honest, never faked as live.
     setTimeout(() => chatSay(null, "Noted — the booth answers back when we're live.", true), 900);
   });
 
   /* ============================================================
      adWorm — 8 blocks, gentle circuit, NO flashing ever
+     The traveler highlights one block at a time, slow fade only.
      ============================================================ */
   const adworm = cfg.adworm || {};
   const allBlocks = [];
@@ -450,9 +465,8 @@
     setInterval(() => {
       allBlocks.forEach((b) => b.classList.remove("traveling"));
       traveler = (traveler + 1) % allBlocks.length;
-      traveler = traveler;
       allBlocks[traveler].classList.add("traveling");
-    }, 6000);
+    }, 6000); // slow circuit: side → top → bottom → back
   }
 
   /* ============================================================
@@ -462,11 +476,13 @@
     const form = $(formId), msg = $(msgId);
     form.addEventListener("submit", (e) => {
       e.preventDefault();
+      // TODO: POST to backend (Cloudflare Worker + D1/KV, or form service).
       msg.hidden = false;
       msg.textContent = okText(form);
       form.reset();
     });
   }
+  /* Request line is subscriber-only: gate behind signup (cybercrowd-list). */
   try {
     const list = JSON.parse(localStorage.getItem("cybercrowd-list") || "[]");
     if (!list.length) {

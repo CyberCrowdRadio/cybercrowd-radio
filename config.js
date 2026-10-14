@@ -38,6 +38,13 @@ window.STATION_CONFIG = {
      The audio streaming server is still undecided — do not fake it. */
   streamUrl: "",
 
+  /* ---------- standby song ----------
+     One song the play button plays when the live stream is offline.
+     James's pick: the flat-earth track he uploaded 2026-10-14.
+     File lives in the repo root. Change this path to swap the song. */
+  standbySong: "flat-earth-nasa-writes-the-script.mp3",
+  standbySongTitle: "NASA Writes the Script",
+
   /* ---------- live channels / playlists ----------
      YouTube-style live channel choices. Sources are not established yet —
      add channel entries here when they're real. Empty = section stays honest. */
@@ -87,7 +94,7 @@ window.STATION_CONFIG = {
     },
     {
       name: "Cleaning Lady Land", days: "Saturday", day: [6], start: 18, end: 19,
-      time: "6PM – 9PM",
+      time: "6PM – 7PM",
       blurb: "One-hour special. Fun songs — hips and tips.",
     },
     {
