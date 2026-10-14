@@ -86,6 +86,30 @@
     <!-- adWorm banner: top -->
     <div class="adworm-banner" data-adworm="banner-top" role="complementary" aria-label="Advertisement"></div>
 
+    <!-- ============ FEATURED SONG ============ -->
+    <section class="section" id="featured" aria-label="Featured song">
+      <div class="section-head">
+        <p class="eyebrow">Coming soon</p>
+        <h2>Featured&nbsp;Song</h2>
+        <p class="section-sub">Sonny Daze will jack the vinyl rack.</p>
+      </div>
+      <div class="pl-player">
+        <iframe src="https://suno.com/embed/8bf095de-2e32-4b3a-ba2a-f63249361e3b" width="100%" height="140" style="border-radius:12px" frameborder="0" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>
+      </div>
+    </section>
+
+    <!-- ============ PLAYLIST: JAMES'S SONGS ============ -->
+    <section class="section" id="playlist" aria-label="James's songs">
+      <div class="section-head">
+        <p class="eyebrow">AI plays AI</p>
+        <h2>The&nbsp;Vault&nbsp;Playlist</h2>
+        <p class="section-sub">James's own tracks — Suno and Donna. Tap one to play. <span id="plCount"></span></p>
+      </div>
+      <p class="now-playing" id="plNow" aria-live="polite">Pick a track — the AI holds it down till Sonny's live.</p>
+      <div class="pl-player" id="plPlayer"></div>
+      <div class="pl-list" id="plList" role="list"></div>
+    </section>
+
     <!-- ============ TICKER ============ -->
     <div class="ticker" aria-hidden="true">
       <div class="ticker-track" id="tickerTrack"></div>
@@ -225,6 +249,11 @@
         <button class="btn-brass" type="submit">Send it to the booth</button>
         <p class="form-msg" id="formMsg" role="status" aria-live="polite" hidden></p>
       </form>
+      <div class="request-queue" id="requestQueue" aria-label="Request queue">
+        <h3>The Queue</h3>
+        <p class="queue-empty" id="queueEmpty">No requests yet — be the first to call one in.</p>
+        <ol class="queue-list" id="queueList"></ol>
+      </div>
     </section>
 
     <!-- ============ JOIN ============ -->
@@ -322,5 +351,7 @@
 
   <script src="config.js"></script>
   <script src="app.js"></script>
+  <script src="announcer.js"></script>
+  <script src="playlist.js"></script>
 </body>
 </html>
