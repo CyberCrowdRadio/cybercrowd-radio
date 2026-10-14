@@ -21,7 +21,9 @@
     'AI plays AI, baby! Here\'s {title}!',
     'The crowd wanted it — {title} on your radio!',
     'Straight fire! {title} is live on Cybercrowd Radio!',
-    'No commercials, no mercy — {title}!'
+    'No commercials, no mercy — {title}!',
+    'Support this station with CyberCrowd Coin! {title} is on!',
+    '{title} — and hey, support this station with CyberCrowd Coin!'
   ];
 
   var WELCOMES = [
