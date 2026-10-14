@@ -147,4 +147,11 @@
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', build);
   } else { build(); }
+
+  // Expose radio controls so the main play button can start the station.
+  window.CCRadioPlaylist = {
+    start: function () { startRadio(); },
+    stop: function () { stopRadio(); },
+    isPlaying: function () { return playing; }
+  };
 })();

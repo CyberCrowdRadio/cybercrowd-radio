@@ -198,13 +198,30 @@
   }
 
   playBtn.addEventListener("click", async () => {
-    // Live stream first. If offline, fall back to the standby song.
-    const url = (cfg.streamUrl || "").trim() || (cfg.standbySong || "").trim();
-    const isStandby = !(cfg.streamUrl || "").trim() && !!(cfg.standbySong || "").trim();
-    if (!url) {
+    // Live stream first. If offline, start the AI radio (69 songs + DJ bot).
+    const streamUrl = (cfg.streamUrl || "").trim();
+    if (!streamUrl) {
+      // No live stream — hand off to the radio playlist with DJ.
+      if (window.CCRadioPlaylist) {
+        if (window.CCRadioPlaylist.isPlaying()) {
+          window.CCRadioPlaylist.stop();
+          setLive(false);
+          say("Radio stopped.");
+        } else {
+          window.CCRadioPlaylist.start();
+          setLive(true);
+          say("Cybercrowd Radio AI is on the air!");
+          // Scroll to the playlist so they see what's playing.
+          var pl = document.getElementById("playlist");
+          if (pl) pl.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+        playBtn.setAttribute("aria-label", window.CCRadioPlaylist.isPlaying() ? "Stop the radio" : "Play the radio");
+        return;
+      }
       say("The stream isn't live yet — the needle drops when we go on the air. Check back soon.");
       return;
     }
+    const url = streamUrl;
     try {
       if (!audio) {
         audio = new Audio(url);
@@ -220,10 +237,6 @@
       else {
         await audio.play();
         setLive(true);
-        // Standby song: show its title instead of "listening live".
-        if (isStandby && cfg.standbySongTitle) {
-          nowPlaying.textContent = `Standby song — ${cfg.standbySongTitle}`;
-        }
       }
     } catch (_) {
       setLive(false);
@@ -491,11 +504,73 @@
       if (gate) gate.hidden = false;
     }
   } catch (_) {}
-  wireForm("requestForm", "formMsg", (f) => {
-    const song = f.querySelector("#reqSong").value.trim();
-    const name = f.querySelector("#reqName").value.trim() || "Midnight caller";
-    return `Got it, ${name} — "${song}" is in the crate-digging queue. The booth answers back on the air.`;
-  });
+  /* ============================================================
+     REQUEST QUEUE — grouped by song, numbered in order.
+     One entry per song. Names stack under it.
+     "Don't own it" lets the booth answer back: sorry, don't own that one.
+     Queue lives in memory for this session — no server yet.
+     ============================================================ */
+  const requestQueue = [];
+  const queueList = $("queueList"), queueEmpty = $("queueEmpty");
+  const esc = (s) => s.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  function renderQueue() {
+    if (!queueList) return;
+    queueList.innerHTML = "";
+    if (!requestQueue.length) {
+      if (queueEmpty) queueEmpty.hidden = false;
+      return;
+    }
+    if (queueEmpty) queueEmpty.hidden = true;
+    requestQueue.forEach((entry, i) => {
+      const li = document.createElement("li");
+      li.className = "queue-item";
+      li.innerHTML =
+        `<span class="queue-num">${i + 1}.</span> ` +
+        `<span class="queue-song">${esc(entry.song)}</span> ` +
+        `<span class="queue-names">— ${entry.names.map(esc).join(", ")}</span> ` +
+        (entry.shout ? `<span class="queue-shout">(${esc(entry.shout)})</span> ` : "") +
+        `<button class="queue-nope" type="button" data-idx="${i}">Don't own it</button>`;
+      queueList.appendChild(li);
+    });
+    queueList.querySelectorAll(".queue-nope").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const idx = Number(btn.dataset.idx);
+        const entry = requestQueue[idx];
+        if (!entry) return;
+        requestQueue.splice(idx, 1);
+        renderQueue();
+        say(`Sorry ${entry.names.join(", ")} — I don't own "${entry.song}".`);
+      });
+    });
+  }
+
+  const requestForm = $("requestForm"), formMsg = $("formMsg");
+  if (requestForm) {
+    requestForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const song = requestForm.querySelector("#reqSong").value.trim();
+      const name = requestForm.querySelector("#reqName").value.trim() || "Midnight caller";
+      const shout = requestForm.querySelector("#reqShout").value.trim();
+      if (!song) return;
+      // Group by song (case-insensitive) — one entry, names stack.
+      const key = song.toLowerCase();
+      const existing = requestQueue.find((en) => en.song.toLowerCase() === key);
+      if (existing) {
+        if (!existing.names.includes(name)) existing.names.push(name);
+        if (shout && !existing.shout) existing.shout = shout;
+      } else {
+        requestQueue.push({ song, names: [name], shout });
+      }
+      renderQueue();
+      if (formMsg) {
+        formMsg.hidden = false;
+        formMsg.textContent = `Got it, ${name} — "${song}" is in the queue. The booth answers back on the air.`;
+      }
+      requestForm.reset();
+    });
+  }
+  renderQueue();
   wireForm("donorForm", "donorMsg", (f) => {
     const rec = f.querySelector("#donorRecord").value.trim();
     const name = f.querySelector("#donorName").value.trim();
