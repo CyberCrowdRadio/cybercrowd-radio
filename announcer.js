@@ -45,7 +45,17 @@
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
       u.rate = 1.05;
-      u.pitch = 0.85;
+      u.pitch = 0.7;
+      // Pick a male voice — not the default female robot.
+      var voices = window.speechSynthesis.getVoices();
+      for (var i = 0; i < voices.length; i++) {
+        var v = voices[i];
+        var n = (v.name + ' ' + v.lang).toLowerCase();
+        if (/male|david|daniel|james|mike|tom|alex|fred|victor/.test(n) && !/female|samantha|zira|jenny/.test(n)) {
+          u.voice = v;
+          break;
+        }
+      }
       window.speechSynthesis.speak(u);
     } catch (e) {}
   }
