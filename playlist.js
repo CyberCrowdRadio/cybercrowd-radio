@@ -1,7 +1,8 @@
-/* playlist.js — Cybercrowd Radio song playlist
- * ONE JOB: play James's songs. Suno tracks via embed, Donna tracks via direct audio.
- * Does not: touch the live stream, the request queue, or the announcer.
- * Only: list songs, play the one you tap.
+/* playlist.js — Cybercrowd Radio autoplay
+ * ONE JOB: play James's songs like a radio station. Hit PLAY, it runs.
+ * Suno tracks via embed, Donna tracks via direct audio.
+ * Auto-advances. DJ bot talks between songs.
+ * Does not: touch the live stream, the request queue.
  */
 (function () {
   'use strict';
@@ -10,68 +11,17 @@
 
   var DONNA_TRACKS = [{"title": "Firmament Prison", "audio_url": "https://origin.media.musicdonna.com/audios/6d41b629-e932-47bc-bff4-03ee4a65f660-1751573608454.m4a"}, {"title": "Raising Demons", "audio_url": "https://origin.media.musicdonna.com/audios/d3ec329a-93dc-40e6-a8ef-5b2c25813b8a-1751598239095.m4a"}, {"title": "Flat Earth NASA writes the script", "audio_url": "https://media.musicdonna.com/audios/27b7c1cd-dfab-46f3-b22f-c948b906986f-1751595899072.m4a"}, {"title": "Liquid Sunshine Sonata", "audio_url": "https://origin.media.musicdonna.com/audios/fb763ae2-b06e-48e1-9dcb-d694d4bc5c1c-1751597189088.m4a"}, {"title": "the pick of braille", "audio_url": "https://media.musicdonna.com/audios/822389b5-1a04-4437-98da-f92e63dcb0c5-1751599021372.m4a"}, {"title": "Blue Ice Illusions", "audio_url": "https://origin.media.musicdonna.com/audios/2d2a44d9-97f6-4d49-b83d-c3b3accb82fc-1751609639337.m4a"}, {"title": "alligator alcatraz", "audio_url": "https://content.media.musicdonna.com/audios/073d7940-9153-4ed0-820b-3b3b926e8b0b-1751611019331.m4a"}, {"title": "Brother", "audio_url": "https://media.musicdonna.com/audios/7039e26b-ec68-4136-9a01-887afdc4013d-1751657042543.m4a"}, {"title": "hillbilly heavy metal", "audio_url": "https://media.musicdonna.com/audios/2689b391-3f0f-4ff5-8c55-d29a124db655-1751903735262.m4a"}, {"title": "twinkle twinkle", "audio_url": "https://content.media.musicdonna.com/audios/301f1750-ae84-4441-affc-9516b14a3413-1751927918771.m4a"}, {"title": "Funky Animal Party", "audio_url": "https://media.musicdonna.com/audios/fffc2f6d-2973-4cbb-b8d1-ce2fe2b86801-1751930195681.m4a"}, {"title": "ABC Funk Dance", "audio_url": "https://media.musicdonna.com/audios/fc327046-ec38-41c2-bf42-773d05b85ff4-1753064796123.m4a"}, {"title": "Back and Forth", "audio_url": "https://origin.media.musicdonna.com/audios/d425edb2-f22f-49c8-a4ee-4296546141e1-1753837079322.m4a"}, {"title": "A Genius in Bloom", "audio_url": "https://content.media.musicdonna.com/audios/097a4848-a904-4215-8184-a456635c9b23-1753312716820.m4a"}];
 
-  var section = null;
-  var listEl = null;
-  var playerEl = null;
-  var nowEl = null;
+  var queue = [];
+  var qi = 0;
+  var playing = false;
   var audio = null;
-
-  function sunoEmbed(id) {
-    return 'https://suno.com/embed/' + id;
-  }
-
-  function stopAll() {
-    if (audio) { audio.pause(); audio = null; }
-    var frames = playerEl.querySelectorAll('iframe');
-    for (var i = 0; i < frames.length; i++) frames[i].remove();
-  }
-
-  function playSuno(track, btn) {
-    stopAll();
-    var f = document.createElement('iframe');
-    f.src = sunoEmbed(track.embed_id);
-    f.width = '100%'; f.height = '140';
-    f.style.borderRadius = '12px';
-    f.frameBorder = '0';
-    f.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
-    playerEl.appendChild(f);
-    setNow('Now playing: ' + track.title + ' — Cybercrowd (Suno)');
-    markActive(btn);
-    if (window.CCRadioAnnouncer) window.CCRadioAnnouncer.trackStarted(track.title);
-  }
-
-  function playDonna(track, btn) {
-    stopAll();
-    audio = new Audio(track.audio_url);
-    audio.play().catch(function () {});
-    setNow('Now playing: ' + track.title + ' — cybercrowd (Donna)');
-    markActive(btn);
-    if (window.CCRadioAnnouncer) window.CCRadioAnnouncer.trackStarted(track.title);
-  }
-
-  function setNow(t) { if (nowEl) nowEl.textContent = t; }
-
-  function markActive(btn) {
-    var act = listEl.querySelectorAll('.pl-active');
-    for (var i = 0; i < act.length; i++) act[i].classList.remove('pl-active');
-    if (btn) btn.classList.add('pl-active');
-  }
-
-  function addRow(title, sub, onTap) {
-    var b = document.createElement('button');
-    b.className = 'pl-row';
-    b.innerHTML = '<span class="pl-title"></span><span class="pl-sub"></span>';
-    b.querySelector('.pl-title').textContent = title;
-    b.querySelector('.pl-sub').textContent = sub;
-    b.addEventListener('click', function () { onTap(b); });
-    listEl.appendChild(b);
-  }
+  var sunoTimer = null;
+  var playBtn = null;
+  var nowEl = null;
+  var playerEl = null;
 
   function normTitle(t) { return (t || '').toLowerCase().trim(); }
 
-  // Spread same-title versions apart — never play back-to-back.
-  // Greedy: always pick the largest remaining group whose title
-  // differs from the last placed track.
   function spreadOut(tracks) {
     var groups = {};
     var i, t, k;
@@ -84,20 +34,11 @@
     var out = [];
     var lastKey = null;
     while (true) {
-      var bestKey = null;
-      var bestLen = -1;
-      var fallbackKey = null;
-      var fallbackLen = -1;
+      var bestKey = null, bestLen = -1, fallbackKey = null, fallbackLen = -1;
       for (k in groups) {
         if (!groups[k].length) continue;
-        if (k !== lastKey && groups[k].length > bestLen) {
-          bestLen = groups[k].length;
-          bestKey = k;
-        }
-        if (groups[k].length > fallbackLen) {
-          fallbackLen = groups[k].length;
-          fallbackKey = k;
-        }
+        if (k !== lastKey && groups[k].length > bestLen) { bestLen = groups[k].length; bestKey = k; }
+        if (groups[k].length > fallbackLen) { fallbackLen = groups[k].length; fallbackKey = k; }
       }
       if (bestKey === null && fallbackKey === null) break;
       var pick = bestKey !== null ? bestKey : fallbackKey;
@@ -107,36 +48,100 @@
     return out;
   }
 
+  function buildQueue() {
+    var all = [];
+    var i;
+    for (i = 0; i < SUNO_TRACKS.length; i++) all.push({ track: SUNO_TRACKS[i], kind: 'Suno' });
+    for (i = 0; i < DONNA_TRACKS.length; i++) all.push({ track: DONNA_TRACKS[i], kind: 'Donna' });
+    queue = spreadOut(all);
+    qi = 0;
+  }
+
+  function sunoEmbed(id) { return 'https://suno.com/embed/' + id; }
+
+  function stopAll() {
+    if (audio) { try { audio.pause(); } catch (e) {} audio = null; }
+    if (sunoTimer) { clearTimeout(sunoTimer); sunoTimer = null; }
+    var frames = playerEl.querySelectorAll('iframe');
+    for (var i = 0; i < frames.length; i++) frames[i].remove();
+  }
+
+  function setNow(t) { if (nowEl) nowEl.textContent = t; }
+
+  function djSay(fn) {
+    if (window.CCRadioAnnouncer && window.CCRadioAnnouncer[fn]) {
+      try { window.CCRadioAnnouncer[fn](); } catch (e) {}
+    }
+  }
+
+  function playCurrent() {
+    if (!playing || qi >= queue.length) { stopRadio(); return; }
+    var e = queue[qi];
+    stopAll();
+    setNow('Now playing: ' + e.track.title);
+    djSay('trackStarted');
+    if (window.CCRadioAnnouncer && window.CCRadioAnnouncer.sayTitle) {
+      try { window.CCRadioAnnouncer.sayTitle(e.track.title); } catch (ex) {}
+    }
+    if (e.kind === 'Suno') {
+      var f = document.createElement('iframe');
+      f.src = sunoEmbed(e.track.embed_id);
+      f.width = '100%'; f.height = '140';
+      f.style.borderRadius = '12px';
+      f.frameBorder = '0';
+      f.allow = 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture';
+      playerEl.appendChild(f);
+      // Suno embeds don't fire end events — advance on a timer (3:30 default).
+      sunoTimer = setTimeout(nextTrack, 210000);
+    } else {
+      audio = new Audio(e.track.audio_url);
+      audio.addEventListener('ended', nextTrack);
+      audio.play().catch(function () { nextTrack(); });
+    }
+    updateBtn();
+  }
+
+  function nextTrack() {
+    qi++;
+    if (qi >= queue.length) { buildQueue(); } // loop the station
+    playCurrent();
+  }
+
+  function startRadio() {
+    if (!queue.length) buildQueue();
+    playing = true;
+    djSay('welcome');
+    playCurrent();
+  }
+
+  function stopRadio() {
+    playing = false;
+    stopAll();
+    setNow('Radio stopped — hit PLAY to start the station.');
+    updateBtn();
+  }
+
+  function updateBtn() {
+    if (playBtn) playBtn.textContent = playing ? 'STOP' : 'PLAY';
+  }
+
   function build() {
-    section = document.getElementById('playlist');
+    var section = document.getElementById('playlist');
     if (!section) return;
-    listEl = document.getElementById('plList');
     playerEl = document.getElementById('plPlayer');
     nowEl = document.getElementById('plNow');
-    if (!listEl || !playerEl) return;
-
-    var all = [];
-    var i, t;
-    for (i = 0; i < SUNO_TRACKS.length; i++) {
-      t = SUNO_TRACKS[i];
-      all.push({ track: t, kind: 'Suno' });
-    }
-    for (i = 0; i < DONNA_TRACKS.length; i++) {
-      t = DONNA_TRACKS[i];
-      all.push({ track: t, kind: 'Donna' });
-    }
-    all = spreadOut(all);
-    for (i = 0; i < all.length; i++) {
-      (function (e) {
-        if (e.kind === 'Suno') {
-          addRow(e.track.title, 'Suno', function (b) { playSuno(e.track, b); });
-        } else {
-          addRow(e.track.title, 'Donna', function (b) { playDonna(e.track, b); });
-        }
-      })(all[i]);
-    }
+    playBtn = document.getElementById('plPlayBtn');
+    if (!playerEl || !nowEl) return;
+    buildQueue();
     var count = document.getElementById('plCount');
-    if (count) count.textContent = all.length + ' tracks';
+    if (count) count.textContent = queue.length + ' tracks';
+    setNow('Hit PLAY — the AI holds it down till Sonny is live.');
+    if (playBtn) {
+      updateBtn();
+      playBtn.addEventListener('click', function () {
+        if (playing) stopRadio(); else startRadio();
+      });
+    }
   }
 
   if (document.readyState === 'loading') {

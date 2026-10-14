@@ -102,12 +102,24 @@
     <section class="section" id="playlist" aria-label="James's songs">
       <div class="section-head">
         <p class="eyebrow">AI plays AI</p>
-        <h2>The&nbsp;Vault&nbsp;Playlist</h2>
-        <p class="section-sub">James's own tracks — Suno and Donna. Tap one to play. <span id="plCount"></span></p>
+        <h2>Cybercrowd&nbsp;Radio</h2>
+        <p class="section-sub">James's own tracks — Suno and Donna. <span id="plCount"></span></p>
       </div>
-      <p class="now-playing" id="plNow" aria-live="polite">Pick a track — the AI holds it down till Sonny's live.</p>
+      <p><button id="plPlayBtn" class="btn btn-primary btn-lg">PLAY</button></p>
+      <p class="now-playing" id="plNow" aria-live="polite">Hit PLAY — the AI holds it down till Sonny's live.</p>
       <div class="pl-player" id="plPlayer"></div>
-      <div class="pl-list" id="plList" role="list"></div>
+    </section>
+
+    <!-- ============ DJ VOCAL PROMPT (for James) ============ -->
+    <section class="section section-alt" id="djprompt" aria-label="DJ vocal prompt">
+      <div class="section-head">
+        <p class="eyebrow">Sonny's toolkit</p>
+        <h2>DJ&nbsp;Vocal&nbsp;Prompt</h2>
+        <p class="section-sub">Copy, paste into your voice generator, swap the song title, go live.</p>
+      </div>
+      <pre class="dj-prompt-text">Wolfman Jack-style radio DJ intro, high energy, playful growl. Sonny Daze persona. Say:
+
+"Alright now, we got [SONG TITLE] comin' at ya on Cybercrowd Radio! This one's straight outta the vault — turn it UP!"</pre>
     </section>
 
     <!-- ============ TICKER ============ -->
