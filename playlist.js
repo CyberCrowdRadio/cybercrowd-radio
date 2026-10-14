@@ -179,13 +179,27 @@
     buildQueue();
     var count = document.getElementById('plCount');
     if (count) count.textContent = queue.length + ' tracks';
-    setNow('Hit PLAY — the AI holds it down till Sonny is live.');
+    setNow('Tap anywhere — the station starts.');
     if (playBtn) {
       updateBtn();
-      playBtn.addEventListener('click', function () {
+      playBtn.addEventListener('click', function (e) {
+        e.stopPropagation();
         if (playing) stopRadio(); else startRadio();
       });
     }
+    // ANY tap tunes you in — no play button needed.
+    var started = false;
+    function firstTouch() {
+      if (started || playing) return;
+      started = true;
+      startRadio();
+      try {
+        document.removeEventListener('click', firstTouch);
+        document.removeEventListener('touchstart', firstTouch);
+      } catch (e) {}
+    }
+    document.addEventListener('click', firstTouch);
+    document.addEventListener('touchstart', firstTouch, { passive: true });
   }
 
   if (document.readyState === 'loading') {
