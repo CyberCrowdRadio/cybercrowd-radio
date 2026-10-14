@@ -10,26 +10,22 @@
   var lastIntro = -1;
 
   var INTROS = [
-    'Alright now, we got {title} comin at ya on Cybercrowd Radio! Turn it UP!',
-    'Oh yeah! Here comes {title} — straight outta the vault, baby!',
-    'Sonny Daze ain\'t here but the music don\'t stop! This is {title}!',
-    'You asked for it, you got it — {title} on Cybercrowd Radio!',
-    'Crank it! {title} is on the air right now!',
-    'From the Cybercrowd vault — {title}! Let\'s go!',
-    'This one\'s a heater! {title} — only on Cybercrowd Radio!',
-    'Keep it locked! {title} comin up next!',
-    'AI plays AI, baby! Here\'s {title}!',
-    'The crowd wanted it — {title} on your radio!',
-    'Straight fire! {title} is live on Cybercrowd Radio!',
-    'No commercials, no mercy — {title}!',
-    'Support this station with CyberCrowd Coin! {title} is on!',
-    '{title} — and hey, support this station with CyberCrowd Coin!'
+    '{title}. Turn it up or get out.',
+    'Yeah. {title}. Deal with it.',
+    '{title} — straight outta the vault. No mercy.',
+    'You want {title}? You got {title}. Don\'t waste it.',
+    '{title}. Crank it till your ears bleed.',
+    'This is {title}. Shut up and listen.',
+    '{title} on Cybercrowd Radio. That\'s it. That\'s the announcement.',
+    'Here\'s {title}. You\'re welcome.',
+    '{title}. Play it loud. I don\'t care about your neighbors.',
+    'Support this station with CyberCrowd Coin. Now here\'s {title}.',
+    '{title} — and yeah, support this station with CyberCrowd Coin or don\'t. Your call.'
   ];
 
   var WELCOMES = [
-    'Welcome to Cybercrowd Radio AI! I\'m holdin it down till Sonny Daze goes live!',
-    'You\'re listenin to Cybercrowd Radio! The AI\'s on the decks till Sonny shows up!',
-    'Welcome in! Cybercrowd Radio AI is live — Sonny Daze will jack the vinyl rack soon!'
+    'Cybercrowd Radio. I\'m the AI. Sonny\'ll be here when he\'s here.',
+    'You\'re on Cybercrowd Radio. Music\'s playing. That\'s what matters.'
   ];
 
   function pick(arr, avoidLast) {
@@ -44,18 +40,19 @@
       if (!('speechSynthesis' in window)) return;
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
-      u.rate = 1.05;
-      u.pitch = 0.7;
-      // Pick a male voice — not the default female robot.
+      u.rate = 0.92;
+      u.pitch = 0.2;
+      // Pick the deepest male voice — grunge, mad, pissed.
       var voices = window.speechSynthesis.getVoices();
+      var best = null;
       for (var i = 0; i < voices.length; i++) {
         var v = voices[i];
         var n = (v.name + ' ' + v.lang).toLowerCase();
-        if (/male|david|daniel|james|mike|tom|alex|fred|victor/.test(n) && !/female|samantha|zira|jenny/.test(n)) {
-          u.voice = v;
-          break;
-        }
+        if (/female|samantha|zira|jenny|aria|michelle/.test(n)) continue;
+        if (/male|david|daniel|james|mike|tom|alex|fred|victor|george/.test(n)) { best = v; break; }
+        if (!best) best = v;
       }
+      if (best) u.voice = best;
       window.speechSynthesis.speak(u);
     } catch (e) {}
   }
