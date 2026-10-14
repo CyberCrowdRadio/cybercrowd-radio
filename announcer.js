@@ -1,6 +1,6 @@
 /* announcer.js — Cybercrowd Radio DJ bot
  * ONE JOB: talk like Sonny Daze when Sonny isn't live.
- * Wolfman Jack energy. Varied lines — never the same intro twice in a row.
+ * Warm, professional, sponsor-friendly. The voice advertisers want to hear.
  * Does not: touch the playlist, the stream, or the request queue.
  * Only: speak between songs via the browser's speech synthesis.
  */
@@ -10,22 +10,22 @@
   var lastIntro = -1;
 
   var INTROS = [
-    '{title}. Turn it up or get out.',
-    'Yeah. {title}. Deal with it.',
-    '{title} — straight outta the vault. No mercy.',
-    'You want {title}? You got {title}. Don\'t waste it.',
-    '{title}. Crank it till your ears bleed.',
-    'This is {title}. Shut up and listen.',
-    '{title} on Cybercrowd Radio. That\'s it. That\'s the announcement.',
-    'Here\'s {title}. You\'re welcome.',
-    '{title}. Play it loud. I don\'t care about your neighbors.',
-    'Support this station with CyberCrowd Coin. Now here\'s {title}.',
-    '{title} — and yeah, support this station with CyberCrowd Coin or don\'t. Your call.'
+    'Coming up next, {title} on Cybercrowd Radio.',
+    'Here\'s {title} — glad you\'re listening.',
+    'This is {title} on your Cybercrowd Radio.',
+    'Up next: {title}. Thanks for tuning in.',
+    '{title} — only on Cybercrowd Radio.',
+    'We\'ve got {title} for you right now.',
+    '{title}. Sit back and enjoy.',
+    'Now playing {title} on Cybercrowd Radio.',
+    'Here comes {title}. Thanks for being here.',
+    'Support this station with CyberCrowd Coin. Here\'s {title}.',
+    '{title} — and if you love what you hear, support us with CyberCrowd Coin.'
   ];
 
   var WELCOMES = [
-    'Cybercrowd Radio. I\'m the AI. Sonny\'ll be here when he\'s here.',
-    'You\'re on Cybercrowd Radio. Music\'s playing. That\'s what matters.'
+    'Welcome to Cybercrowd Radio. I\'m holding it down until Sonny Daze goes live.',
+    'You\'re listening to Cybercrowd Radio. Thanks for tuning in.'
   ];
 
   function pick(arr, avoidLast) {
@@ -40,9 +40,9 @@
       if (!('speechSynthesis' in window)) return;
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
-      u.rate = 0.92;
-      u.pitch = 0.2;
-      // Pick the deepest male voice — grunge, mad, pissed.
+      u.rate = 1.0;
+      u.pitch = 0.9;
+      // Male voice, warm and professional.
       var voices = window.speechSynthesis.getVoices();
       var best = null;
       for (var i = 0; i < voices.length; i++) {
@@ -69,10 +69,10 @@
       speak(r.text.replace('{title}', title));
     },
     shoutout: function (name) {
-      speak('Shout out to ' + name + '! Thanks for the request on Cybercrowd Radio!');
+      speak('A big shout out to ' + name + '! Thanks for the request on Cybercrowd Radio.');
     },
     tipThanks: function (name) {
-      speak('Big thanks to ' + name + ' for the tip! You keep the signal alive!');
+      speak('Thank you to ' + name + ' for the tip. You keep this station on the air.');
     }
   };
 })();
