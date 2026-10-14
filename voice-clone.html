@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Voice Clone — Cybercrowd Radio</title>
+<style>
+  body { font-family: system-ui, sans-serif; background: #0a0a0a; color: #f5f0e8; margin: 0; padding: 20px; }
+  h1 { font-size: 1.8em; margin-bottom: 0.2em; }
+  .sub { color: #a89e8d; margin-bottom: 2em; }
+  .card { background: #1a1a1a; border: 1px solid #333; border-radius: 12px; padding: 20px; margin-bottom: 20px; }
+  .card h2 { margin-top: 0; font-size: 1.2em; }
+  label { display: block; margin: 12px 0 4px; font-weight: 600; }
+  input[type="text"], input[type="password"], textarea { width: 100%; background: #0a0a0a; border: 1px solid #444; color: #f5f0e8; border-radius: 8px; padding: 10px; font-size: 1em; box-sizing: border-box; }
+  textarea { min-height: 100px; resize: vertical; }
+  button { background: #c9a227; color: #0a0a0a; border: none; border-radius: 8px; padding: 12px 24px; font-size: 1em; font-weight: 700; cursor: pointer; margin-top: 12px; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.secondary { background: #333; color: #f5f0e8; }
+  .status { margin-top: 12px; padding: 10px; border-radius: 8px; background: #111; font-size: 0.9em; }
+  .status.ok { border-left: 4px solid #4caf50; }
+  .status.err { border-left: 4px solid #f44336; }
+  audio { width: 100%; margin-top: 12px; }
+  .voice-list { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+  .voice-chip { background: #222; border: 1px solid #444; border-radius: 20px; padding: 8px 16px; cursor: pointer; }
+  .voice-chip.sel { background: #c9a227; color: #0a0a0a; border-color: #c9a227; }
+  .hint { font-size: 0.85em; color: #888; margin-top: 4px; }
+</style>
+</head>
+<body>
+
+<h1>Voice Clone</h1>
+<p class="sub">Clone Sonny Daze's voice. Generate DJ intros. Put them on the station.</p>
+
+<div class="card">
+  <h2>1. API Key</h2>
+  <label for="apiKey">ElevenLabs API Key</label>
+  <input type="password" id="apiKey" placeholder="sk_...">
+  <p class="hint">Get one at elevenlabs.io. Stored in your browser only — never sent anywhere except ElevenLabs.</p>
+  <button id="saveKey">Save Key</button>
+  <div class="status" id="keyStatus" style="display:none"></div>
+</div>
+
+<div class="card">
+  <h2>2. Clone Your Voice</h2>
+  <label for="voiceName">Voice Name</label>
+  <input type="text" id="voiceName" value="Sonny Daze" placeholder="Sonny Daze">
+  <label for="samples">Voice Samples (MP3/WAV — 1-3 minutes of clear speech)</label>
+  <input type="file" id="samples" accept="audio/*" multiple>
+  <p class="hint">Upload 1-3 audio files of you talking. Clear, no background noise.</p>
+  <button id="cloneBtn">Clone Voice</button>
+  <div class="status" id="cloneStatus" style="display:none"></div>
+</div>
+
+<div class="card">
+  <h2>3. Your Cloned Voices</h2>
+  <button id="loadVoices" class="secondary">Load Voices</button>
+  <div class="voice-list" id="voiceList"></div>
+</div>
+
+<div class="card">
+  <h2>4. Generate DJ Intro</h2>
+  <label for="scriptText">Script</label>
+  <textarea id="scriptText" placeholder="Coming up next, [song] on Cybercrowd Radio. Thanks for tuning in."></textarea>
+  <button id="genBtn">Generate Audio</button>
+  <div class="status" id="genStatus" style="display:none"></div>
+  <audio id="resultAudio" controls style="display:none"></audio>
+  <p><button id="dlBtn" class="secondary" style="display:none">Download MP3</button></p>
+</div>
+
+<script>
+(function() {
+  'use strict';
+  var apiKey = localStorage.getItem('el_api_key') || '';
+  var selVoiceId = localStorage.getItem('el_voice_id') || '';
+  var lastBlobUrl = null;
+
+  var $ = function(id) { return document.getElementById(id); };
+
+  function status(elId, msg, ok) {
+    var el = $(elId);
+    el.style.display = 'block';
+    el.textContent = msg;
+    el.className = 'status ' + (ok ? 'ok' : 'err');
+  }
+
+  // 1. API Key
+  if (apiKey) $('apiKey').value = apiKey;
+  $('saveKey').addEventListener('click', function() {
+    apiKey = $('apiKey').value.trim();
+    if (!apiKey) { status('keyStatus', 'Enter an API key.', false); return; }
+    try { localStorage.setItem('el_api_key', apiKey); } catch(e) {}
+    status('keyStatus', 'Key saved.', true);
+  });
+
+  // 2. Clone voice
+  $('cloneBtn').addEventListener('click', async function() {
+    if (!apiKey) { status('cloneStatus', 'Save your API key first.', false); return; }
+    var files = $('samples').files;
+    if (!files.length) { status('cloneStatus', 'Upload at least one voice sample.', false); return; }
+    var name = $('voiceName').value.trim() || 'Sonny Daze';
+    status('cloneStatus', 'Cloning... this takes a minute.', true);
+    try {
+      var fd = new FormData();
+      fd.append('name', name);
+      for (var i = 0; i < files.length; i++) fd.append('files', files[i]);
+      var r = await fetch('https://api.elevenlabs.io/v1/voices/add', {
+        method: 'POST',
+        headers: { 'xi-api-key': apiKey },
+        body: fd
+      });
+      var j = await r.json();
+      if (!r.ok) throw new Error(j.detail ? JSON.stringify(j.detail) : 'Clone failed');
+      selVoiceId = j.voice_id;
+      try { localStorage.setItem('el_voice_id', selVoiceId); } catch(e) {}
+      status('cloneStatus', 'Voice cloned! ID: ' + selVoiceId, true);
+      loadVoices();
+    } catch(e) { status('cloneStatus', 'Error: ' + e.message, false); }
+  });
+
+  // 3. Load voices
+  async function loadVoices() {
+    if (!apiKey) { status('cloneStatus', 'Save your API key first.', false); return; }
+    try {
+      var r = await fetch('https://api.elevenlabs.io/v1/voices', {
+        headers: { 'xi-api-key': apiKey }
+      });
+      var j = await r.json();
+      var list = $('voiceList');
+      list.innerHTML = '';
+      (j.voices || []).forEach(function(v) {
+        var chip = document.createElement('div');
+        chip.className = 'voice-chip' + (v.voice_id === selVoiceId ? ' sel' : '');
+        chip.textContent = v.name;
+        chip.addEventListener('click', function() {
+          selVoiceId = v.voice_id;
+          try { localStorage.setItem('el_voice_id', selVoiceId); } catch(e) {}
+          loadVoices();
+        });
+        list.appendChild(chip);
+      });
+    } catch(e) {}
+  }
+  $('loadVoices').addEventListener('click', loadVoices);
+
+  // 4. Generate
+  $('genBtn').addEventListener('click', async function() {
+    if (!apiKey) { status('genStatus', 'Save your API key first.', false); return; }
+    if (!selVoiceId) { status('genStatus', 'Select or clone a voice first.', false); return; }
+    var text = $('scriptText').value.trim();
+    if (!text) { status('genStatus', 'Enter a script.', false); return; }
+    status('genStatus', 'Generating...', true);
+    try {
+      var r = await fetch('https://api.elevenlabs.io/v1/text-to-speech/' + selVoiceId, {
+        method: 'POST',
+        headers: { 'xi-api-key': apiKey, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ text: text, model_id: 'eleven_monolingual_v1' })
+      });
+      if (!r.ok) throw new Error('Generation failed: ' + r.status);
+      var blob = await r.blob();
+      if (lastBlobUrl) URL.revokeObjectURL(lastBlobUrl);
+      lastBlobUrl = URL.createObjectURL(blob);
+      var audio = $('resultAudio');
+      audio.src = lastBlobUrl;
+      audio.style.display = 'block';
+      $('dlBtn').style.display = 'inline-block';
+      $('dlBtn').onclick = function() {
+        var a = document.createElement('a');
+        a.href = lastBlobUrl;
+        a.download = 'sonny-daze-intro.mp3';
+        a.click();
+      };
+      status('genStatus', 'Done. Play it above or download.', true);
+    } catch(e) { status('genStatus', 'Error: ' + e.message, false); }
+  });
+
+  if (apiKey) loadVoices();
+})();
+</script>
+</body>
+</html>
