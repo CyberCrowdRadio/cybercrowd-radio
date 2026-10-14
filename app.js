@@ -587,4 +587,29 @@
   $("advertiseBtn").addEventListener("click", () =>
     say("Tell the booth which block you want — Pops start at $5.99.")
   );
+
+  /* ============ SHARE — with referral tracking ============ */
+  function getRefCode() {
+    try {
+      var code = localStorage.getItem("ccr_ref");
+      if (!code) {
+        code = "r" + Math.random().toString(36).slice(2, 8);
+        localStorage.setItem("ccr_ref", code);
+      }
+      return code;
+    } catch (_) { return "rshare"; }
+  }
+  var shareBtn = $("shareBtn");
+  if (shareBtn) {
+    shareBtn.addEventListener("click", async () => {
+      var url = location.origin + location.pathname + "?ref=" + getRefCode();
+      var data = { title: "Cybercrowd Radio", text: "AI plays AI — 69 songs, DJ on the decks. Sonny Daze will jack the vinyl rack.", url: url };
+      try {
+        if (navigator.share) { await navigator.share(data); say("Shared!"); }
+        else { await navigator.clipboard.writeText(url); say("Link copied — share it!"); }
+      } catch (_) {
+        try { await navigator.clipboard.writeText(url); say("Link copied — share it!"); } catch (_) {}
+      }
+    });
+  }
 })();
