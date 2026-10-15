@@ -208,7 +208,7 @@
       updateBtn();
       playBtn.addEventListener('click', function (e) {
         e.stopPropagation();
-        if (playing) stopRadio(); else startRadio();
+        startRadio();
       });
     }
     // AUTOPLAY: no clicks, no taps. It just plays.
