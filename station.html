@@ -111,6 +111,21 @@
       </div>
     </section>
 
+    <!-- ============ AUTO-GENERATOR: DJ PLAYS YOUR LIST ============ -->
+    <section class="section" id="autogen" aria-label="Auto DJ">
+      <div class="section-head">
+        <p class="eyebrow">The auto DJ</p>
+        <h2>Sonny's&nbsp;Stand-In</h2>
+        <p class="section-sub">Plays your songs, talks between them. Hit start.</p>
+      </div>
+      <div id="autogenPlayer">
+        <p><button id="autogenStart" class="btn btn-primary btn-lg">START THE DJ</button>
+        <button id="autogenStop" class="btn btn-secondary">STOP</button></p>
+        <p class="now-playing" id="autogenNow" aria-live="polite">Ready.</p>
+        <p class="signal-state" id="autogenStatus">Loading tracks...</p>
+      </div>
+    </section>
+
     <!-- ============ WEATHER SEGMENT ============ -->
     <section class="section section-alt" id="weather" aria-label="Temp and rain statistics">
       <div class="section-head">
@@ -364,5 +379,6 @@
   <script src="app.js"></script>
   <script src="announcer.js"></script>
   <script src="playlist.js"></script>
+  <script src="autogen.js"></script>
 </body>
 </html>
