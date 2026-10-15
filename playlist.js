@@ -80,7 +80,7 @@
     var i;
     // Donna first — direct audio that actually plays. Suno embeds often stay silent.
     for (i = 0; i < DONNA_TRACKS.length; i++) all.push({ track: DONNA_TRACKS[i], kind: 'Donna' });
-    for (i = 0; i < SUNO_TRACKS.length; i++) all.push({ track: SUNO_TRACKS[i], kind: 'Suno' });
+    // Suno removed 2026-10-15 (James) — embeds stay silent, Donna direct audio only.
     queue = spreadOut(all);
     qi = 0;
   }
