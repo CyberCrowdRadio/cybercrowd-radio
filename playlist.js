@@ -122,12 +122,36 @@
         // Advance when the song should be over. ALWAYS advances.
         sunoTimer = setTimeout(function () { if (playing) nextTrack(); }, dur);
       } else {
+        // CONTINUOUS: crossfade into the next track — no gaps, no silence.
         try {
-          audio = new Audio(e.track.audio_url);
-          audio.addEventListener('ended', function () { if (playing) nextTrack(); });
-          audio.addEventListener('error', function () { if (playing) nextTrack(); });
-          if (offset > 0 && offset < (e.track.duration || 210)) { try { audio.currentTime = offset; } catch (ex) {} }
-          audio.play().catch(function () { if (playing) nextTrack(); });
+          var nextA = new Audio(e.track.audio_url);
+          nextA.preload = 'auto';
+          if (offset > 0 && offset < (e.track.duration || 210)) { try { nextA.currentTime = offset; } catch (ex) {} }
+          nextA.addEventListener('error', function () { if (playing) nextTrack(); });
+          // When the new track can play, fade out the old and fade in the new.
+          nextA.addEventListener('canplay', function () {
+            try {
+              var oldA = audio;
+              audio = nextA;
+              nextA.volume = 0;
+              nextA.play().catch(function () {});
+              var steps = 20, i = 0;
+              var fade = setInterval(function () {
+                i++;
+                try {
+                  if (oldA) oldA.volume = Math.max(0, 1 - i / steps);
+                  nextA.volume = Math.min(1, i / steps);
+                } catch (ex) {}
+                if (i >= steps) {
+                  clearInterval(fade);
+                  try { if (oldA) { oldA.pause(); } } catch (ex) {}
+                }
+              }, 150);
+            } catch (ex) {}
+          });
+          // Advance when this track ends.
+          nextA.addEventListener('ended', function () { if (playing) nextTrack(); });
+          nextA.load();
           // Safety: if audio stalls, force advance
           sunoTimer = setTimeout(function () { if (playing) nextTrack(); }, dur + 15000);
         } catch (ex) { if (playing) nextTrack(); }
@@ -179,7 +203,7 @@
     buildQueue();
     var count = document.getElementById('plCount');
     if (count) count.textContent = queue.length + ' tracks';
-    setNow('Tap anywhere — the station starts.');
+    setNow('Cybercrowd Radio — live.');
     if (playBtn) {
       updateBtn();
       playBtn.addEventListener('click', function (e) {
@@ -187,19 +211,10 @@
         if (playing) stopRadio(); else startRadio();
       });
     }
-    // ANY tap tunes you in — no play button needed.
-    var started = false;
-    function firstTouch() {
-      if (started || playing) return;
-      started = true;
-      startRadio();
-      try {
-        document.removeEventListener('click', firstTouch);
-        document.removeEventListener('touchstart', firstTouch);
-      } catch (e) {}
-    }
-    document.addEventListener('click', firstTouch);
-    document.addEventListener('touchstart', firstTouch, { passive: true });
+    // AUTOPLAY: no clicks, no taps. It just plays.
+    setTimeout(function () {
+      if (!playing) startRadio();
+    }, 500);
   }
 
   if (document.readyState === 'loading') {
