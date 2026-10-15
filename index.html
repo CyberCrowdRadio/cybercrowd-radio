@@ -34,11 +34,11 @@
       <p class="mission">Caretaker. Archive. Receiver of lost LPs.</p>
       <p class="landing-lede">5,500 records strong. Forgotten vinyl, mailed in and spun on the air — every donor credited by name.</p>
 
-      <a class="enter-btn" href="signup.html">ENTER</a>
-      <p class="enter-note">This button starts the station.</p>
+      <a class="enter-btn" href="station.html" id="enterBtn">ENTER</a>
+      <p class="enter-note">Tap ENTER — the live stream starts.</p>
     </section>
 
-    <!-- ============ WELCOME FEED + TIP JAR ============ -->
+    <!-- ============ WELCOME FEED + JESTER ============ -->
     <section class="welcome-row" aria-label="Welcome to the crowd">
       <div class="welcome-feed" id="welcomeFeed" aria-live="polite"></div>
       <div class="tipjar" id="tipjar" aria-label="Tip jar — buy and tip CRWD">
@@ -53,8 +53,8 @@
     <section class="landing-section" aria-label="Listen now">
       <p class="eyebrow">Straight from the vault</p>
       <h2 class="landing-h2">Listen&nbsp;Now</h2>
-      <p class="landing-sub"><strong>"Still Lethal"</strong> — the Thursday opener. Made with Suno AI. Press play, it never leaves this page.</p>
-      <div class="suno-stack" id="sunoStack"></div>
+      <p class="landing-sub"><strong>"Still Lethal"</strong> — the Thursday opener. Made with Suno AI.</p>
+      <p><a href="https://suno.com/playlist/fdc65faf-0313-457d-8cd4-08ad342e986e" target="_blank" rel="noopener">Listen on Suno</a></p>
     </section>
 
     <!-- ============ KEEP THE SIGNAL ALIVE ============ -->
@@ -81,42 +81,20 @@
       var cfg = window.STATION_CONFIG || {};
       document.getElementById("year").textContent = new Date().getFullYear();
 
-      /* Members skip the signup: if this browser has a saved email,
-         ENTER goes straight to the station. */
-      try {
-        var list = JSON.parse(localStorage.getItem("cybercrowd-list") || "[]");
-        if (list.length > 0) {
-          var enterBtn = document.querySelector(".enter-btn");
-          if (enterBtn) enterBtn.href = "station.html";
-        }
-      } catch (err) { /* no storage — normal signup flow */ }
-      
-      /* Suno embeds — built from config, never link away */
-      var tracks = cfg.sunoTracks || [
-        { id: "274004e1-671b-4195-b47c-01adc55afca0", title: "Still Lethal", note: "Thursday opener — cut 1" },
-        { id: "e1324f91-ee29-47f0-ae8d-cc738befa683", title: "Still Lethal", note: "Thursday opener — cut 2" }
-      ];
-      var stack = document.getElementById("sunoStack");
-      tracks.forEach(function (t) {
-        var card = document.createElement("div");
-        card.className = "suno-card";
-        var label = document.createElement("p");
-        label.className = "suno-label";
-        label.textContent = t.title + " — " + t.note;
-        var frame = document.createElement("iframe");
-        frame.src = "https://suno.com/embed/" + t.id;
-        frame.width = "100%";
-        frame.height = "240";
-        frame.setAttribute("frameborder", "0");
-        frame.setAttribute("allow", "autoplay; encrypted-media; fullscreen");
-        frame.setAttribute("allowfullscreen", "");
-        frame.setAttribute("loading", "lazy");
-        frame.setAttribute("referrerpolicy", "no-referrer-when-downgrade");
-        frame.title = t.title + " on Suno";
-        card.appendChild(label);
-        card.appendChild(frame);
-        stack.appendChild(card);
-      });
+      /* ENTER starts the live stream: set autostart flag, go to station.
+         One tap on ENTER is the user gesture that unlocks audio. */
+      var enterBtn = document.getElementById("enterBtn");
+      if (enterBtn) {
+        // Members skip signup; new users go through signup first
+        try {
+          var list = JSON.parse(localStorage.getItem("cybercrowd-list") || "[]");
+          if (list.length === 0) enterBtn.href = "signup.html";
+        } catch (err) { enterBtn.href = "signup.html"; }
+
+        enterBtn.addEventListener("click", function () {
+          try { sessionStorage.setItem("ccr-autostart", "1"); } catch (e) {}
+        });
+      }
 
       /* Patreon — honest when the URL isn't set yet */
       var url = (cfg.patreonUrl || "").trim();
@@ -134,6 +112,8 @@
       var tipAddr = (cfg.crwdTipAddress || "").trim();
       var buyBtn = document.getElementById("buyCrwdBtn");
       if (buyBtn && mint) buyBtn.href = "https://jup.ag/swap/SOL-" + mint;
+      /* Tip button: Solana Pay URL — one tap opens their wallet with the
+         tip address and CRWD token pre-filled. Button-friendly for everyone. */
       var tipBtn = document.getElementById("tipCrwdBtn");
       if (tipBtn && tipAddr && mint) {
         tipBtn.href = "solana:" + tipAddr
