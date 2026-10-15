@@ -74,9 +74,9 @@ window.STATION_CONFIG = {
       blurb: "B-sides only or deep cuts. No mainstream — the flipsides and the buried gold.",
     },
     {
-      name: "Wolfman Jack Show", days: "Thursday", day: [4], start: 20, end: 23,
+      name: "Sonny Daze Show", days: "Thursday", day: [4], start: 20, end: 23,
       time: "8PM – 11PM",
-      blurb: "James's 3-hour Wolfman Jack show. Atomic Kricket rides along. \"Still Lethal\" kicks the door in.",
+      blurb: "James's 3-hour Sonny Daze show. Atomic Kricket rides along. \"Still Lethal\" kicks the door in.",
     },
     {
       name: "Double Barrel Fridays", days: "Friday", day: [5], start: 17, end: 19,
