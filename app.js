@@ -73,7 +73,7 @@
     $("liveNowName").textContent = liveShow.name;
   }
 
-  /* ---------- day-aware hero: the station knows what day it is ---------- */
+  /* ---------- day-aware hero ---------- */
   function standbyText() {
     if (todayShow) return `Today is ${DAY_NAMES[day]} — ${todayShow.name} · ${todayShow.time}`;
     return "Standby — the needle drops when we go live";
@@ -81,7 +81,7 @@
   const heroNowPlaying = $("nowPlaying");
   if (heroNowPlaying) heroNowPlaying.textContent = standbyText();
 
-  /* ---------- retired segments (preserved, never deleted) ---------- */
+  /* ---------- retired segments ---------- */
   const retiredList = $("retiredList");
   (cfg.retiredSegments || []).forEach((r) => {
     const li = document.createElement("li");
@@ -109,7 +109,7 @@
     });
   }
 
-  /* ---------- donor wall (local until the archive backend lands) ---------- */
+  /* ---------- donor wall ---------- */
   const donorWall = $("donorWall");
   const DONOR_KEY = "cybercrowd-donors";
   function loadDonors() {
@@ -171,7 +171,7 @@
   });
 
   /* ============================================================
-     THE RECEIVER — honest live player
+     THE RECEIVER — one-button player
      ============================================================ */
   const playBtn = $("playBtn");
   const iconPlay = $("iconPlay"), iconPause = $("iconPause");
@@ -198,27 +198,22 @@
   }
 
   playBtn.addEventListener("click", async () => {
-    // Live stream first. If offline, start the AI radio (69 songs + DJ bot).
     const streamUrl = (cfg.streamUrl || "").trim();
     if (!streamUrl) {
-      // No live stream — hand off to the radio playlist with DJ.
-      if (window.CCRadioPlaylist) {
-        if (window.CCRadioPlaylist.isPlaying()) {
-          window.CCRadioPlaylist.stop();
-          setLive(false);
-          say("Radio stopped.");
-        } else {
-          window.CCRadioPlaylist.start();
-          setLive(true);
-          say("Cybercrowd Radio AI is on the air!");
-          // Scroll to the playlist so they see what's playing.
-          var pl = document.getElementById("playlist");
-          if (pl) pl.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-        playBtn.setAttribute("aria-label", window.CCRadioPlaylist.isPlaying() ? "Stop the radio" : "Play the radio");
+      if (!window.CCRadioDJ) {
+        say("Player not loaded yet — try again in a moment.");
         return;
       }
-      say("The stream isn't live yet — the needle drops when we go on the air. Check back soon.");
+      if (window.CCRadioDJ.isStopped()) {
+        window.CCRadioDJ.start(nowPlaying);
+        setLive(true);
+        say("Cybercrowd Radio is on the air!");
+      } else {
+        window.CCRadioDJ.stop();
+        setLive(false);
+        say("Radio paused.");
+      }
+      playBtn.setAttribute("aria-label", window.CCRadioDJ.isStopped() ? "Play the radio" : "Pause the radio");
       return;
     }
     const url = streamUrl;
@@ -245,350 +240,204 @@
   });
 
   /* ============================================================
-     THE EASEL — draggable 2x2 video canvas
-     Touch-hold-drag-let-go. Double-tap enlarges.
-     Sound never changes — layout only.
+     3 BROADCAST MODES
      ============================================================ */
-  const easel = $("easel");
-  const squares = Array.from(easel.querySelectorAll(".video-square"));
-  let dragEl = null, dropTarget = null;
+  const modeAIDJ = $("modeAIDJ");
+  const modeStraight = $("modeStraight");
+  const modeLive = $("modeLive");
+  let bcastMode = "aidj";
+  let straightAudio = null;
+  let liveAudio = null;
 
-  function squareAtPoint(x, y, exclude) {
-    return squares.find((sq) => {
-      if (sq === exclude) return false;
-      const r = sq.getBoundingClientRect();
-      return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
-    }) || null;
+  function stopAllModes() {
+    if (window.CCRadioDJ && !window.CCRadioDJ.isStopped()) window.CCRadioDJ.stop();
+    if (straightAudio) { try { straightAudio.pause(); } catch (e) {} straightAudio = null; }
+    if (liveAudio) { try { liveAudio.pause(); } catch (e) {} liveAudio = null; }
+    if (audio) { try { audio.pause(); } catch (e) {} audio = null; }
   }
-
-  function swapSquares(a, b) {
-    if (!a || !b || a === b) return;
-    const aNext = a.nextElementSibling;
-    if (aNext === b) easel.insertBefore(b, a);
-    else if (b.nextElementSibling === a) easel.insertBefore(a, b);
-    else { easel.insertBefore(a, b.nextElementSibling); easel.insertBefore(b, aNext); }
+  function setModeButtons(mode) {
+    bcastMode = mode;
+    [[modeAIDJ, "aidj"], [modeStraight, "straight"], [modeLive, "live"]].forEach(([btn, m]) => {
+      if (!btn) return;
+      const on = m === mode;
+      btn.classList.toggle("is-active", on);
+      btn.setAttribute("aria-pressed", on ? "true" : "false");
+    });
   }
-
-  function clearDrop() {
-    squares.forEach((sq) => sq.classList.remove("drop-target"));
-    dropTarget = null;
-  }
-
-  squares.forEach((sq) => {
-    let startX = 0, startY = 0, moved = false, lastTap = 0;
-
-    sq.addEventListener("pointerdown", (e) => {
-      // double-tap enlarges; single quick tap does nothing
-      const t = Date.now();
-      if (t - lastTap < 320 && !moved) {
-        sq.classList.toggle("enlarged");
-        lastTap = 0;
-        return;
-      }
-      lastTap = t;
-      moved = false;
-      startX = e.clientX; startY = e.clientY;
-      sq.setPointerCapture(e.pointerId);
-    });
-
-    sq.addEventListener("pointermove", (e) => {
-      if (!sq.hasPointerCapture(e.pointerId)) return;
-      const dx = e.clientX - startX, dy = e.clientY - startY;
-      if (!moved && Math.hypot(dx, dy) > 12) {
-        moved = true;
-        dragEl = sq;
-        sq.classList.add("dragging");
-      }
-      if (moved) {
-        clearDrop();
-        dropTarget = squareAtPoint(e.clientX, e.clientY, sq);
-        if (dropTarget) dropTarget.classList.add("drop-target");
-      }
-    });
-
-    const endDrag = (e) => {
-      if (moved && dragEl) {
-        if (dropTarget) swapSquares(dragEl, dropTarget);
-        dragEl.classList.remove("dragging");
-        clearDrop();
-        dragEl = null;
-        say("Canvas rearranged. The sound never changed.");
-      }
-      moved = false;
-    };
-    sq.addEventListener("pointerup", endDrag);
-    sq.addEventListener("pointercancel", endDrag);
-
-    // keyboard: arrows reorder, Enter enlarges
-    sq.addEventListener("keydown", (e) => {
-      const i = squares.indexOf(sq);
-      if (e.key === "Enter" || e.key === " ") {
-        e.preventDefault();
-        sq.classList.toggle("enlarged");
-      } else if (e.key === "ArrowRight" || e.key === "ArrowLeft") {
-        e.preventDefault();
-        const j = e.key === "ArrowRight" ? (i + 1) % squares.length : (i - 1 + squares.length) % squares.length;
-        swapSquares(sq, squares[j]);
-      }
-    });
-  });
-
-  /* ---------- camera selector strip ---------- */
-  const camStrip = $("camStrip");
-  const camChips = Array.from(camStrip.querySelectorAll(".cam-chip"));
-  const camMeta = {};
-  (cfg.cameras || []).forEach((c) => { camMeta[c.id] = c; });
-  camChips.forEach((chip) => {
-    chip.addEventListener("click", () => {
-      camChips.forEach((c) => {
-        c.classList.remove("is-active");
-        c.setAttribute("aria-selected", "false");
-      });
-      chip.classList.add("is-active");
-      chip.setAttribute("aria-selected", "true");
-      const id = chip.dataset.cam;
-      const meta = camMeta[id] || {};
-      const target = squares.find((sq) => sq.dataset.cam === id) || squares[0];
-      squares.forEach((sq) => sq.classList.remove("enlarged"));
-      target.classList.add("enlarged");
-      say(`${meta.label || id} loaded full-easel. Feeds connect when the studio goes live.`);
-      target.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" });
-    });
-  });
-
-  /* ============================================================
-     CHAT DOCK — open / closed / undocked-and-draggable
-     ============================================================ */
-  const chatDock = $("chatDock");
-  const chatHead = $("chatHead");
-  const chatTab = $("chatTab");
-  const chatMinBtn = $("chatMinBtn");
-  const chatUndockBtn = $("chatUndockBtn");
-  const chatMsgs = $("chatMsgs");
-  const chatForm = $("chatForm");
-  const chatInput = $("chatInput");
-  const isMobile = () => window.matchMedia("(max-width: 860px)").matches;
-  let dockedPos = null; // remembered {left, top} when undocked
-
-  function chatSay(who, text, sys) {
-    const li = document.createElement("li");
-    if (sys) li.innerHTML = `<span class="sys">${text}</span>`;
-    else li.innerHTML = `<span class="who">${who}</span>${text}`;
-    chatMsgs.appendChild(li);
-    chatMsgs.scrollTop = chatMsgs.scrollHeight;
-  }
-  chatSay(null, "The booth is quiet until we go live. Leave a message — the station answers back.", true);
-
-  // Mobile starts with chat closed behind the ">" tab (full-screen when opened).
-  // Desktop starts docked open.
-  if (isMobile()) setChatState("closed");
-
-  function setChatState(state) {
-    chatDock.dataset.state = state;
-    chatDock.classList.remove("fullscreen");
-    if (state === "closed") {
-      chatTab.hidden = false;
-      chatTab.setAttribute("aria-label", "Open chat");
-    } else {
-      chatTab.hidden = true;
-      if (state === "open") {
-        chatDock.style.left = "";
-        chatDock.style.top = "";
-        if (isMobile()) chatDock.classList.add("fullscreen");
-      }
-      if (state === "undocked" && dockedPos) {
-        chatDock.style.left = dockedPos.left + "px";
-        chatDock.style.top = dockedPos.top + "px";
-      }
-      setTimeout(() => chatInput.focus({ preventScroll: true }), 380);
+  async function playStraight() {
+    try {
+      const r = await fetch("/now");
+      const now = await r.json();
+      if (!now.id) { nowPlaying.textContent = "No tracks in the bucket."; return; }
+      nowPlaying.textContent = now.title;
+      straightAudio = new Audio("/t/" + now.id);
+      straightAudio.addEventListener("ended", () => { if (bcastMode === "straight" && playing) playStraight(); });
+      straightAudio.addEventListener("error", () => { if (bcastMode === "straight" && playing) setTimeout(playStraight, 3000); });
+      await straightAudio.play();
+    } catch (e) {
+      nowPlaying.textContent = "Couldn't reach the station — retrying…";
+      setTimeout(() => { if (bcastMode === "straight" && playing) playStraight(); }, 5000);
     }
   }
-
-  chatMinBtn.addEventListener("click", () => setChatState("closed"));
-  chatTab.addEventListener("click", () => setChatState("open"));
-  chatUndockBtn.addEventListener("click", () => {
-    if (chatDock.dataset.state === "undocked") setChatState("open");
-    else {
-      const r = chatDock.getBoundingClientRect();
-      dockedPos = { left: r.left, top: r.top };
-      chatDock.style.left = r.left + "px";
-      chatDock.style.top = Math.min(r.top, window.innerHeight - 200) + "px";
-      setChatState("undocked");
-      say("Chat undocked — drag the header anywhere.");
+  async function playLiveStandby() {
+    try {
+      const r = await fetch("/station-id");
+      const sid = await r.json();
+      if (!sid.id) { nowPlaying.textContent = "No station ID found."; return; }
+      nowPlaying.textContent = "STANDBY — " + sid.title + " (on repeat)";
+      liveAudio = new Audio("/t/" + sid.id);
+      liveAudio.loop = true;
+      await liveAudio.play();
+    } catch (e) {
+      nowPlaying.textContent = "Standby…";
     }
-  });
-
-  // drag the dock by its header (touch + mouse)
-  let cDrag = null;
-  chatHead.addEventListener("pointerdown", (e) => {
-    if (e.target.closest("button")) return;
-    if (chatDock.dataset.state !== "undocked") {
-      const r = chatDock.getBoundingClientRect();
-      dockedPos = { left: r.left, top: r.top };
-      chatDock.style.left = r.left + "px";
-      chatDock.style.top = Math.min(r.top, window.innerHeight - 200) + "px";
-      chatDock.dataset.state = "undocked";
-    }
-    cDrag = { x: e.clientX - chatDock.getBoundingClientRect().left, y: e.clientY - chatDock.getBoundingClientRect().top };
-    chatHead.setPointerCapture(e.pointerId);
-  });
-  chatHead.addEventListener("pointermove", (e) => {
-    if (!cDrag || !chatHead.hasPointerCapture(e.pointerId)) return;
-    const x = Math.max(0, Math.min(window.innerWidth - 120, e.clientX - cDrag.x));
-    const y = Math.max(0, Math.min(window.innerHeight - 60, e.clientY - cDrag.y));
-    chatDock.style.left = x + "px";
-    chatDock.style.top = y + "px";
-  });
-  ["pointerup", "pointercancel"].forEach((ev) =>
-    chatHead.addEventListener(ev, () => {
-      if (cDrag) {
-        const r = chatDock.getBoundingClientRect();
-        dockedPos = { left: r.left, top: r.top };
+  }
+  function switchMode(mode) {
+    const wasPlaying = playing;
+    stopAllModes();
+    setLive(false);
+    setModeButtons(mode);
+    if (!wasPlaying) return;
+    if (mode === "aidj" && window.CCRadioDJ) {
+      window.CCRadioDJ.start(nowPlaying);
+      setLive(true);
+    } else if (mode === "straight") {
+      setLive(true);
+      playStraight();
+    } else if (mode === "live") {
+      const url = (cfg.streamUrl || "").trim();
+      if (url) {
+        audio = new Audio(url);
+        audio.play().then(() => setLive(true)).catch(() => setLive(false));
+      } else {
+        setLive(true);
+        playLiveStandby();
       }
-      cDrag = null;
-    })
-  );
+    }
+  }
+  if (modeAIDJ) modeAIDJ.addEventListener("click", () => switchMode("aidj"));
+  if (modeStraight) modeStraight.addEventListener("click", () => switchMode("straight"));
+  if (modeLive) modeLive.addEventListener("click", () => switchMode("live"));
 
-  chatForm.addEventListener("submit", (e) => {
-    e.preventDefault();
-    const text = chatInput.value.trim();
+  /* Crowd Cam queue */
+  const putMeOnBtn = $("putMeOnBtn");
+  const putMeOnStatus = $("putMeOnStatus");
+  if (putMeOnBtn) putMeOnBtn.addEventListener("click", () => {
+    if (putMeOnStatus) {
+      putMeOnStatus.hidden = false;
+      putMeOnStatus.textContent = "You're in the queue — Sonny Daze picks who's on.";
+    }
+    putMeOnBtn.disabled = true;
+    putMeOnBtn.textContent = "IN THE QUEUE";
+  });
+
+  /* Kinetic talk break */
+  const kineticSay = $("kineticSay");
+  const kineticSayBtn = $("kineticSayBtn");
+  if (kineticSayBtn) kineticSayBtn.addEventListener("click", () => {
+    const text = (kineticSay.value || "").trim();
     if (!text) return;
-    chatSay("You", text.replace(/</g, "&lt;"));
-    chatInput.value = "";
-    // Local echo until the live backend lands — honest, never faked as live.
-    setTimeout(() => chatSay(null, "Noted — the booth answers back when we're live.", true), 900);
+    stopAllModes();
+    setLive(false);
+    const done = () => {
+      if (kineticSay) kineticSay.value = "";
+      if (bcastMode === "aidj" && window.CCRadioDJ) {
+        window.CCRadioDJ.start(nowPlaying);
+        setLive(true);
+      } else if (bcastMode === "straight") {
+        setLive(true);
+        playStraight();
+      }
+    };
+    if (!('speechSynthesis' in window)) { done(); return; }
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.onend = done;
+      u.onerror = done;
+      setTimeout(() => { try { window.speechSynthesis.cancel(); } catch (e) {} done(); }, 30000);
+      window.speechSynthesis.speak(u);
+    } catch (e) { done(); }
+  });
+
+  /* GONG IT */
+  const gongBtn = $("gongBtn");
+  function speakAsKinetic(text, done) {
+    if (!('speechSynthesis' in window)) { done(); return; }
+    try {
+      window.speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.onend = done;
+      u.onerror = done;
+      setTimeout(() => { try { window.speechSynthesis.cancel(); } catch (e) {} done(); }, 30000);
+      window.speechSynthesis.speak(u);
+    } catch (e) { done(); }
+  }
+  if (gongBtn) gongBtn.addEventListener("click", () => {
+    const text = (kineticSay.value || "").trim();
+    stopAllModes();
+    setLive(false);
+    const resume = () => {
+      if (kineticSay) kineticSay.value = "";
+      if (bcastMode === "aidj" && window.CCRadioDJ) {
+        window.CCRadioDJ.next();
+        if (window.CCRadioDJ.isStopped()) window.CCRadioDJ.start(nowPlaying);
+        setLive(true);
+      } else if (bcastMode === "straight") {
+        setLive(true);
+        playStraight();
+      }
+    };
+    if (text) { speakAsKinetic(text, resume); }
+    else { setTimeout(resume, 800); }
   });
 
   /* ============================================================
-     adWorm — 8 blocks, gentle circuit, NO flashing ever
-     The traveler highlights one block at a time, slow fade only.
+     STUDIO BROADCAST
      ============================================================ */
-  const adworm = cfg.adworm || {};
-  const allBlocks = [];
-  document.querySelectorAll("[data-adworm]").forEach((el) => {
-    const id = el.dataset.adworm;
-    const isCorner = id.startsWith("corner-");
-    const list = isCorner ? (adworm.corners || []) : (adworm.banners || []);
-    const meta = list.find((b) => b.id === id) || {};
-    el.innerHTML = `<a href="#advertise"><span>AD — ${meta.label || id}<br />Your Pop here · ${adworm.popPrice || "$5.99"}</span></a>`;
-    allBlocks.push(el);
-  });
-  if (!reduced && allBlocks.length > 1) {
-    let traveler = 0;
-    setInterval(() => {
-      allBlocks.forEach((b) => b.classList.remove("traveling"));
-      traveler = (traveler + 1) % allBlocks.length;
-      allBlocks[traveler].classList.add("traveling");
-    }, 6000); // slow circuit: side → top → bottom → back
-  }
-
-  /* ============================================================
-     FORMS — front-end only until backends are wired (see README)
-     ============================================================ */
-  function wireForm(formId, msgId, okText) {
-    const form = $(formId), msg = $(msgId);
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
-      // TODO: POST to backend (Cloudflare Worker + D1/KV, or form service).
-      msg.hidden = false;
-      msg.textContent = okText(form);
-      form.reset();
-    });
-  }
-  /* Request line is subscriber-only: gate behind signup (cybercrowd-list). */
+  const studioUrl = $("studioStreamUrl");
+  const goLiveBtn = $("goLiveBtn");
+  const goOffAirBtn = $("goOffAirBtn");
+  const studioStatus = $("studioStatus");
   try {
-    const list = JSON.parse(localStorage.getItem("cybercrowd-list") || "[]");
-    if (!list.length) {
-      const form = $("requestForm"), gate = $("requestGate");
-      if (form) form.hidden = true;
-      if (gate) gate.hidden = false;
+    const saved = localStorage.getItem("cc-studio-url") || "";
+    if (saved && studioUrl) studioUrl.value = saved;
+    if (saved) cfg.streamUrl = saved;
+  } catch (e) {}
+  function setStudioLive(on) {
+    if (goLiveBtn) goLiveBtn.hidden = on;
+    if (goOffAirBtn) goOffAirBtn.hidden = !on;
+    if (studioStatus) {
+      studioStatus.textContent = on
+        ? "ON AIR — you're broadcasting live from the studio."
+        : "Standby — paste your stream URL and hit GO LIVE.";
+      studioStatus.classList.toggle("live", on);
     }
-  } catch (_) {}
-  /* ============================================================
-     REQUEST QUEUE — grouped by song, numbered in order.
-     One entry per song. Names stack under it.
-     "Don't own it" lets the booth answer back: sorry, don't own that one.
-     Queue lives in memory for this session — no server yet.
-     ============================================================ */
-  const requestQueue = [];
-  const queueList = $("queueList"), queueEmpty = $("queueEmpty");
-  const esc = (s) => s.replace(/</g, "&lt;").replace(/>/g, "&gt;");
-
-  function renderQueue() {
-    if (!queueList) return;
-    queueList.innerHTML = "";
-    if (!requestQueue.length) {
-      if (queueEmpty) queueEmpty.hidden = false;
+  }
+  if (goLiveBtn) goLiveBtn.addEventListener("click", () => {
+    const url = (studioUrl.value || "").trim();
+    if (!url) {
+      if (studioStatus) studioStatus.textContent = "Paste your stream URL first.";
       return;
     }
-    if (queueEmpty) queueEmpty.hidden = true;
-    requestQueue.forEach((entry, i) => {
-      const li = document.createElement("li");
-      li.className = "queue-item";
-      li.innerHTML =
-        `<span class="queue-num">${i + 1}.</span> ` +
-        `<span class="queue-song">${esc(entry.song)}</span> ` +
-        `<span class="queue-names">— ${entry.names.map(esc).join(", ")}</span> ` +
-        (entry.shout ? `<span class="queue-shout">(${esc(entry.shout)})</span> ` : "") +
-        `<button class="queue-nope" type="button" data-idx="${i}">Don't own it</button>`;
-      queueList.appendChild(li);
-    });
-    queueList.querySelectorAll(".queue-nope").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const idx = Number(btn.dataset.idx);
-        const entry = requestQueue[idx];
-        if (!entry) return;
-        requestQueue.splice(idx, 1);
-        renderQueue();
-        say(`Sorry ${entry.names.join(", ")} — I don't own "${entry.song}".`);
-      });
-    });
-  }
-
-  const requestForm = $("requestForm"), formMsg = $("formMsg");
-  if (requestForm) {
-    requestForm.addEventListener("submit", (e) => {
-      e.preventDefault();
-      const song = requestForm.querySelector("#reqSong").value.trim();
-      const name = requestForm.querySelector("#reqName").value.trim() || "Midnight caller";
-      const shout = requestForm.querySelector("#reqShout").value.trim();
-      if (!song) return;
-      // Group by song (case-insensitive) — one entry, names stack.
-      const key = song.toLowerCase();
-      const existing = requestQueue.find((en) => en.song.toLowerCase() === key);
-      if (existing) {
-        if (!existing.names.includes(name)) existing.names.push(name);
-        if (shout && !existing.shout) existing.shout = shout;
-      } else {
-        requestQueue.push({ song, names: [name], shout });
-      }
-      renderQueue();
-      if (formMsg) {
-        formMsg.hidden = false;
-        formMsg.textContent = `Got it, ${name} — "${song}" is in the queue. The booth answers back on the air.`;
-      }
-      requestForm.reset();
-    });
-  }
-  renderQueue();
-  wireForm("donorForm", "donorMsg", (f) => {
-    const rec = f.querySelector("#donorRecord").value.trim();
-    const name = f.querySelector("#donorName").value.trim();
-    const donors = loadDonors();
-    donors.unshift({ name: name.replace(/</g, "&lt;"), record: rec.replace(/</g, "&lt;") });
-    try { localStorage.setItem(DONOR_KEY, JSON.stringify(donors.slice(0, 60))); } catch (_) {}
-    renderDonors();
-    return `Logged, ${name} — "${rec}" is on the caretaker's desk. Your plaque is on the wall.`;
+    cfg.streamUrl = url;
+    try { localStorage.setItem("cc-studio-url", url); } catch (e) {}
+    if (window.CCRadioDJ && !window.CCRadioDJ.isStopped()) window.CCRadioDJ.stop();
+    setLive(true);
+    setStudioLive(true);
+    say("You're live from the studio!");
   });
-  wireForm("emailForm", "emailMsg", () =>
-    "You're on the list — the Sunday caretaker letter lands weekly."
-  );
+  if (goOffAirBtn) goOffAirBtn.addEventListener("click", () => {
+    cfg.streamUrl = "";
+    try { localStorage.removeItem("cc-studio-url"); } catch (e) {}
+    if (studioUrl) studioUrl.value = "";
+    setLive(false);
+    setStudioLive(false);
+    say("Off air — Sonny Daze is back on the bucket.");
+  });
+  setStudioLive(!!(cfg.streamUrl || "").trim());
 
-  $("advertiseBtn").addEventListener("click", () =>
-    say("Tell the booth which block you want — Pops start at $5.99.")
-  );
-
-  /* ============ SHARE — with referral tracking ============ */
+  /* ---------- share ---------- */
   function getRefCode() {
     try {
       var code = localStorage.getItem("ccr_ref");
@@ -603,7 +452,7 @@
   if (shareBtn) {
     shareBtn.addEventListener("click", async () => {
       var url = location.origin + location.pathname + "?ref=" + getRefCode();
-      var data = { title: "Cybercrowd Radio", text: "AI plays AI — 69 songs, DJ on the decks. Sonny Daze will jack the vinyl rack.", url: url };
+      var data = { title: "Cybercrowd Radio", text: "Cybercrowd Radio is live.", url: url };
       try {
         if (navigator.share) { await navigator.share(data); say("Shared!"); }
         else { await navigator.clipboard.writeText(url); say("Link copied — share it!"); }
