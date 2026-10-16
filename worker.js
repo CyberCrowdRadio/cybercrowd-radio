@@ -214,6 +214,21 @@ export default {
     if (url.pathname === '/now') {
       return nowPlaying(env);
     }
+    if (url.pathname === '/station-id') {
+      var tracks = await getRotation(env);
+      for (var si = 0; si < tracks.length; si++) {
+        if (tracks[si].title.toLowerCase().indexOf('cybercrowd radio') >= 0) {
+          return jsonResp({ id: tracks[si].id, title: tracks[si].title, duration: tracks[si].duration });
+        }
+      }
+      return jsonResp({ error: 'no station id found' }, 404);
+    }
+    if (url.pathname === '/tracks') {
+      var allTracks = await getRotation(env);
+      return jsonResp(allTracks.map(function (t) {
+        return { id: t.id, title: t.title, duration: t.duration };
+      }));
+    }
     var tm = url.pathname.match(/^\/t\/(\d+)$/);
     if (tm) {
       return streamTrack(request, env, tm[1]);
