@@ -129,27 +129,14 @@
           nextA.preload = 'auto';
           if (offset > 0 && offset < (e.track.duration || 210)) { try { nextA.currentTime = offset; } catch (ex) {} }
           nextA.addEventListener('error', function () { if (playing) nextTrack(); });
-          // When the new track can play, fade out the old and fade in the new.
-          nextA.addEventListener('canplay', function () {
-            try {
-              var oldA = audio;
-              audio = nextA;
-              nextA.volume = 0;
-              nextA.play().catch(function () {});
-              var steps = 20, i = 0;
-              var fade = setInterval(function () {
-                i++;
-                try {
-                  if (oldA) oldA.volume = Math.max(0, 1 - i / steps);
-                  nextA.volume = Math.min(1, i / steps);
-                } catch (ex) {}
-                if (i >= steps) {
-                  clearInterval(fade);
-                  try { if (oldA) { oldA.pause(); } } catch (ex) {}
-                }
-              }, 150);
-            } catch (ex) {}
-          });
+          // Play directly — no waiting for canplay.
+          try {
+            var oldA = audio;
+            audio = nextA;
+            if (oldA) { try { oldA.pause(); } catch (ex) {} }
+            nextA.volume = 1;
+            nextA.play().catch(function () { if (playing) nextTrack(); });
+          } catch (ex) { if (playing) nextTrack(); }
           // Advance when this track ends.
           nextA.addEventListener('ended', function () { if (playing) nextTrack(); });
           nextA.load();
