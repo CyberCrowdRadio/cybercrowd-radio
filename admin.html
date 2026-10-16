@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Cybercrowd Radio</title>
+<style>
+:root {
+  --black: #05050a;
+  --green: #00ff9d;
+  --gold: #f5c518;
+  --red: #ff3344;
+  --blue: #4488ff;
+  --yellow: #ffcc00;
+  --orange: #ff8800;
+  --mid: #12121e;
+  --border: #1e1e30;
+  --text: #c8c8e0;
+  --muted: #50506a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--black);
+  font-family: monospace;
+  color: var(--text);
+  min-height: 100vh;
+  padding: 20px;
+  max-width: 900px;
+  margin: 0 auto;
+}
+h1 {
+  color: var(--gold);
+  font-size: 1.5rem;
+  margin-bottom: 5px;
+}
+.sub { color: var(--muted); margin-bottom: 25px; font-size: 0.85rem; }
+.section {
+  background: var(--mid);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+.section h2 {
+  font-size: 1rem;
+  color: var(--green);
+  margin-bottom: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+}
+.btn {
+  display: inline-block;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.9rem;
+  cursor: pointer;
+  margin: 4px;
+}
+.btn-gong { background: var(--red); color: #fff; font-weight: bold; }
+.btn-warn { background: var(--yellow); color: #000; }
+.btn-block { background: var(--red); color: #fff; }
+.btn-appeal { background: var(--orange); color: #000; }
+.btn-connect { background: var(--blue); color: #fff; }
+.btn-action { background: var(--green); color: #000; font-weight: bold; }
+.btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px;
+  border-bottom: 1px solid var(--border);
+}
+.user-row:last-child { border-bottom: none; }
+.dot {
+  display: inline-block;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  margin-right: 8px;
+}
+.dot-blue { background: var(--blue); }
+.dot-yellow { background: var(--yellow); }
+.dot-red { background: var(--red); }
+.dot-orange { background: var(--orange); }
+.dot-green { background: var(--green); }
+.handle { font-weight: bold; }
+.founder-star { color: var(--gold); }
+.actions { display: flex; gap: 4px; flex-wrap: wrap; }
+.actions .btn { padding: 6px 12px; font-size: 0.75rem; margin: 2px; }
+input[type="text"] {
+  width: 100%;
+  padding: 10px;
+  background: var(--black);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: monospace;
+  margin-bottom: 10px;
+}
+.empty { color: var(--muted); font-style: italic; padding: 10px; }
+</style>
+</head>
+<body>
+
+<h1>★ Admin</h1>
+<p class="sub">Founder authority — fatmon'lefthanded</p>
+
+<!-- DJ CONTROL -->
+<div class="section">
+  <h2>DJ Control</h2>
+  <p style="margin-bottom:10px; font-size:0.85rem; color:var(--muted)">You are the judge. Kinetic is the backup.</p>
+  <button class="btn btn-gong" onclick="adminGong()">GONG — Take the mic</button>
+  <button class="btn btn-action" onclick="adminSkip()">Skip song</button>
+  <button class="btn btn-ghost" onclick="adminBackToKinetic()">Hand back to Kinetic</button>
+  <p id="djStatus" style="margin-top:10px; font-size:0.85rem;"></p>
+</div>
+
+<!-- USERS -->
+<div class="section">
+  <h2>Users</h2>
+  <input type="text" id="userSearch" placeholder="Search handle..." oninput="filterUsers()">
+  <div id="userList">
+    <p class="empty">No users yet. They'll appear here when they connect.</p>
+  </div>
+</div>
+
+<!-- APPEALS -->
+<div class="section">
+  <h2>Appeals <span style="color:var(--orange)">●</span></h2>
+  <div id="appealList">
+    <p class="empty">No pending appeals.</p>
+  </div>
+</div>
+
+<!-- FLAGS -->
+<div class="section">
+  <h2>Flags</h2>
+  <div id="flagList">
+    <p class="empty">No flags reported.</p>
+  </div>
+</div>
+
+<!-- MOD LOG -->
+<div class="section">
+  <h2>Mod Log</h2>
+  <div id="modLog">
+    <p class="empty">No actions yet.</p>
+  </div>
+</div>
+
+<script>
+// ---- admin state (localStorage for prototype) ----
+const ADMIN_KEY = "ccr-admin-users";
+const LOG_KEY = "ccr-mod-log";
+
+function loadUsers() {
+  try { return JSON.parse(localStorage.getItem(ADMIN_KEY) || "[]"); }
+  catch (_) { return []; }
+}
+function saveUsers(u) {
+  try { localStorage.setItem(ADMIN_KEY, JSON.stringify(u)); } catch (_) {}
+}
+function loadLog() {
+  try { return JSON.parse(localStorage.getItem(LOG_KEY) || "[]"); }
+  catch (_) { return []; }
+}
+function saveLog(l) {
+  try { localStorage.setItem(LOG_KEY, JSON.stringify(l)); } catch (_) {}
+}
+function logAction(action, target) {
+  const log = loadLog();
+  log.unshift({ action, target, by: "fatmon'lefthanded", at: new Date().toISOString() });
+  saveLog(log.slice(0, 100));
+  renderLog();
+}
+
+// ---- DJ controls ----
+function adminGong() {
+  document.getElementById("djStatus").textContent = "GONGED — you're live. Say what you want.";
+  logAction("GONG", "current song");
+  // In production: stop music, open mic
+}
+function adminSkip() {
+  document.getElementById("djStatus").textContent = "Skipped.";
+  logAction("SKIP", "current song");
+}
+function adminBackToKinetic() {
+  document.getElementById("djStatus").textContent = "Kinetic has the wheel.";
+  logAction("HANDOFF", "Kinetic");
+}
+
+// ---- user management ----
+const STATUS_COLORS = { blue: "dot-blue", yellow: "dot-yellow", red: "dot-red", orange: "dot-orange", green: "dot-green" };
+const STATUS_LABELS = { blue: "connecting", yellow: "warned", red: "blocked", orange: "appeal", green: "clean" };
+
+function renderUsers(filter) {
+  const list = document.getElementById("userList");
+  let users = loadUsers();
+  if (filter) users = users.filter(u => u.handle.includes(filter.toLowerCase()));
+  if (!users.length) {
+    list.innerHTML = '<p class="empty">No users' + (filter ? ' matching "' + filter + '"' : '') + '.</p>';
+    return;
+  }
+  list.innerHTML = users.map((u, i) => `
+    <div class="user-row">
+      <span><span class="dot ${STATUS_COLORS[u.status] || 'dot-green'}"></span><span class="handle">${u.handle}</span> <span style="color:var(--muted);font-size:0.75rem">${STATUS_LABELS[u.status] || 'clean'}</span></span>
+      <span class="actions">
+        <button class="btn btn-warn" onclick="modAction(${i},'yellow')">Warn</button>
+        <button class="btn btn-block" onclick="modAction(${i},'red')">Block</button>
+        <button class="btn btn-ghost" onclick="modAction(${i},'green')">Clear</button>
+      </span>
+    </div>`).join("");
+}
+function filterUsers() {
+  renderUsers(document.getElementById("userSearch").value);
+}
+function modAction(idx, status) {
+  const users = loadUsers();
+  if (!users[idx]) return;
+  const labels = { yellow: "WARNED", red: "BLOCKED", green: "CLEARED" };
+  users[idx].status = status;
+  saveUsers(users);
+  logAction(labels[status] || status.toUpperCase(), users[idx].handle);
+  renderUsers(document.getElementById("userSearch").value);
+  renderAppeals();
+}
+
+// ---- appeals ----
+function renderAppeals() {
+  const list = document.getElementById("appealList");
+  const users = loadUsers().filter(u => u.status === "orange");
+  if (!users.length) {
+    list.innerHTML = '<p class="empty">No pending appeals.</p>';
+    return;
+  }
+  list.innerHTML = users.map(u => `
+    <div class="user-row">
+      <span><span class="dot dot-orange"></span><span class="handle">${u.handle}</span> <span style="color:var(--muted);font-size:0.75rem">appealing</span></span>
+      <span class="actions">
+        <button class="btn btn-action" onclick="resolveAppeal('${u.handle}', true)">Approve</button>
+        <button class="btn btn-block" onclick="resolveAppeal('${u.handle}', false)">Deny</button>
+      </span>
+    </div>`).join("");
+}
+function resolveAppeal(handle, approved) {
+  const users = loadUsers();
+  const u = users.find(x => x.handle === handle);
+  if (u) {
+    u.status = approved ? "green" : "red";
+    saveUsers(users);
+    logAction(approved ? "APPEAL APPROVED" : "APPEAL DENIED", handle);
+    renderUsers(document.getElementById("userSearch").value);
+    renderAppeals();
+  }
+}
+
+// ---- mod log ----
+function renderLog() {
+  const list = document.getElementById("modLog");
+  const log = loadLog();
+  if (!log.length) {
+    list.innerHTML = '<p class="empty">No actions yet.</p>';
+    return;
+  }
+  list.innerHTML = log.slice(0, 20).map(e => `
+    <div class="user-row">
+      <span><strong>${e.action}</strong> → ${e.target}</span>
+      <span style="color:var(--muted); font-size:0.75rem">${e.by} · ${new Date(e.at).toLocaleString()}</span>
+    </div>`).join("");
+}
+
+// ---- demo: simulate a user connecting (remove in production) ----
+function demoAddUser(handle, status) {
+  const users = loadUsers();
+  if (!users.find(u => u.handle === handle)) {
+    users.push({ handle, status: status || "blue" });
+    saveUsers(users);
+    renderUsers();
+  }
+}
+
+// init
+renderUsers();
+renderAppeals();
+renderLog();
+</script>
+</body>
+</html>

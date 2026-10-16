@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Playlist Builder — Cybercrowd Radio</title>
+<style>
+:root {
+  --black: #05050a;
+  --green: #00ff9d;
+  --gold: #f5c518;
+  --red: #ff3344;
+  --mid: #12121e;
+  --border: #1e1e30;
+  --text: #c8c8e0;
+  --muted: #50506a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  background: var(--black);
+  font-family: monospace;
+  color: var(--text);
+  min-height: 100vh;
+  padding: 20px;
+  max-width: 700px;
+  margin: 0 auto;
+}
+h1 { color: var(--green); font-size: 1.4rem; margin-bottom: 5px; }
+.sub { color: var(--muted); margin-bottom: 20px; font-size: 0.85rem; }
+.paste-box {
+  background: var(--mid);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 18px;
+  margin-bottom: 18px;
+}
+.paste-box label {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
+textarea {
+  width: 100%;
+  min-height: 100px;
+  padding: 12px;
+  background: var(--black);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-family: monospace;
+  font-size: 0.85rem;
+  resize: vertical;
+  margin-bottom: 10px;
+}
+textarea:focus { outline: none; border-color: var(--green); }
+.btn {
+  display: inline-block;
+  padding: 12px 24px;
+  border: none;
+  border-radius: 6px;
+  font-family: monospace;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-weight: bold;
+}
+.btn-add { background: var(--green); color: #000; }
+.btn-clear { background: transparent; border: 1px solid var(--border); color: var(--text); }
+.btn-play { background: var(--gold); color: #000; }
+.playlist { margin-top: 10px; }
+.track {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px;
+  background: var(--mid);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+.track-info { flex: 1; overflow: hidden; }
+.track-url {
+  font-size: 0.75rem;
+  color: var(--muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.track-title { font-weight: bold; margin-bottom: 2px; }
+.track-remove {
+  background: var(--red);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-family: monospace;
+  font-size: 0.75rem;
+  margin-left: 10px;
+}
+.empty { color: var(--muted); font-style: italic; padding: 20px; text-align: center; }
+.count { color: var(--gold); font-size: 0.85rem; margin-bottom: 10px; }
+</style>
+</head>
+<body>
+
+<h1>Playlist Builder</h1>
+<p class="sub">Paste Suno links. They become your playlist.</p>
+
+<div class="paste-box">
+  <label>Paste one link per line:</label>
+  <textarea id="linkInput" placeholder="https://suno.com/s/xxxxx&#10;https://suno.com/s/yyyyy"></textarea>
+  <button class="btn btn-add" onclick="addLinks()">Add to Playlist</button>
+  <button class="btn btn-clear" onclick="clearAll()">Clear All</button>
+</div>
+
+<div class="count" id="count"></div>
+<div class="playlist" id="playlist"></div>
+
+<div style="margin-top: 20px; text-align: center;">
+  <button class="btn btn-play" onclick="playPlaylist()">▶ Play This Playlist</button>
+</div>
+
+<script>
+const KEY = "ccr-playlist";
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY) || "[]"); }
+  catch (_) { return []; }
+}
+function save(list) {
+  try { localStorage.setItem(KEY, JSON.stringify(list)); } catch (_) {}
+}
+
+function extractId(url) {
+  // suno.com/s/XXXXX or suno.com/song/UUID
+  url = url.trim();
+  if (!url) return null;
+  const m = url.match(/suno\.com\/s\/([A-Za-z0-9]+)/);
+  if (m) return { type: "share", id: m[1], url };
+  const m2 = url.match(/suno\.com\/song\/([a-f0-9-]+)/i);
+  if (m2) return { type: "song", id: m2[1], url };
+  const m3 = url.match(/suno\.com\/embed\/([a-f0-9-]+)/i);
+  if (m3) return { type: "embed", id: m3[1], url };
+  return null;
+}
+
+function addLinks() {
+  const input = document.getElementById("linkInput");
+  const lines = input.value.split("\n");
+  const list = load();
+  let added = 0;
+  lines.forEach(line => {
+    const parsed = extractId(line);
+    if (parsed && !list.find(t => t.url === parsed.url)) {
+      list.push({ ...parsed, title: parsed.id, addedAt: Date.now() });
+      added++;
+    }
+  });
+  save(list);
+  input.value = "";
+  render();
+  if (added) alert(`Added ${added} track${added > 1 ? "s" : ""}.`);
+}
+
+function removeTrack(idx) {
+  const list = load();
+  list.splice(idx, 1);
+  save(list);
+  render();
+}
+
+function clearAll() {
+  if (!confirm("Clear the whole playlist?")) return;
+  save([]);
+  render();
+}
+
+function render() {
+  const list = load();
+  const el = document.getElementById("playlist");
+  const count = document.getElementById("count");
+  count.textContent = list.length ? `${list.length} track${list.length > 1 ? "s" : ""}` : "";
+  if (!list.length) {
+    el.innerHTML = '<p class="empty">No tracks yet. Paste some Suno links above.</p>';
+    return;
+  }
+  el.innerHTML = list.map((t, i) => `
+    <div class="track">
+      <div class="track-info">
+        <div class="track-title">${i + 1}. ${t.title}</div>
+        <div class="track-url">${t.url}</div>
+      </div>
+      <button class="track-remove" onclick="removeTrack(${i})">Remove</button>
+    </div>`).join("");
+}
+
+function playPlaylist() {
+  const list = load();
+  if (!list.length) { alert("Playlist is empty."); return; }
+  // Hand off to the station player
+  try {
+    localStorage.setItem("ccr-play-queue", JSON.stringify(list));
+  } catch (_) {}
+  window.location.href = "station.html?source=playlist";
+}
+
+// Allow Enter to add (Shift+Enter for newline)
+document.getElementById("linkInput").addEventListener("keydown", e => {
+  if (e.key === "Enter" && !e.shiftKey) {
+    e.preventDefault();
+    addLinks();
+  }
+});
+
+render();
+</script>
+</body>
+</html>

@@ -30,11 +30,29 @@
     return { title: title, artist: title };
   }
 
+  /* Kinetic personality: Chris Rock energy meets Wolfman Jack hype.
+   * Fast-talking, funny, big DJ energy. Never the same line twice. */
+  var kineticLines = [
+    function (t, a) { return "Whooo! Sonny Daze stepped out, so YOU got me — Kinetic! Let me tell you somethin', '" + t + "' by " + a + " is about to tear this place UP!"; },
+    function (t, a) { return "Aight aight aight! Sonny's on a break, I'm Kinetic holdin' it down! Comin' atcha — '" + t + "' by " + a + "! Turn it UP!"; },
+    function (t, a) { return "Y'all ain't ready! Sonny Daze is out, Kinetic is IN! Next up — '" + t + "' by " + a + "! Whooo!"; },
+    function (t, a) { return "Listen here! While Sonny's away, the Kinetic's gonna play! '" + t + "' by " + a + " — let's GOOO!"; },
+    function (t, a) { return "Ohhh baby! Sonny Daze took five, so I'm drivin' this thing! Buckle up — '" + t + "' by " + a + " comin' atcha RIGHT NOW!"; },
+  ];
+  var lineIndex = 0;
+  function kineticScript(title, artist) {
+    var fn = kineticLines[lineIndex % kineticLines.length];
+    lineIndex++;
+    return fn(title, artist);
+  }
+
   function djSay(text, done) {
     if (!('speechSynthesis' in window)) { done(); return; }
     try {
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
+      u.rate = 1.15;   // faster — Chris Rock energy
+      u.pitch = 0.9;   // slightly lower — Wolfman grit
       u.onend = function () { done(); };
       u.onerror = function () { done(); };
       var fallback = setTimeout(function () {
@@ -67,11 +85,11 @@
 
   function onSongEnd() {
     if (stopped) return;
+    // Song ended. DJ talks about the NEXT song, then it plays.
     trackIndex = (trackIndex + 1) % tracks.length;
     var next = tracks[trackIndex];
     var p = parseTrack(next.title);
-    var script = "Alright, Sonny Daze is on a break! While he is away, I am Kinetic. " +
-      "Next up is '" + p.title + "' by '" + p.artist + "'.";
+    var script = kineticScript(p.title, p.artist);
     setStatus('DJ is talking…');
     djSay(script, function () {
       if (!stopped) playCurrent();
@@ -115,6 +133,7 @@
     },
     isStopped: function () { return stopped; },
     next: function () {
+      // Skip to next track immediately.
       if (!tracks.length) return;
       trackIndex = (trackIndex + 1) % tracks.length;
       if (!stopped) playCurrent();
