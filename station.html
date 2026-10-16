@@ -13,6 +13,8 @@
 </head>
 <body>
   <a class="skip" href="#listen">Skip to the player</a>
+
+  <!-- ============ TOP BAR ============ -->
   <header class="topbar">
     <a class="brand" href="index.html" aria-label="Cybercrowd Radio home">
       <span class="brand-seal" aria-hidden="true">CR</span>
@@ -29,6 +31,9 @@
       <a href="adworm.html">Advertise</a>
     </nav>
     <div class="topbar-right">
+      <span class="handle-pill" id="handlePill" title="Your handle — tap to change">
+        <span id="handleText">guest</span>
+      </span>
       <span class="onair-pill" id="onairPill" role="status" aria-live="polite">
         <span class="onair-lamp" aria-hidden="true"></span>
         <span id="onairText">STANDBY</span>
@@ -46,13 +51,17 @@
     <a href="#join">Join</a>
     <a href="adworm.html">Advertise</a>
   </nav>
+
   <main id="top">
+    <!-- ============ HERO / LISTEN ============ -->
     <section class="hero" id="listen" aria-label="Listen live">
       <div class="hero-inner">
         <p class="eyebrow">A museum with a transmitter</p>
         <h1 class="station-name">Cybercrowd<br />Radio</h1>
         <p class="mission">Caretaker. Archive. Receiver of lost LPs.</p>
         <p class="lede">5,500 records strong. Followers mail in forgotten vinyl, and every spin credits the donor by name — like a museum plaque under the exhibit. Thanks to Bobby Sue, we have this for you.</p>
+
+        <!-- The receiver: a 1950s-style tuner, honest about signal -->
         <div class="receiver" role="region" aria-label="Live radio receiver">
           <div class="receiver-face">
             <div class="dial-window">
@@ -81,17 +90,26 @@
             <button class="mode-btn" id="modeLive" aria-pressed="false">GO LIVE</button>
           </div>
           <p><button class="btn btn-secondary" id="shareBtn">Share the station</button></p>
+          <div class="rate-song" role="group" aria-label="Rate this song">
+            <button class="rate-btn" id="rateLike" aria-label="Like this song">A · Like</button>
+            <button class="rate-btn" id="rateHate" aria-label="Hate this song">B · Hate</button>
+            <button class="rate-btn" id="rateBg" aria-label="Just background">C · Background</button>
+          </div>
         </div>
       </div>
     </section>
+
+    <!-- adWorm banner: top -->
     <div class="adworm-banner" data-adworm="banner-top" role="complementary" aria-label="Advertisement"></div>
+
+    <!-- ============ FEATURED SONG ============ -->
     <section class="section" id="featured" aria-label="Featured song">
       <div class="section-head">
         <p class="eyebrow">Coming soon</p>
         <h2>Featured&nbsp;Song</h2>
         <p class="section-sub">Sonny Daze will jack the vinyl rack.</p>
       </div>
-    </section>
+    <!-- ============ TIP JAR ============ -->
     <section class="section" id="tipjar" aria-label="Tip jar">
       <div class="section-head">
         <p class="eyebrow">Keep the signal alive</p>
@@ -105,6 +123,8 @@
         <p class="signal-state" id="tipjarStatus" aria-live="polite">Loading...</p>
       </div>
     </section>
+
+    <!-- ============ WEATHER SEGMENT ============ -->
     <section class="section section-alt" id="weather" aria-label="Temp and rain statistics">
       <div class="section-head">
         <p class="eyebrow">The caper</p>
@@ -113,38 +133,44 @@
       </div>
       <audio controls src="weather-segment.mp3" style="width:100%"></audio>
     </section>
+
+    <!-- ============ TICKER ============ -->
     <div class="ticker" aria-hidden="true">
       <div class="ticker-track" id="tickerTrack"></div>
     </div>
+
+    <!-- ============ THE EASEL ============ -->
     <section class="section" id="easel" aria-label="The easel — live cameras">
       <div class="section-head">
         <p class="eyebrow">Hands on the screen</p>
         <h2>The&nbsp;Easel</h2>
-        <p class="section-sub">The screen is the easel. Four squares are the canvas — <strong>touch, hold, drag, let go</strong> to move them. Tap a camera below to load it.</p>
+        <p class="section-sub">The screen is the easel. Four squares are the canvas — <strong>touch, hold, drag, let go</strong> to move them. Tap a camera below to load it. The chat is a dock: open, closed, or undocked and dragged anywhere. The sound never changes — only the layout.</p>
       </div>
+
       <div class="easel-wrap">
         <div class="easel" id="easel">
-          <div class="video-square" data-cam="studio" tabindex="0" role="button" aria-label="Studio camera.">
+          <div class="video-square" data-cam="studio" tabindex="0" role="button" aria-label="Studio camera. Drag to move, double-tap to enlarge.">
             <span class="vs-label">Studio Cam</span>
             <span class="vs-state">Feed connects when the studio goes live</span>
             <span class="vs-hint" aria-hidden="true">drag me</span>
           </div>
-          <div class="video-square" data-cam="turntable" tabindex="0" role="button" aria-label="Turntable camera.">
+          <div class="video-square" data-cam="turntable" tabindex="0" role="button" aria-label="Turntable camera. Drag to move, double-tap to enlarge.">
             <span class="vs-label">Turntable Cam</span>
             <span class="vs-state">Feed connects when the studio goes live</span>
             <span class="vs-hint" aria-hidden="true">drag me</span>
           </div>
-          <div class="video-square" data-cam="vault" tabindex="0" role="button" aria-label="Vault camera.">
+          <div class="video-square" data-cam="vault" tabindex="0" role="button" aria-label="Vault camera. Drag to move, double-tap to enlarge.">
             <span class="vs-label">Vault Cam</span>
             <span class="vs-state">Feed connects when the studio goes live</span>
             <span class="vs-hint" aria-hidden="true">drag me</span>
           </div>
-          <div class="video-square" data-cam="crowd" tabindex="0" role="button" aria-label="Crowd camera.">
+          <div class="video-square" data-cam="crowd" tabindex="0" role="button" aria-label="Crowd camera. Drag to move, double-tap to enlarge.">
             <span class="vs-label">Crowd Cam</span>
             <span class="vs-state">Feed connects when the studio goes live</span>
             <span class="vs-hint" aria-hidden="true">drag me</span>
           </div>
         </div>
+
         <div class="cam-strip" id="camStrip" role="listbox" aria-label="Choose a camera">
           <button class="cam-chip is-active" data-cam="studio" role="option" aria-selected="true">Studio</button>
           <button class="cam-chip" data-cam="turntable" role="option" aria-selected="false">Turntable</button>
@@ -156,6 +182,8 @@
         <p class="signal-state" id="putMeOnStatus" aria-live="polite" hidden></p>
       </div>
     </section>
+
+    <!-- ============ CHANNELS ============ -->
     <section class="section" id="channels" aria-label="Live channels">
       <div class="section-head">
         <p class="eyebrow">Pick your room</p>
@@ -164,7 +192,11 @@
       </div>
       <div class="channels" id="channelsGrid"></div>
     </section>
+
+    <!-- adWorm banner: mid -->
     <div class="adworm-banner" data-adworm="banner-mid" role="complementary" aria-label="Advertisement"></div>
+
+    <!-- ============ SHOWS ============ -->
     <section class="section section-alt" id="shows" aria-label="Weekly shows">
       <div class="section-head">
         <p class="eyebrow">The weekly cycle</p>
@@ -177,6 +209,8 @@
         <ul id="retiredList"></ul>
       </details>
     </section>
+
+    <!-- ============ ARCHIVE / MAIL-IN LPs ============ -->
     <section class="section" id="archive" aria-label="The archive — mail in your LPs">
       <div class="section-head">
         <p class="eyebrow">The caretaker's desk</p>
@@ -210,7 +244,11 @@
         <ul class="plaques" id="donorWall"></ul>
       </div>
     </section>
+
+    <!-- adWorm banner: lower -->
     <div class="adworm-banner" data-adworm="banner-lower" role="complementary" aria-label="Advertisement"></div>
+
+    <!-- ============ REQUEST LINE ============ -->
     <section class="section section-alt" id="request" aria-label="Request line">
       <div class="section-head">
         <p class="eyebrow">Two-way, always</p>
@@ -243,6 +281,8 @@
         <ol class="queue-list" id="queueList"></ol>
       </div>
     </section>
+
+    <!-- ============ STUDIO BROADCAST ============ -->
     <section class="section" id="studio" aria-label="Studio broadcast controls">
       <div class="section-head">
         <p class="eyebrow">Sonny Daze</p>
@@ -267,6 +307,8 @@
         <button id="gongBtn" class="btn btn-secondary">🔔 GONG IT</button></p>
       </div>
     </section>
+
+    <!-- ============ JOIN ============ -->
     <section class="section" id="join" aria-label="Join the station">
       <div class="section-head">
         <p class="eyebrow">Keep the vault alive</p>
@@ -285,7 +327,11 @@
         <p class="form-msg" id="emailMsg" role="status" aria-live="polite" hidden></p>
       </form>
     </section>
+
+    <!-- adWorm banner: foot -->
     <div class="adworm-banner" data-adworm="banner-foot" role="complementary" aria-label="Advertisement"></div>
+
+    <!-- ============ ADVERTISE ============ -->
     <section class="section section-alt" id="advertise" aria-label="Advertise with adWorm">
       <div class="section-head">
         <p class="eyebrow">adWorm</p>
@@ -313,6 +359,8 @@
       <p class="advertise-cta"><a class="btn-brass" href="#request" id="advertiseBtn">Claim a block</a></p>
     </section>
   </main>
+
+  <!-- ============ FOOTER ============ -->
   <footer class="footer">
     <p class="footer-brand">CYBERCROWD&nbsp;RADIO</p>
     <p class="footer-tag">A museum with a transmitter.</p>
@@ -321,10 +369,14 @@
     </nav>
     <p class="footer-copy">© <span id="year">2026</span> Cybercrowd Radio. All rights reserved.</p>
   </footer>
+
+  <!-- ============ adWorm corners: 4 fixed squares ============ -->
   <div class="adworm-corner" data-adworm="corner-nw" role="complementary" aria-label="Advertisement"></div>
   <div class="adworm-corner" data-adworm="corner-ne" role="complementary" aria-label="Advertisement"></div>
   <div class="adworm-corner" data-adworm="corner-sw" role="complementary" aria-label="Advertisement"></div>
   <div class="adworm-corner" data-adworm="corner-se" role="complementary" aria-label="Advertisement"></div>
+
+  <!-- ============ CHAT DOCK ============ -->
   <button class="chat-tab" id="chatTab" aria-label="Open chat" hidden>
     <span aria-hidden="true">&gt;</span>
   </button>
@@ -346,7 +398,9 @@
       <p class="chat-note">Chat connects when the station goes live. Drag the header to move me.</p>
     </div>
   </aside>
+
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
   <script src="config.js"></script>
   <script src="app.js"></script>
   <script src="announcer.js"></script>
