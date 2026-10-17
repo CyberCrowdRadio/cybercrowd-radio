@@ -96,8 +96,12 @@
   }
 
   function onWormTap() {
-    // Tap the worm = create your own ad
-    window.location.href = '/adworm.html';
+    // Tap the worm = "Would you like to create an ad?"
+    // Yes → ad creator. No → nothing.
+    if (confirm("Would you like to create an ad?")) {
+      window.location.href = '/adworm.html';
+    }
+    // No = no interaction
   }
 
   function start() {
