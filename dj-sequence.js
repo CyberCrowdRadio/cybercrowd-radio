@@ -83,7 +83,7 @@
         audio = new Audio();
         audio.preload = 'auto';
         audio.addEventListener('ended', onSongEnd);
-        audio.addEventListener('error', onSongEnd);
+        audio.addEventListener('error', skipDead);
         // If the stream stalls with no error, don't hang — skip.
         audio.addEventListener('stalled', function () {
           clearTimeout(playWatchdog);
@@ -101,22 +101,30 @@
       audio.src = '/t/' + t.id;
       audio.load();
       var pr = audio.play();
-      // Watchdog: if it's not actually playing after 12s, skip it.
+      // Watchdog: if it's not actually playing after 5s, skip SILENTLY (dead track).
       playWatchdog = setTimeout(function () {
         if (audio && audio.paused && !stopped) {
-          onSongEnd();
+          skipDead();
         }
-      }, 12000);
+      }, 5000);
       if (pr && pr.catch) pr.catch(function () {
         clearTimeout(playWatchdog);
-        onSongEnd();
+        skipDead();
       });
-    } catch (e) { onSongEnd(); }
+    } catch (e) { skipDead(); }
+  }
+
+  // Dead track: skip immediately, no DJ chatter. Just move on.
+  function skipDead() {
+    if (stopped) return;
+    trackIndex = (trackIndex + 1) % tracks.length;
+    // Don't recurse forever — if we've tried all tracks, wait and retry
+    playCurrent();
   }
 
   function onSongEnd() {
     if (stopped) return;
-    // Song ended. DJ talks about the NEXT song, then it plays.
+    // Song ENDED (actually played). DJ talks about the NEXT song, then it plays.
     trackIndex = (trackIndex + 1) % tracks.length;
     var next = tracks[trackIndex];
     var p = parseTrack(next.title);
