@@ -48,24 +48,29 @@
 
   function djSay(text, done) {
     if (!('speechSynthesis' in window)) { done(); return; }
+    var finished = false;
+    function once() {
+      if (finished) return;
+      finished = true;
+      clearTimeout(fallback);
+      done();
+    }
+    var fallback = setTimeout(function () {
+      try { window.speechSynthesis.cancel(); } catch (e) {}
+      once();
+    }, 8000);
     try {
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
       u.rate = 1.15;   // faster — Chris Rock energy
       u.pitch = 0.9;   // slightly lower — Wolfman grit
-      u.onend = function () { done(); };
-      u.onerror = function () { done(); };
-      var fallback = setTimeout(function () {
-        try { window.speechSynthesis.cancel(); } catch (e) {}
-        done();
-      }, 8000);
-      var origDone = done;
-      done = function () { clearTimeout(fallback); origDone(); };
-      u.onend = function () { done(); };
-      u.onerror = function () { done(); };
+      u.onend = once;
+      u.onerror = once;
       window.speechSynthesis.speak(u);
-    } catch (e) { done(); }
+    } catch (e) { once(); }
   }
+
+  var playWatchdog = null;
 
   function playCurrent() {
     if (stopped || !tracks.length) return;
@@ -79,13 +84,33 @@
         audio.preload = 'auto';
         audio.addEventListener('ended', onSongEnd);
         audio.addEventListener('error', onSongEnd);
+        // If the stream stalls with no error, don't hang — skip.
+        audio.addEventListener('stalled', function () {
+          clearTimeout(playWatchdog);
+          playWatchdog = setTimeout(function () {
+            if (audio && audio.paused) onSongEnd();
+          }, 5000);
+        });
+        audio.addEventListener('playing', function () {
+          clearTimeout(playWatchdog);
+        });
       } else {
         try { audio.pause(); } catch (e) {}
       }
+      clearTimeout(playWatchdog);
       audio.src = '/t/' + t.id;
       audio.load();
       var pr = audio.play();
-      if (pr && pr.catch) pr.catch(function () { onSongEnd(); });
+      // Watchdog: if it's not actually playing after 12s, skip it.
+      playWatchdog = setTimeout(function () {
+        if (audio && audio.paused && !stopped) {
+          onSongEnd();
+        }
+      }, 12000);
+      if (pr && pr.catch) pr.catch(function () {
+        clearTimeout(playWatchdog);
+        onSongEnd();
+      });
     } catch (e) { onSongEnd(); }
   }
 
