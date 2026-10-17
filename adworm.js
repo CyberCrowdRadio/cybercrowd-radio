@@ -96,12 +96,8 @@
   }
 
   function onWormTap() {
-    if (ads.length) {
-      var ad = ads[currentIndex % ads.length];
-      if (ad && ad.link) {
-        window.open(ad.link, '_blank', 'noopener');
-      }
-    }
+    // Tap the worm = create your own ad
+    window.location.href = '/adworm.html';
   }
 
   function start() {
