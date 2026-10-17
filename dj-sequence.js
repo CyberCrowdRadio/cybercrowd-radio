@@ -106,6 +106,13 @@
           return;
         }
         tracks = list;
+        // Shuffle so it doesn't start with the same songs every time
+        for (var i = tracks.length - 1; i > 0; i--) {
+          var j = Math.floor(Math.random() * (i + 1));
+          var tmp = tracks[i];
+          tracks[i] = tracks[j];
+          tracks[j] = tmp;
+        }
         trackIndex = 0;
         playCurrent();
       })
