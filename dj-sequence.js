@@ -93,6 +93,8 @@
         });
         audio.addEventListener('playing', function () {
           clearTimeout(playWatchdog);
+          // This track works — remember it
+          if (tracks[trackIndex]) markWorking(tracks[trackIndex].id);
         });
       } else {
         try { audio.pause(); } catch (e) {}
@@ -114,13 +116,58 @@
     } catch (e) { skipDead(); }
   }
 
-  // Dead track: skip immediately, no DJ chatter. Just move on.
-  // But NEVER give up — 24/7 even if James dies.
-  // ASYNC via setTimeout to prevent synchronous recursion → stack overflow.
+  // Track health: learn which tracks work, avoid the dead ones.
+  // Persisted in localStorage so it remembers across sessions.
+  var trackHealth = {
+    working: {},  // trackId -> true (played successfully)
+    dead: {},     // trackId -> timestamp (failed)
+  };
+  try {
+    var saved = localStorage.getItem('cc-track-health');
+    if (saved) trackHealth = JSON.parse(saved);
+  } catch (_) {}
+
+  function saveHealth() {
+    try { localStorage.setItem('cc-track-health', JSON.stringify(trackHealth)); }
+    catch (_) {}
+  }
+
+  function markWorking(id) {
+    trackHealth.working[id] = true;
+    delete trackHealth.dead[id];
+    saveHealth();
+  }
+
+  function markDead(id) {
+    trackHealth.dead[id] = Date.now();
+    delete trackHealth.working[id];
+    saveHealth();
+  }
+
+  function pickNextTrack() {
+    var ids = tracks.map(function (t) { return t.id; });
+    // Prefer known-working tracks
+    var working = ids.filter(function (id) { return trackHealth.working[id]; });
+    if (working.length > 0) {
+      var wid = working[Math.floor(Math.random() * working.length)];
+      return tracks.findIndex(function (t) { return t.id === wid; });
+    }
+    // Avoid known-dead (unless everything is dead)
+    var alive = ids.filter(function (id) { return !trackHealth.dead[id]; });
+    if (alive.length > 0) {
+      var aid = alive[Math.floor(Math.random() * alive.length)];
+      return tracks.findIndex(function (t) { return t.id === aid; });
+    }
+    // Everything is dead — try anything, maybe something came back
+    return Math.floor(Math.random() * tracks.length);
+  }
+
   var deadStreak = 0;
 
   function skipDead() {
     if (stopped) return;
+    // Mark this track as dead
+    if (tracks[trackIndex]) markDead(tracks[trackIndex].id);
     setTimeout(function () {
       if (stopped) return;
       deadStreak++;
@@ -130,14 +177,14 @@
         setStatus('Signal lost — retrying…');
         setTimeout(function () {
           if (!stopped) {
-            trackIndex = Math.floor(Math.random() * tracks.length);
+            trackIndex = pickNextTrack();
             playCurrent();
           }
         }, 30000);
         return;
       }
-      // Random next song — never sequential, never predictable
-      trackIndex = Math.floor(Math.random() * tracks.length);
+      // Smart pick: prefer working tracks, avoid dead ones
+      trackIndex = pickNextTrack();
       playCurrent();
     }, 100); // tiny delay breaks the recursion chain
   }
