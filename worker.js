@@ -215,6 +215,7 @@ export default {
       return nowPlaying(env);
     }
     if (url.pathname === '/station-id') {
+      // The CYBERCROWD RADIO station ID song, for GO LIVE standby loop.
       var tracks = await getRotation(env);
       for (var si = 0; si < tracks.length; si++) {
         if (tracks[si].title.toLowerCase().indexOf('cybercrowd radio') >= 0) {
@@ -224,6 +225,7 @@ export default {
       return jsonResp({ error: 'no station id found' }, 404);
     }
     if (url.pathname === '/tracks') {
+      // Full track list for sequential playback.
       var allTracks = await getRotation(env);
       return jsonResp(allTracks.map(function (t) {
         return { id: t.id, title: t.title, duration: t.duration };
