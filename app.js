@@ -24,8 +24,15 @@
     try {
       let h = localStorage.getItem(HANDLE_KEY);
       if (!h) {
-        h = randomHandle();
-        localStorage.setItem(HANDLE_KEY, h);
+        h = prompt("Pick your handle for the station:", "");
+        if (h) {
+          h = h.trim().toLowerCase().replace(/[^a-z0-9'_-]/g, "");
+          if (h && !RESERVED.some(r => h.includes(r))) {
+            localStorage.setItem(HANDLE_KEY, h);
+            return h;
+          }
+        }
+        return "guest";
       }
       return h;
     } catch (_) { return "guest"; }
