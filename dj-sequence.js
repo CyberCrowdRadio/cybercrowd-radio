@@ -58,7 +58,7 @@
       var fallback = setTimeout(function () {
         try { window.speechSynthesis.cancel(); } catch (e) {}
         done();
-      }, 20000);
+      }, 8000);
       var origDone = done;
       done = function () { clearTimeout(fallback); origDone(); };
       u.onend = function () { done(); };
@@ -73,11 +73,17 @@
     var p = parseTrack(t.title);
     setStatus('Now playing: ' + t.title);
     try {
-      if (audio) { try { audio.pause(); } catch (e) {} audio = null; }
-      audio = new Audio('/t/' + t.id);
-      audio.preload = 'auto';
-      audio.addEventListener('ended', onSongEnd);
-      audio.addEventListener('error', onSongEnd);
+      // Reuse single audio element — mobile browsers choke on many Audio objects
+      if (!audio) {
+        audio = new Audio();
+        audio.preload = 'auto';
+        audio.addEventListener('ended', onSongEnd);
+        audio.addEventListener('error', onSongEnd);
+      } else {
+        try { audio.pause(); } catch (e) {}
+      }
+      audio.src = '/t/' + t.id;
+      audio.load();
       var pr = audio.play();
       if (pr && pr.catch) pr.catch(function () { onSongEnd(); });
     } catch (e) { onSongEnd(); }
