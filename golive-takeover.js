@@ -161,25 +161,7 @@
 
   window.CCGoLiveTakeover = GoLiveTakeover;
 
-  // Wire the GO LIVE buttons if they exist
-  function wire() {
-    ["goLiveBtn", "modeLive"].forEach(function (id) {
-      var b = document.getElementById(id);
-      if (b && !b.dataset.liveWired) {
-        b.dataset.liveWired = "1";
-        b.addEventListener("click", function (e) {
-          e.preventDefault();
-          GoLiveTakeover.goLive();
-        });
-      }
-    });
-  }
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", wire);
-  } else {
-    wire();
-  }
-  // Re-wire after dynamic content loads
-  setTimeout(wire, 2000);
+  // DON'T wire buttons here — app.js owns mode switching.
+  // app.js calls CCGoLiveTakeover.goLive() when switching to live mode.
+  // Wiring buttons here caused double-handlers (both play at once).
 })();
