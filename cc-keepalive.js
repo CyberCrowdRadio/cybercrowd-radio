@@ -63,20 +63,12 @@
     });
   }
 
-  // Wake Lock: keeps the screen on so the OS doesn't kill us
+  // Wake Lock: DISABLED for sleep mode.
+  // James: "Thats bull shit when I want to sleep" — screen stays OFF.
+  // Media Session API handles background playback. No wake lock.
   function requestWakeLock() {
-    if (!("wakeLock" in navigator)) return;
-    try {
-      navigator.wakeLock.request("screen").then(function (lock) {
-        wakeLock = lock;
-        console.log("[KEEPALIVE] Wake lock active.");
-        lock.addEventListener("release", function () {
-          wakeLock = null;
-        });
-      }).catch(function () {
-        // Wake lock denied — that's fine, music still plays
-      });
-    } catch (_) {}
+    // Intentionally empty. Screen stays off for sleep.
+    // If James wants screen-on mode later, he'll ask.
   }
 
   // Keep the AudioContext alive (some browsers suspend it)
