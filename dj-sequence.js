@@ -62,8 +62,21 @@
     try {
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
-      u.rate = 1.15;   // faster — Chris Rock energy
+      u.rate = 1.09;   // 5% slower than 1.15 — James 2026-10-17
       u.pitch = 0.9;   // slightly lower — Wolfman grit
+      // Male voice — James 2026-10-17
+      try {
+        var voices = window.speechSynthesis.getVoices();
+        var male = null;
+        for (var i = 0; i < voices.length; i++) {
+          var n = (voices[i].name || '').toLowerCase();
+          if (/male|david|daniel|james|alex|fred|george|aaron|matthew|michael|john|robert|william|thomas/.test(n) && !/female|samantha|victoria|zira|aria|jenny|michelle/.test(n)) {
+            male = voices[i];
+            break;
+          }
+        }
+        if (male) u.voice = male;
+      } catch (e) {}
       u.onend = once;
       u.onerror = once;
       window.speechSynthesis.speak(u);
