@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Podcasts — Cybercrowd Radio</title>
+<link rel="stylesheet" href="style.css" />
+<style>
+  .pod-wrap { max-width: 720px; margin: 0 auto; padding: 24px 16px 80px; }
+  .pod-hero { text-align: center; margin-bottom: 32px; }
+  .pod-hero h1 { font-family: var(--serif); font-size: 2.5rem; color: var(--cream); margin: 0 0 8px; }
+  .pod-hero p { color: var(--cream-dim); font-size: 1rem; }
+  .show-card {
+    background: var(--wood-2); border: 1px solid var(--line); border-radius: 12px;
+    padding: 20px; margin-bottom: 16px;
+  }
+  .show-card h2 { font-family: var(--serif); color: var(--brass-hi); margin: 0 0 4px; font-size: 1.4rem; }
+  .show-card .host { color: var(--cream-dim); font-size: 0.85rem; margin-bottom: 12px; font-family: var(--mono); }
+  .episode {
+    display: flex; align-items: center; gap: 12px;
+    padding: 12px 0; border-top: 1px solid var(--line);
+  }
+  .episode:first-of-type { border-top: none; }
+  .ep-play {
+    width: 44px; height: 44px; border-radius: 50%; flex-shrink: 0;
+    background: var(--brass); color: var(--ink); border: none;
+    font-size: 1.1rem; cursor: pointer;
+  }
+  .ep-play.playing { background: var(--red); color: var(--cream); }
+  .ep-info { flex: 1; min-width: 0; }
+  .ep-title { color: var(--cream); font-weight: 600; font-size: 0.95rem; }
+  .ep-meta { color: var(--cream-dim); font-size: 0.75rem; font-family: var(--mono); }
+  .upload-box {
+    background: var(--wood-2); border: 2px dashed var(--line); border-radius: 12px;
+    padding: 32px 20px; text-align: center; margin-top: 32px;
+  }
+  .upload-box h3 { color: var(--cream); margin: 0 0 8px; font-family: var(--serif); }
+  .upload-box p { color: var(--cream-dim); font-size: 0.9rem; margin-bottom: 16px; }
+  .upload-box input[type="file"] { display: none; }
+  .upload-label {
+    display: inline-block; background: var(--brass); color: var(--ink);
+    font-family: var(--mono); font-weight: 600; padding: 12px 28px;
+    border-radius: 8px; cursor: pointer;
+  }
+  .back-link { display: block; text-align: center; margin-top: 24px; color: var(--brass-hi); text-decoration: none; font-family: var(--mono); }
+</style>
+</head>
+<body>
+<div class="pod-wrap">
+  <div class="pod-hero">
+    <h1>Podcasts</h1>
+    <p>Shows on Cybercrowd Radio. Hosts upload, the crowd listens.</p>
+  </div>
+
+  <div id="shows"></div>
+
+  <div class="upload-box">
+    <h3>Host a show</h3>
+    <p>Upload your episode. It goes live on the station.</p>
+    <label class="upload-label" for="epUpload">Upload Episode</label>
+    <input type="file" id="epUpload" accept="audio/*" />
+    <p id="uploadStatus" style="margin-top:12px;"></p>
+  </div>
+
+  <a class="back-link" href="/">← Back to station</a>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  // Shows live in localStorage for now. Backend comes later.
+  var shows = JSON.parse(localStorage.getItem("cc_shows") || "[]");
+  var audio = new Audio();
+  var playingBtn = null;
+
+  function render() {
+    var box = document.getElementById("shows");
+    if (shows.length === 0) {
+      box.innerHTML = '<div class="show-card"><h2>No shows yet</h2><p class="host">Be the first. Upload your episode below.</p></div>';
+      return;
+    }
+    box.innerHTML = shows.map(function (s, si) {
+      var eps = s.episodes.map(function (e, ei) {
+        return '<div class="episode">' +
+          '<button class="ep-play" data-s="' + si + '" data-e="' + ei + '">▶</button>' +
+          '<div class="ep-info"><div class="ep-title">' + esc(e.title) + '</div>' +
+          '<div class="ep-meta">' + esc(e.date) + '</div></div></div>';
+      }).join("");
+      return '<div class="show-card"><h2>' + esc(s.name) + '</h2>' +
+        '<div class="host">hosted by ' + esc(s.host) + '</div>' + eps + '</div>';
+    }).join("");
+
+    box.querySelectorAll(".ep-play").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var s = shows[+btn.dataset.s];
+        var e = s.episodes[+btn.dataset.e];
+        if (playingBtn === btn && !audio.paused) {
+          audio.pause();
+          btn.textContent = "▶";
+          btn.classList.remove("playing");
+          playingBtn = null;
+          return;
+        }
+        if (playingBtn) { playingBtn.textContent = "▶"; playingBtn.classList.remove("playing"); }
+        audio.src = e.url;
+        audio.play();
+        btn.textContent = "⏸";
+        btn.classList.add("playing");
+        playingBtn = btn;
+      });
+    });
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  document.getElementById("epUpload").addEventListener("change", function (ev) {
+    var f = ev.target.files[0];
+    if (!f) return;
+    var status = document.getElementById("uploadStatus");
+    status.textContent = "Uploading " + f.name + "...";
+
+    // For now: store as local object URL. Real upload backend comes later.
+    var url = URL.createObjectURL(f);
+    var handle = localStorage.getItem("cc_handle") || "host";
+    var showName = prompt("Show name:", "My Show") || "My Show";
+
+    var show = shows.find(function (s) { return s.name === showName; });
+    if (!show) {
+      show = { name: showName, host: handle, episodes: [] };
+      shows.push(show);
+    }
+    show.episodes.push({
+      title: f.name.replace(/\.[^.]+$/, ""),
+      date: new Date().toLocaleDateString(),
+      url: url,
+    });
+    // Note: object URLs don't survive reload. Backend needed for persistence.
+    try {
+      var persist = shows.map(function (s) {
+        return { name: s.name, host: s.host, episodes: s.episodes.map(function (e) {
+          return { title: e.title, date: e.date, url: "" };
+        })};
+      });
+      localStorage.setItem("cc_shows", JSON.stringify(persist));
+    } catch (_) {}
+
+    status.textContent = "Episode added: " + f.name;
+    render();
+    // Re-attach the URL for playback this session
+    show.episodes[show.episodes.length - 1].url = url;
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
