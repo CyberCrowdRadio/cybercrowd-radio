@@ -29,6 +29,20 @@ window.STATION_CONFIG = {
      The audio streaming server is still undecided — do not fake it. */
   streamUrl: "",
 
+  /* ---------- Firebase (chat) ----------
+     James set this up 2026-10-17 for real-time chat.
+     Project: cybercrowd-radio. Enables Wade's phone and James's phone to chat. */
+  firebaseConfig: {
+    apiKey: "AIzaSyDimd9Ox1wfuuZGnySYaeBKz6ydiN3Ic4c",
+    authDomain: "cybercrowd-radio.firebaseapp.com",
+    databaseURL: "https://cybercrowd-radio-default-rtdb.firebaseio.com/",
+    projectId: "cybercrowd-radio",
+    storageBucket: "cybercrowd-radio.firebasestorage.app",
+    messagingSenderId: "1000528907038",
+    appId: "1:1000528907038:web:1d62c2a5006c2f1fc3970f",
+    measurementId: "G-EXCBEMBS2L"
+  },
+
   /* ---------- standby song ----------
      One song the play button plays when the live stream is offline.
      James's pick: the flat-earth track he uploaded 2026-10-14.
