@@ -115,17 +115,35 @@
   }
 
   // Dead track: skip immediately, no DJ chatter. Just move on.
+  // But NEVER give up — 24/7 even if James dies.
+  var deadStreak = 0;
+
   function skipDead() {
     if (stopped) return;
-    trackIndex = (trackIndex + 1) % tracks.length;
-    // Don't recurse forever — if we've tried all tracks, wait and retry
+    deadStreak++;
+    if (deadStreak >= tracks.length) {
+      // All tracks are dead. Don't spin forever — wait 30s and retry.
+      deadStreak = 0;
+      setStatus('Signal lost — retrying…');
+      setTimeout(function () {
+        if (!stopped) {
+          trackIndex = Math.floor(Math.random() * tracks.length);
+          playCurrent();
+        }
+      }, 30000);
+      return;
+    }
+    // Random next song — never sequential, never predictable
+    trackIndex = Math.floor(Math.random() * tracks.length);
     playCurrent();
   }
 
   function onSongEnd() {
     if (stopped) return;
+    deadStreak = 0; // a song actually played — reset the streak
     // Song ENDED (actually played). DJ talks about the NEXT song, then it plays.
-    trackIndex = (trackIndex + 1) % tracks.length;
+    // Random next — the station never plays the same order twice.
+    trackIndex = Math.floor(Math.random() * tracks.length);
     var next = tracks[trackIndex];
     var p = parseTrack(next.title);
     var script = kineticScript(p.title, p.artist);
