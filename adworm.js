@@ -1,141 +1,148 @@
-/* adWorm™ — ONE premium spot, top center.
- * 15-second ads. Worm-like motion. No flashing. Never interrupts.
- * James's spec, 2026-10-16.
- * DOES NOT: circle the screen, blink, or touch the player.
- * ONLY: sit top-center, wriggle like a worm, show one ad at a time.
+/* adWorm — James's spec, 2026-10-16.
+ * ONE square. Blank balcony. Paid spot SQUEEZES in, BLINKS for the click,
+ * 15 seconds, pops out. Tap = "Would you like to create an ad?"
+ * Yes → creator. No → nothing.
+ *
+ * DOES NOT: flash (seizure). DOES: slow squeeze + deliberate blink.
+ * ONLY: one spot, top center, paid rotation on a timer.
  */
 
 (function () {
-  'use strict';
+  "use strict";
 
-  var AD_DURATION_MS = 15000;
+  var SPOT_SECONDS = 15;
+  var ROTATE_MS = 60000; // check for next paid spot every 60s
 
-  var ads = [];
   var wormEl = null;
-  var currentIndex = 0;
-  var timer = null;
-  var running = false;
+  var currentAd = null;
+  var spotTimer = null;
 
-  function el(id) { return document.getElementById(id); }
+  // Paid spots queue. Real ads get pushed here after payment.
+  // For now: house spots so the balcony isn't dead.
+  var paidQueue = [
+    { brand: "Cybercrowd Radio", msg: "Your ad here — tap the worm", url: "/adworm.html" },
+    { brand: "Cybercade", msg: "Play PixelPrix — cybercade-game.com", url: "https://cybercade-game.com" },
+  ];
+  var queueIdx = 0;
 
-  function buildWorm() {
-    // Remove old worm if present
-    var old = el('adworm-solo');
-    if (old) old.remove();
-
-    wormEl = document.createElement('div');
-    wormEl.id = 'adworm-solo';
-    wormEl.setAttribute('role', 'button');
-    wormEl.setAttribute('tabindex', '0');
-    wormEl.setAttribute('aria-label', 'Tap the worm');
-    wormEl.innerHTML = '<span class="adworm-wiggle"></span><span class="adworm-text">Tap the worm!</span>';
-    wormEl.addEventListener('click', onWormTap);
-    document.body.appendChild(wormEl);
-    injectStyles();
-  }
-
-  function injectStyles() {
-    var css = [
-      '#adworm-solo{',
-      ' position:fixed; top:12px; left:50%; transform:translateX(-50%);',
-      ' z-index:9990; cursor:pointer;',
-      ' background:#1a1a2e; border:1px solid #c9a227; border-radius:20px;',
-      ' padding:8px 18px; font-size:13px; color:#e8dcc0;',
-      ' font-family:inherit; white-space:nowrap;',
-      ' max-width:90vw; overflow:hidden; text-overflow:ellipsis;',
-      '}',
-      '#adworm-solo .adworm-wiggle{',
-      ' display:inline-block; width:10px; height:10px;',
-      ' border-radius:50%; background:#c9a227; margin-right:10px;',
-      ' animation:adworm-wriggle 1.2s ease-in-out infinite;',
-      '}',
-      '@keyframes adworm-wriggle{',
-      ' 0%,100%{ transform:translateX(0) scale(1); }',
-      ' 25%{ transform:translateX(-3px) scale(1.15); }',
-      ' 50%{ transform:translateX(0) scale(1); }',
-      ' 75%{ transform:translateX(3px) scale(1.15); }',
-      '}',
-      '#adworm-solo .adworm-text{',
-      ' max-width:70vw; overflow:hidden; text-overflow:ellipsis;',
-      ' display:inline-block; vertical-align:middle;',
-      '}',
-    ].join('\n');
-    var s = document.createElement('style');
-    s.textContent = css;
+  function css() {
+    if (document.getElementById("adworm-css")) return;
+    var s = document.createElement("style");
+    s.id = "adworm-css";
+    s.textContent = [
+      "#cc-worm{",
+      " position:fixed; top:8px; left:50%; transform:translateX(-50%);",
+      " z-index:9000; min-width:280px; max-width:92vw;",
+      " background:#0a0a0f; border:1px solid rgba(201,162,39,.4); border-radius:10px;",
+      " padding:10px 16px; text-align:center; cursor:pointer;",
+      " font-family:monospace; color:#f5edd8;",
+      " display:none;", // balcony starts BLANK
+      "}",
+      "#cc-worm .worm-brand{ font-size:.7rem; color:#c9a227; letter-spacing:.1em; text-transform:uppercase; }",
+      "#cc-worm .worm-msg{ font-size:.95rem; margin-top:4px; }",
+      // SQUEEZE IN — grabs the eye
+      "#cc-worm.squeeze-in{ display:block; animation:wormSqueeze .6s ease-out; }",
+      "@keyframes wormSqueeze{",
+      " 0%{ transform:translateX(-50%) scaleX(.1); opacity:0; }",
+      " 60%{ transform:translateX(-50%) scaleX(1.15); opacity:1; }",
+      " 100%{ transform:translateX(-50%) scaleX(1); opacity:1; }",
+      "}",
+      // BLINK — slow, deliberate, begging for the click. NOT a strobe.
+      "#cc-worm.blinking{ animation:wormBlink 1.2s ease-in-out 3; }",
+      "@keyframes wormBlink{",
+      " 0%,100%{ opacity:1; }",
+      " 50%{ opacity:.35; }",
+      "}",
+      // SQUEEZE OUT
+      "#cc-worm.squeeze-out{ animation:wormSqueezeOut .4s ease-in forwards; }",
+      "@keyframes wormSqueezeOut{",
+      " 0%{ transform:translateX(-50%) scaleX(1); opacity:1; }",
+      " 100%{ transform:translateX(-50%) scaleX(.1); opacity:0; }",
+      "}",
+    ].join("\n");
     document.head.appendChild(s);
   }
 
-  function escapeHtml(s) {
-    var d = document.createElement('div');
-    d.textContent = s;
-    return d.innerHTML;
+  function build() {
+    if (wormEl) return;
+    css();
+    wormEl = document.createElement("div");
+    wormEl.id = "cc-worm";
+    wormEl.setAttribute("role", "button");
+    wormEl.setAttribute("aria-label", "Advertisement");
+    wormEl.addEventListener("click", onTap);
+    document.body.appendChild(wormEl);
   }
 
-  function showAd() {
-    if (!wormEl) return;
-    var txt = wormEl.querySelector('.adworm-text');
-    if (!txt) return;
-    if (ads.length) {
-      var ad = ads[currentIndex % ads.length];
-      var html = '';
-      if (ad.img) {
-        html += '<img src="' + escapeHtml(ad.img) + '" style="height:20px;vertical-align:middle;margin-right:8px;" alt="">';
-      }
-      html += escapeHtml(ad.name + ': ' + ad.message);
-      txt.innerHTML = html;
-    } else {
-      txt.textContent = 'Tap the worm!';
-    }
-  }
-
-  function nextAd() {
-    if (!running) return;
-    currentIndex = (currentIndex + 1) % Math.max(ads.length, 1);
-    showAd();
-    timer = setTimeout(nextAd, AD_DURATION_MS);
-  }
-
-  function onWormTap() {
-    // Tap the worm = "Would you like to create an ad?"
-    // Yes → ad creator. No → nothing.
+  function onTap() {
+    // James's flow: ask first.
     if (confirm("Would you like to create an ad?")) {
-      window.location.href = '/adworm.html';
+      window.location.href = "/adworm.html";
     }
-    // No = no interaction
+    // No = nothing.
   }
 
+  function showSpot(ad) {
+    build();
+    currentAd = ad;
+    wormEl.classList.remove("squeeze-out", "blinking");
+    wormEl.innerHTML =
+      '<div class="worm-brand">' + esc(ad.brand) + "</div>" +
+      '<div class="worm-msg">' + esc(ad.msg) + "</div>";
+    // SQUEEZE IN
+    wormEl.classList.add("squeeze-in");
+    // Then BLINK for the click
+    setTimeout(function () {
+      wormEl.classList.add("blinking");
+    }, 700);
+    // 15 seconds, then out
+    clearTimeout(spotTimer);
+    spotTimer = setTimeout(hideSpot, SPOT_SECONDS * 1000);
+  }
+
+  function hideSpot() {
+    if (!wormEl) return;
+    wormEl.classList.remove("squeeze-in", "blinking");
+    wormEl.classList.add("squeeze-out");
+    setTimeout(function () {
+      wormEl.style.display = "none";
+      wormEl.classList.remove("squeeze-out");
+      currentAd = null;
+    }, 400);
+  }
+
+  function nextPaid() {
+    if (paidQueue.length === 0) return; // balcony stays blank
+    var ad = paidQueue[queueIdx % paidQueue.length];
+    queueIdx++;
+    showSpot(ad);
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+
+  // Public: push a real paid ad into rotation (after Stripe payment)
+  function addPaidSpot(brand, msg, url) {
+    paidQueue.push({ brand: brand, msg: msg, url: url });
+  }
+
+  // Start the rotation timer. Balcony stays blank until a spot pops in.
   function start() {
-    if (running) return;
-    running = true;
-    showAd();
-    timer = setTimeout(nextAd, AD_DURATION_MS);
+    build();
+    // First spot pops in after 5 seconds so the page loads clean
+    setTimeout(nextPaid, 5000);
+    setInterval(function () {
+      if (!currentAd) nextPaid();
+    }, ROTATE_MS);
   }
 
-  function stop() {
-    running = false;
-    if (timer) clearTimeout(timer);
-    if (wormEl) wormEl.style.display = 'none';
-  }
+  window.CCAdWorm = { start: start, addPaidSpot: addPaidSpot, next: nextPaid };
 
-  function setAds(list) {
-    ads = list || [];
-    currentIndex = 0;
-    if (running) showAd();
-  }
-
-  document.addEventListener('DOMContentLoaded', function () {
-    buildWorm();
-    setAds([
-      { name: 'Cybercrowd.net', message: 'Where You Belong', link: 'https://cybercrowd.net' },
-      { name: 'PixelPrix', message: 'The kids cleanup game', link: 'https://cybercade-game.com' },
-      { name: 'Cybercrowd Radio', message: 'A museum with a transmitter', link: 'https://cybercrowdradio.com' },
-    ]);
+  // Auto-start when DOM is ready
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", start);
+  } else {
     start();
-  });
-
-  window.adworm = {
-    start: start,
-    stop: stop,
-    setAds: setAds,
-  };
+  }
 })();
