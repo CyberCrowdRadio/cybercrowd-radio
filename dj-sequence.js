@@ -97,12 +97,12 @@
         audio.preload = 'auto';
         audio.addEventListener('ended', onSongEnd);
         audio.addEventListener('error', skipDead);
-        // If the stream stalls with no error, don't hang — skip.
+        // If the stream stalls with no error, don't hang — skip after 20s.
         audio.addEventListener('stalled', function () {
           clearTimeout(playWatchdog);
           playWatchdog = setTimeout(function () {
             if (audio && audio.paused) onSongEnd();
-          }, 5000);
+          }, 20000);
         });
         audio.addEventListener('playing', function () {
           clearTimeout(playWatchdog);
@@ -116,12 +116,19 @@
       audio.src = '/t/' + t.id;
       audio.load();
       var pr = audio.play();
-      // Watchdog: if it's not actually playing after 5s, skip SILENTLY (dead track).
+      // Watchdog: mobile buffering can take a while. Give it 20s.
+      // SLOW is not DEAD — only the 'error' event marks a track dead.
+      // A timeout just moves on without poisoning the health data.
       playWatchdog = setTimeout(function () {
         if (audio && audio.paused && !stopped) {
-          skipDead();
+          // Don't markDead here — it might just be slow. Skip gently.
+          setTimeout(function () {
+            if (stopped) return;
+            trackIndex = pickNextTrack();
+            playCurrent();
+          }, 100);
         }
-      }, 5000);
+      }, 20000);
       if (pr && pr.catch) pr.catch(function () {
         clearTimeout(playWatchdog);
         skipDead();
@@ -206,8 +213,8 @@
     if (stopped) return;
     deadStreak = 0; // a song actually played — reset the streak
     // Song ENDED (actually played). DJ talks about the NEXT song, then it plays.
-    // Random next — the station never plays the same order twice.
-    trackIndex = Math.floor(Math.random() * tracks.length);
+    // Prefer known-working tracks so the music keeps flowing.
+    trackIndex = pickNextTrack();
     var next = tracks[trackIndex];
     var p = parseTrack(next.title);
     var script = kineticScript(p.title, p.artist);
