@@ -34,16 +34,59 @@
   var currentAudio = null;
   var db = null;
 
-  // ---- Voice ----
+  // ---- Voice: MALE. Waits for voices to load (Android is slow). ----
+  var cachedMaleVoice = null;
+  var voicesReady = false;
+
+  function initVoices() {
+    try {
+      if (!('speechSynthesis' in window)) return;
+      var load = function () {
+        var voices = window.speechSynthesis.getVoices();
+        if (voices && voices.length) {
+          voicesReady = true;
+          cachedMaleVoice = findMaleVoice(voices);
+        }
+      };
+      load();
+      // Android loads voices async — retry until we have them
+      if (window.speechSynthesis.onvoiceschanged !== undefined) {
+        window.speechSynthesis.onvoiceschanged = load;
+      }
+      // Fallback poll for stubborn browsers
+      var tries = 0;
+      var poll = setInterval(function () {
+        tries++;
+        load();
+        if (voicesReady || tries > 20) clearInterval(poll);
+      }, 500);
+    } catch (_) {}
+  }
+
+  function findMaleVoice(voices) {
+    // Pass 1: explicit male names
+    for (var i = 0; i < voices.length; i++) {
+      var n = (voices[i].name || '').toLowerCase();
+      if (/male/.test(n) && !/female/.test(n)) return voices[i];
+    }
+    // Pass 2: common male voice names
+    for (var j = 0; j < voices.length; j++) {
+      var m = (voices[j].name || '').toLowerCase();
+      if (/david|daniel|james|alex|fred|george|fred|aaron|matthew|michael|john|robert|william|thomas|google uk english male|google us english male/.test(m) &&
+          !/female|samantha|victoria|zira|aria|jenny|michelle|google uk english female|google us english female/.test(m)) {
+        return voices[j];
+      }
+    }
+    return null;
+  }
+
   function getMaleVoice() {
+    if (cachedMaleVoice) return cachedMaleVoice;
     try {
       var voices = window.speechSynthesis.getVoices();
-      for (var i = 0; i < voices.length; i++) {
-        var n = (voices[i].name || '').toLowerCase();
-        if (/male|david|daniel|james|alex|fred|george|aaron|matthew|michael|john|robert|william|thomas/.test(n) &&
-            !/female|samantha|victoria|zira|aria|jenny|michelle/.test(n)) {
-          return voices[i];
-        }
+      if (voices && voices.length) {
+        cachedMaleVoice = findMaleVoice(voices);
+        return cachedMaleVoice;
       }
     } catch (_) {}
     return null;
@@ -54,8 +97,8 @@
     try {
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
-      u.rate = 1.09;   // 5% slower — James 2026-10-17
-      u.pitch = 0.9;   // Wolfman grit
+      u.rate = 1.0;    // steady
+      u.pitch = 0.5;   // deep — gruff older man. One voice, no picker.
       var male = getMaleVoice();
       if (male) u.voice = male;
       var finished = false;
@@ -208,17 +251,8 @@
       onSonnyLive(!!(val && val.live));
     });
 
-    // Load voices (async on some browsers)
-    try {
-      if (window.speechSynthesis) {
-        window.speechSynthesis.getVoices();
-        if (window.speechSynthesis.onvoiceschanged !== undefined) {
-          window.speechSynthesis.onvoiceschanged = function () {
-            window.speechSynthesis.getVoices();
-          };
-        }
-      }
-    } catch (_) {}
+    // Load voices early — Android is slow, start polling now
+    initVoices();
 
     aiRunning = true;
     writeAiState({ status: 'starting', note: 'Kinetic is on the air' });

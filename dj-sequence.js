@@ -62,20 +62,29 @@
     try {
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
-      u.rate = 1.09;   // 5% slower than 1.15 — James 2026-10-17
-      u.pitch = 0.9;   // slightly lower — Wolfman grit
-      // Male voice — James 2026-10-17
+      u.rate = 1.0;    // steady, not rushed
+      u.pitch = 0.5;   // deep — gruff older man
+      // ONE voice: find the most masculine English voice, no picker.
       try {
         var voices = window.speechSynthesis.getVoices();
-        var male = null;
+        var best = null;
+        var bestScore = -1;
         for (var i = 0; i < voices.length; i++) {
-          var n = (voices[i].name || '').toLowerCase();
-          if (/male|david|daniel|james|alex|fred|george|aaron|matthew|michael|john|robert|william|thomas/.test(n) && !/female|samantha|victoria|zira|aria|jenny|michelle/.test(n)) {
-            male = voices[i];
-            break;
-          }
+          var v = voices[i];
+          var n = (v.name || '').toLowerCase();
+          var lang = (v.lang || '').toLowerCase();
+          // English only
+          if (lang && lang.indexOf('en') !== 0) continue;
+          var score = 0;
+          // Strong male indicators
+          if (/male/.test(n)) score += 10;
+          if (/david|daniel|james|george|aaron|matthew|michael|john|robert|william|thomas|fred|alex/.test(n)) score += 8;
+          // Penalize female indicators
+          if (/female|samantha|victoria|zira|aria|jenny|michelle|emma|sophia/.test(n)) score -= 20;
+          if (score > bestScore) { bestScore = score; best = v; }
         }
-        if (male) u.voice = male;
+        if (best && bestScore > 0) u.voice = best;
+        // If no male voice found, the low pitch (0.5) masculinizes whatever's there.
       } catch (e) {}
       u.onend = once;
       u.onerror = once;
