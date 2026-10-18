@@ -78,25 +78,29 @@
     buyCoins();
   }
 
-  // Buy CRWD to fill the jar (one-time or refill)
+  // Buy CRWD to fill the jar — opens Moonshot (James: "it needs to allow you open a Moonshot")
+  // Deep link to Moonshot app, fallback to web. No fake backend.
   function buyCoins() {
     var amount = prompt('How much CRWD to add? (e.g. 10)', '10');
     if (!amount || isNaN(parseFloat(amount))) return;
-    setStatus('Processing...');
-    api('/api/tipjar/buy', 'POST', { amount: parseFloat(amount) })
-      .then(function (d) {
-        if (d.ok) {
-          balance = d.newBalance;
-          updateUI();
-          setStatus('Added ' + amount + ' CRWD to your jar.');
-        } else if (d.needPayment) {
-          // Redirect to payment (Stripe/Moonshot)
-          window.location.href = d.paymentUrl;
-        } else {
-          setStatus(d.error || 'Purchase failed.');
-        }
-      })
-      .catch(function () { setStatus('Purchase failed — try again.'); });
+    openMoonshot();
+  }
+
+  function openMoonshot() {
+    // Try the Moonshot app first, fall back to the website
+    var appUrl = 'moonshot://';
+    var webUrl = 'https://moonshot.money/';
+    // If a specific CRWD token URL is configured, use it
+    if (window.CCConfig && window.CCConfig.CRWD_MOONSHOT_URL) {
+      webUrl = window.CCConfig.CRWD_MOONSHOT_URL;
+    }
+    setStatus('Opening Moonshot…');
+    // Try app deep link
+    window.location.href = appUrl;
+    // Fall back to web after a beat (if app not installed)
+    setTimeout(function () {
+      window.open(webUrl, '_blank');
+    }, 1500);
   }
 
   function build() {
