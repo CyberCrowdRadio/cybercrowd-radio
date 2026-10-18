@@ -23,6 +23,8 @@
   function getHandle() {
     try {
       let h = localStorage.getItem(HANDLE_KEY);
+      // Don't auto-generate random junk — ask the user to pick their handle
+      // James: "it always randomly picks my name... Thats not becoming a part of the radio"
       if (!h) {
         h = prompt("Pick your handle for the station:", "");
         if (h) {
@@ -32,6 +34,7 @@
             return h;
           }
         }
+        // If they cancel or enter invalid, use guest (not random)
         return "guest";
       }
       return h;
@@ -576,6 +579,26 @@
     say("Off air — Sonny Daze is back on the bucket.");
   });
   setStudioLive(!!(cfg.streamUrl || "").trim());
+
+  /* AI DJ toggle — Kinetic talks between songs or stays silent. */
+  const aiDjToggle = $("aiDjToggle");
+  let aiDjOn = true;
+  try {
+    aiDjOn = localStorage.getItem("cc-ai-dj") !== "off";
+  } catch (e) {}
+  function setAiDj(on) {
+    aiDjOn = on;
+    window.CCKineticEnabled = on;
+    try { localStorage.setItem("cc-ai-dj", on ? "on" : "off"); } catch (e) {}
+    if (aiDjToggle) {
+      aiDjToggle.textContent = on ? "ON" : "OFF";
+      aiDjToggle.classList.toggle("is-on", on);
+      aiDjToggle.setAttribute("aria-pressed", on ? "true" : "false");
+    }
+  }
+  if (aiDjToggle) aiDjToggle.addEventListener("click", () => setAiDj(!aiDjOn));
+  setAiDj(aiDjOn);
+  window.CCKineticEnabled = aiDjOn;
 
   /* ============================================================
      THE EASEL — draggable 2x2 video canvas

@@ -778,3 +778,28 @@ a { color: var(--brass-hi); }
 }
 #rateLike:hover { border-color: #00ff9d; color: #00ff9d; }
 #rateHate:hover { border-color: var(--red); color: var(--red); }
+
+/* AI DJ toggle */
+.toggle-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.toggle-btn {
+  min-width: 64px;
+  padding: 8px 16px;
+  border: 2px solid var(--gold, #e9c979);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--gold, #e9c979);
+  font-weight: bold;
+  cursor: pointer;
+}
+.toggle-btn.is-on {
+  background: var(--gold, #e9c979);
+  color: #1a1a1a;
+}
+.toggle-hint {
+  font-size: 0.9em;
+  opacity: 0.7;
+}

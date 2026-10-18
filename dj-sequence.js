@@ -224,6 +224,11 @@
     // Song ENDED (actually played). DJ talks about the NEXT song, then it plays.
     // Prefer known-working tracks so the music keeps flowing.
     trackIndex = pickNextTrack();
+    // If AI DJ is off, skip the announcement and go straight to music.
+    if (window.CCKineticEnabled === false) {
+      playCurrent();
+      return;
+    }
     var next = tracks[trackIndex];
     var p = parseTrack(next.title);
     var script = kineticScript(p.title, p.artist);
