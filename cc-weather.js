@@ -147,9 +147,53 @@
     if (savedZip) fetchWeather(savedZip);
   }
 
+  // Tip-triggered personal weather shoutout — James 2026-10-17
+  // "Cold morning for Julie in NYC, your temp is 42 with 20% chance of precipitation"
+  function tipWeatherShoutout(tipperName, zip, sayFn) {
+    if (!zip || !/^\d{5}$/.test(zip)) return;
+    fetch('https://api.zippopotam.us/us/' + zip)
+      .then(function (r) {
+        if (!r.ok) throw new Error('zip not found');
+        return r.json();
+      })
+      .then(function (geo) {
+        var place = geo.places[0];
+        var city = place['place name'];
+        var state = place['state abbreviation'] || '';
+        var locName = state ? city + ', ' + state : city;
+        return fetch('https://api.open-meteo.com/v1/forecast?latitude=' + place.latitude +
+          '&longitude=' + place.longitude +
+          '&current=temperature_2m,weather_code,precipitation_probability' +
+          '&temperature_unit=fahrenheit&timezone=auto')
+          .then(function (r) { return r.json(); })
+          .then(function (wx) {
+            var c = wx.current || {};
+            var temp = Math.round(c.temperature_2m || 0);
+            var precip = c.precipitation_probability;
+            var precipStr = (precip !== undefined && precip !== null)
+              ? ' with a ' + precip + ' percent chance of precipitation'
+              : '';
+            var timeWord = temp <= 45 ? 'Cold morning' : temp <= 65 ? 'Cool day' : 'Warm day';
+            var msg = timeWord + ' for ' + tipperName + ' in ' + locName +
+              '. Your temp is ' + temp + ' degrees' + precipStr + '. Thanks for the tip!';
+            if (sayFn) { sayFn(msg); }
+            else if (window.CCStationAI) {
+              // Use Kinetic's voice if available — queue it as a shoutout
+              try {
+                var u = new SpeechSynthesisUtterance(msg);
+                u.rate = 1.09; u.pitch = 0.9;
+                window.speechSynthesis.speak(u);
+              } catch (_) {}
+            }
+          });
+      })
+      .catch(function () {});
+  }
+
   window.CCWeather = {
     fetchWeather: fetchWeather,
     getZip: getZip,
+    tipWeatherShoutout: tipWeatherShoutout,
   };
 
   if (document.readyState === 'loading') {
