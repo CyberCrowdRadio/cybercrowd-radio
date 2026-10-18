@@ -150,6 +150,8 @@ window.STATION_CONFIG = {
     },
   ],
   stripePublishableKey: "", // paste when Stripe is configured — "" = join collects email only
+  stripeMemberPriceId: "", // $3.99/mo membership — James creates in Stripe dashboard, pastes price ID here
+  stripePortalUrl: "", // Stripe customer portal URL for cancellations
 
   /* ---------- station store ----------
      James makes it himself — DIY, not print-on-demand.
