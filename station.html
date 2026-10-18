@@ -124,6 +124,16 @@
       </div>
     </section>
 
+    <!-- ============ MEMBERSHIP ============ -->
+    <section class="section" id="membership" aria-label="Membership">
+      <div class="section-head">
+        <p class="eyebrow">Join the crowd</p>
+        <h2>$3.99 a month</h2>
+        <p class="section-sub">62 songs. 7-day free trial.</p>
+      </div>
+      <div class="section-body"></div>
+    </section>
+
     <!-- ============ WEATHER SEGMENT ============ -->
     <section class="section section-alt" id="weather" aria-label="Temp and rain statistics">
       <div class="section-head">
@@ -131,7 +141,7 @@
         <h2>Temp&nbsp;&amp;&nbsp;Rain</h2>
         <p class="section-sub">Statistics per area.</p>
       </div>
-      <audio controls src="weather-segment.mp3" style="width:100%"></audio>
+      <div class="section-body" id="weatherBody"></div>
     </section>
 
     <!-- ============ TICKER ============ -->
@@ -415,5 +425,7 @@
   <script src="cc-weather.js"></script>
   <script src="cc-broadcast.js"></script>
   <script src="cc-station-ai.js"></script>
+  <script src="https://js.stripe.com/v3/"></script>
+  <script src="cc-membership.js"></script>
 </body>
 </html>
