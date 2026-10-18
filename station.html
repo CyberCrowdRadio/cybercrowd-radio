@@ -123,6 +123,7 @@
         <p><button id="tipjarBtn" class="btn btn-primary btn-lg">TIP 1 CRWD</button>
         <button id="tipjarBuy" class="btn btn-secondary">ADD COINS</button></p>
         <p class="signal-state" id="tipjarStatus" aria-live="polite">Loading...</p>
+        <div id="coinBannerSlot" style="margin-top:18px;"></div>
       </div>
     </section>
 
@@ -420,6 +421,19 @@
   <script src="dj-sequence.js"></script>
   <script src="adworm.js"></script>
   <script src="tipjar.js"></script>
+  <script src="cc-coin-banner.js"></script>
+  <script>
+    // Mount the CRWD coin light-ad banner in the tip jar
+    if (window.CCCoinBanner) {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+          window.CCCoinBanner.mount('#coinBannerSlot');
+        });
+      } else {
+        window.CCCoinBanner.mount('#coinBannerSlot');
+      }
+    }
+  </script>
   <!-- Firebase for real-time chat (James set up 2026-10-17) -->
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
