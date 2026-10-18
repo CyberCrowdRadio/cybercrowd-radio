@@ -27,7 +27,7 @@
     if (parts.length >= 2) {
       return { title: parts[0].trim(), artist: parts.slice(1).join(' - ').trim() };
     }
-    return { title: title, artist: title };
+    return { title: title, artist: 'Cybercrowd' };
   }
 
   /* Kinetic personality: Chris Rock energy meets Wolfman Jack hype.
