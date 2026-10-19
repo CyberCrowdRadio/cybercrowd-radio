@@ -92,6 +92,7 @@
             <button class="mode-btn" id="modeStraight" aria-pressed="false">STRAIGHT R2</button>
             <button class="mode-btn" id="modeLive" aria-pressed="false">GO LIVE</button>
           </div>
+          <p><button class="mode-btn" id="thunderBtn" aria-pressed="false" title="Mark this song as thunderous — AI stays quiet on the intro next time">THUNDER</button></p>
           <p><button class="btn btn-secondary" id="shareBtn">Share the station</button></p>
           <div class="rate-song" role="group" aria-label="Rate this song">
             <button class="rate-btn" id="rateLike" aria-label="Like this song">A · Like</button>
@@ -105,10 +106,7 @@
     <!-- adWorm banner: top -->
     <div class="adworm-banner" data-adworm="banner-top" role="complementary" aria-label="Advertisement"></div>
 
-      <!-- ============ TICKER ============ -->
-    <div class="ticker" aria-hidden="true">
-      <div class="ticker-track" id="tickerTrack"></div>
-    </div>
+      <!-- ============ TICKER (removed per James 2026-10-19) ============ -->
 
 
   </main>
@@ -155,6 +153,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
   <script src="config.js"></script>
+  <script src="cc-stream.js"></script>
   <script src="app.js"></script>
   <script src="announcer.js"></script>
   <script src="playlist.js"></script>
@@ -180,6 +179,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
   <script src="cc-chat.js"></script>
   <script src="cc-spamblock.js"></script>
+  <script src="cc-thunder.js"></script>
   <script src="cc-presence.js"></script>
   <script src="cc-weather.js"></script>
   <script src="cc-broadcast.js"></script>
