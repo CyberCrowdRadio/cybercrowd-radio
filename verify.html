@@ -31,6 +31,7 @@
       <div id="verifyCta" hidden>
         <a class="enter-btn" href="station.html">ENTER THE STATION</a>
       </div>
+      <p style="margin-top:20px;font-size:0.85rem;"><a href="#" id="reportLink" style="color:#888;">If this is not you, click to report</a></p>
       <p class="back-line"><a href="index.html">← Back to the entrance</a></p>
     </section>
   </main>
@@ -61,10 +62,9 @@
               localStorage.setItem("cybercrowd-verified", "1");
               if (data.email) localStorage.setItem("cybercrowd-email", data.email);
             } catch (e) {}
-            title.textContent = "You're in.";
-            sub.textContent = "Email confirmed — now pick your handle.";
-            namePicker.hidden = false;
-            setupNamePicker();
+            // Redirect to station.html with verified flag (signup overlay opens, audio keeps playing)
+            var email = (data.email || new URLSearchParams(window.location.search).get("email") || "");
+            window.location.href = "station.html?verified=1&email=" + encodeURIComponent(email);
           } else {
             title.textContent = "Link expired.";
             sub.textContent = "That confirmation link is old or invalid — sign up again and we'll send a fresh one.";
@@ -113,6 +113,33 @@
         input.focus();
       }
     })();
+
+    // Report: "If this is not you"
+    document.getElementById('reportLink').addEventListener('click', function(e) {
+      e.preventDefault();
+      var token = new URLSearchParams(window.location.search).get("token") || "";
+      var email = new URLSearchParams(window.location.search).get("email") || "";
+      var report = {
+        type: 'impersonation',
+        token: token,
+        email: email,
+        timestamp: new Date().toISOString(),
+        userAgent: navigator.userAgent
+      };
+      // Save to Firebase if available, else localStorage
+      try {
+        if (window.firebase && window.firebase.database) {
+          window.firebase.database().ref('reports').push(report);
+        } else {
+          var reports = JSON.parse(localStorage.getItem('ccr-reports') || '[]');
+          reports.push(report);
+          localStorage.setItem('ccr-reports', JSON.stringify(reports));
+        }
+        alert('Reported. The admin will review this.');
+      } catch (err) {
+        alert('Report saved.');
+      }
+    });
   </script>
 </body>
 </html>

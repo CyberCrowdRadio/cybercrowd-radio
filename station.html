@@ -186,5 +186,49 @@
   <script src="cc-station-ai.js"></script>
   <script src="https://js.stripe.com/v3/"></script>
   <script src="cc-membership.js"></script>
+  <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  <script src="cc-signup-overlay.js"></script>
+
+  <!-- Signup Overlay (audio keeps playing underneath) -->
+  <div id="signupOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;overflow-y:auto;">
+    <div style="max-width:420px;margin:40px auto;background:#0a0a0a;border:3px solid #c9a227;border-radius:16px;padding:30px 25px;position:relative;">
+      <button id="closeSignup" style="position:absolute;top:10px;right:15px;background:none;border:none;color:#888;font-size:24px;cursor:pointer;">×</button>
+      
+      <!-- Step 1: Email -->
+      <div id="signupStepEmail">
+        <h2 style="color:#e9c979;font-family:Georgia,serif;margin:0 0 10px;text-align:center;">Sign Up</h2>
+        <p style="color:#999;text-align:center;margin:0 0 20px;">Enter your email to sign up...</p>
+        <input type="email" id="overlayEmail" placeholder="yourname@mymail.com" style="width:100%;padding:12px;font-size:1rem;border:2px solid #c9a227;border-radius:8px;background:#1a1a1a;color:#fff;box-sizing:border-box;margin-bottom:15px;">
+        <div id="overlayTurnstile" style="display:none;margin-bottom:15px;"><div class="cf-turnstile" data-sitekey="0x4AAAAAAFT4WC4u5rb2Gr56" data-callback="onOverlayTurnstile"></div></div>
+        <button id="overlaySend" disabled style="width:100%;padding:13px;font-size:1rem;font-weight:bold;color:#000;background:linear-gradient(180deg,#ffd700,#cc8800);border:none;border-radius:8px;cursor:pointer;opacity:0.5;">Send</button>
+        <p id="overlayStatus" style="color:#f44336;font-size:0.85rem;text-align:center;margin:10px 0 0;"></p>
+      </div>
+
+      <!-- Step 2: Check email popup -->
+      <div id="signupStepCheck" style="display:none;text-align:center;">
+        <h2 style="color:#e9c979;font-family:Georgia,serif;margin:0 0 15px;">CYBERCROWD RADIO</h2>
+        <p style="color:#fff;font-size:1.1rem;">Check your email and verify your email.</p>
+        <p style="color:#888;font-size:0.85rem;margin-top:15px;">The station keeps playing.</p>
+      </div>
+
+      <!-- Step 3: Create account -->
+      <div id="signupStepCreate" style="display:none;">
+        <h2 style="color:#e9c979;font-family:Georgia,serif;margin:0 0 10px;text-align:center;">Create Your Account</h2>
+        <p id="overlayEmailDisplay" style="color:#c9a227;text-align:center;margin:0 0 15px;"></p>
+        <label style="display:block;margin:10px 0 5px;color:#c9a227;font-weight:bold;font-size:0.85rem;">Choose your handle <button type="button" class="helpBtn" data-help="handleHelp2" style="background:none;border:1px solid #c9a227;border-radius:50%;width:20px;height:20px;color:#c9a227;font-size:12px;cursor:pointer;padding:0;">?</button></label>
+        <input type="text" id="overlayHandle" placeholder="Your DJ name" maxlength="30" style="width:100%;padding:10px;border:2px solid #c9a227;border-radius:8px;background:#1a1a1a;color:#fff;box-sizing:border-box;">
+        <p id="handleHelp2" style="display:none;color:#999;font-size:0.8rem;margin:5px 0;">Your handle is your original single-use account name. Link it to your other accounts. "cybercrowd" is not allowed. We block impersonators.</p>
+        <label style="display:block;margin:10px 0 5px;color:#c9a227;font-weight:bold;font-size:0.85rem;">Project name <button type="button" class="helpBtn" data-help="projectHelp2" style="background:none;border:1px solid #c9a227;border-radius:50%;width:20px;height:20px;color:#c9a227;font-size:12px;cursor:pointer;padding:0;">?</button></label>
+        <input type="text" id="overlayProject" placeholder="Name your show or channel" maxlength="60" style="width:100%;padding:10px;border:2px solid #c9a227;border-radius:8px;background:#1a1a1a;color:#fff;box-sizing:border-box;">
+        <p id="projectHelp2" style="display:none;color:#999;font-size:0.8rem;margin:5px 0;">Your project name is your show — your account header.</p>
+        <label style="display:block;margin:10px 0 5px;color:#c9a227;font-weight:bold;font-size:0.85rem;">Password <button type="button" class="helpBtn" data-help="passwordHelp2" style="background:none;border:1px solid #c9a227;border-radius:50%;width:20px;height:20px;color:#c9a227;font-size:12px;cursor:pointer;padding:0;">?</button></label>
+        <input type="password" id="overlayPassword" placeholder="Choose a password" minlength="8" maxlength="29" style="width:100%;padding:10px;border:2px solid #c9a227;border-radius:8px;background:#1a1a1a;color:#fff;box-sizing:border-box;">
+        <p id="passwordHelp2" style="display:none;color:#999;font-size:0.8rem;margin:5px 0;">8 to 29 characters. Use uppercase, lowercase, a number, and a symbol.</p>
+        <label style="display:block;margin:10px 0 5px;color:#c9a227;font-weight:bold;font-size:0.85rem;">Confirm password</label>
+        <input type="password" id="overlayConfirm" placeholder="Re-enter your password" minlength="8" maxlength="29" style="width:100%;padding:10px;border:2px solid #c9a227;border-radius:8px;background:#1a1a1a;color:#fff;box-sizing:border-box;">
+        <button id="overlayCreate" style="width:100%;padding:13px;margin-top:20px;font-size:1rem;font-weight:bold;color:#000;background:linear-gradient(180deg,#ffd700,#cc8800);border:none;border-radius:8px;cursor:pointer;">Create Account</button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>

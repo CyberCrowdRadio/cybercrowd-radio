@@ -19,26 +19,99 @@
 <body>
   <h1>Create Your Account</h1>
   <p>Join the crowd. Pick your handle.</p>
+  <p id="emailDisplay" style="color:#c9a227;"></p>
   <form id="createAccountForm">
-    <label for="email">Email</label>
-    <input type="email" id="email" required placeholder="you@example.com">
-    
-    <label for="handle">Choose your handle</label>
+    <label for="handle">Choose your handle <button type="button" id="handleHelp" style="background:none;border:1px solid #c9a227;border-radius:50%;width:20px;height:20px;color:#c9a227;font-size:12px;cursor:pointer;padding:0;" aria-label="What is a handle?">?</button></label>
     <input type="text" id="handle" required placeholder="Your DJ name" maxlength="30">
+    <p id="handleHelpText" style="display:none;color:#999;font-size:0.85rem;margin:5px 0 0;text-align:left;">Your handle is your original single-use account name. This is the person you may want to link to your other accounts. Handles containing "cybercrowd" are not allowed. We block impersonators — fakes built to look like originals for clickbaiting.</p>
+    
+    <label for="project">Project name <button type="button" id="projectHelp" style="background:none;border:1px solid #c9a227;border-radius:50%;width:20px;height:20px;color:#c9a227;font-size:12px;cursor:pointer;padding:0;" aria-label="What is a project name?">?</button></label>
+    <input type="text" id="project" placeholder="Name your show or channel" maxlength="60">
+    <p id="projectHelpText" style="display:none;color:#999;font-size:0.85rem;margin:5px 0 0;text-align:left;">Your project name is your show — your account header. It's the name people see.</p>
+    
+    <label for="password">Password <button type="button" id="passwordHelp" style="background:none;border:1px solid #c9a227;border-radius:50%;width:20px;height:20px;color:#c9a227;font-size:12px;cursor:pointer;padding:0;" aria-label="Password requirements?">?</button></label>
+    <input type="password" id="password" required placeholder="Choose a password" minlength="8" maxlength="29">
+    <p id="passwordHelpText" style="display:none;color:#999;font-size:0.85rem;margin:5px 0 0;text-align:left;">8 to 29 characters. Use uppercase, lowercase, a number, and a symbol.</p>
+    
+    <label for="confirmPassword">Confirm password</label>
+    <input type="password" id="confirmPassword" required placeholder="Re-enter your password" minlength="8" maxlength="29">
     
     <button type="submit">Create Account</button>
   </form>
   <p style="margin-top: 30px;"><a href="station.html">← Back to the station</a></p>
 
 <script>
+// Help toggles
+document.getElementById('handleHelp').addEventListener('click', function() {
+  var help = document.getElementById('handleHelpText');
+  help.style.display = help.style.display === 'none' ? 'block' : 'none';
+});
+document.getElementById('projectHelp').addEventListener('click', function() {
+  var help = document.getElementById('projectHelpText');
+  help.style.display = help.style.display === 'none' ? 'block' : 'none';
+});
+document.getElementById('passwordHelp').addEventListener('click', function() {
+  var help = document.getElementById('passwordHelpText');
+  help.style.display = help.style.display === 'none' ? 'block' : 'none';
+});
+
+// Live password match - field glows blue when matched
+var passwordInput = document.getElementById('password');
+var confirmInput = document.getElementById('confirmPassword');
+
+function checkMatch() {
+  var pw = passwordInput.value;
+  var cpw = confirmInput.value;
+  if (!cpw) {
+    confirmInput.style.borderColor = '';
+    confirmInput.style.boxShadow = '';
+    return;
+  }
+  if (pw === cpw && pw.length >= 8) {
+    confirmInput.style.borderColor = '#2196F3';
+    confirmInput.style.boxShadow = '0 0 15px #2196F3';
+  } else {
+    confirmInput.style.borderColor = '';
+    confirmInput.style.boxShadow = '';
+  }
+}
+passwordInput.addEventListener('input', checkMatch);
+confirmInput.addEventListener('input', checkMatch);
+
+// Get email from verification (URL param or sessionStorage)
+(function() {
+  var email = "";
+  try {
+    var params = new URLSearchParams(window.location.search);
+    email = params.get("email") || sessionStorage.getItem("cybercrowd_entry_email") || "";
+  } catch (_) {}
+  if (email) {
+    document.getElementById("emailDisplay").textContent = email;
+  }
+})();
+
 document.getElementById('createAccountForm').addEventListener('submit', function(e) {
   e.preventDefault();
-  var email = document.getElementById('email').value.trim();
   var handle = document.getElementById('handle').value.trim();
-  if (!email || !handle) return;
+  var project = document.getElementById('project').value.trim();
+  var password = document.getElementById('password').value;
+  var confirmPassword = document.getElementById('confirmPassword').value;
+  var email = document.getElementById('emailDisplay').textContent;
+  if (!handle || !password) return;
+  if (password.length < 8 || password.length > 29) {
+    alert('Password must be 8 to 29 characters.');
+    return;
+  }
+  if (password !== confirmPassword) {
+    alert('Passwords do not match.');
+    return;
+  }
+  // TODO: Send to backend for real account creation (one email per account enforced server-side)
+  // For now, save handle locally (password is NOT stored in localStorage)
   try {
     localStorage.setItem('ccr-handle', handle);
     localStorage.setItem('ccr-email', email);
+    if (project) localStorage.setItem('ccr-project', project);
   } catch (_) {}
   window.location.href = 'station.html';
 });

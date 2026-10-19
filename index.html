@@ -32,7 +32,7 @@
       <p class="eyebrow">A museum with a transmitter</p>
       <h1 class="landing-name">Cybercrowd<br />Radio</h1>
       <p class="mission">Caretaker. Archive. Receiver of lost LPs.</p>
-      <p class="landing-lede">5,500 records strong. Forgotten vinyl, mailed in and spun on the air — every donor credited by name.</p>
+      <p class="landing-lede">Large library with daily mail-ins. Forgotten vinyl, mailed in and spun on the air — every donor credited by name on the honor wall.</p>
 
       <a class="enter-btn" href="station.html" id="enterBtn">ENTER</a>
       <p class="enter-note">Tap ENTER — the live stream starts.</p>
@@ -85,11 +85,11 @@
          One tap on ENTER is the user gesture that unlocks audio. */
       var enterBtn = document.getElementById("enterBtn");
       if (enterBtn) {
-        // Members skip signup; new users go through signup first
+        // Members skip signup; new users get signup overlay on station (audio keeps playing)
         try {
           var list = JSON.parse(localStorage.getItem("cybercrowd-list") || "[]");
-          if (list.length === 0) enterBtn.href = "signup.html";
-        } catch (err) { enterBtn.href = "signup.html"; }
+          if (list.length === 0) enterBtn.href = "station.html?signup=1";
+        } catch (err) { enterBtn.href = "station.html?signup=1"; }
 
         enterBtn.addEventListener("click", function () {
           try { sessionStorage.setItem("ccr-autostart", "1"); } catch (e) {}
