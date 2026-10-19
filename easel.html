@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>The Easel — Cybercrowd Radio</title>
+  <meta name="description" content="Four camera squares, one canvas — touch, hold, drag, let go." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='8' y='8' width='84' height='84' rx='6' fill='%231a120b' stroke='%23c9a227' stroke-width='5'/><circle cx='50' cy='50' r='22' fill='none' stroke='%23c9a227' stroke-width='4'/><circle cx='50' cy='50' r='5' fill='%23a93226'/></svg>" />
+</head>
+<body>
+  <a class="skip" href="#content">Skip to content</a>
+
+  <!-- ============ TOP BAR ============ -->
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="Cybercrowd Radio home">
+      <span class="brand-seal" aria-hidden="true">CR</span>
+      <span class="brand-word">CYBERCROWD&nbsp;RADIO</span>
+    </a>
+    <nav class="nav" aria-label="Primary">
+      <a href="station.html">Listen</a>
+      <a href="easel.html">The Easel</a>
+      <a href="channels.html">Channels</a>
+      <a href="shows.html">Shows</a>
+      <a href="archive.html">Archive</a>
+      <a href="request.html">Request Line</a>
+      <a href="join.html">Join</a>
+      <a href="adworm.html">Advertise</a>
+      <a href="https://www.patreon.com/c/cybercrowd" target="_blank" rel="noopener">Patreon</a>
+    </nav>
+    <div class="topbar-right">
+      <a class="handle-pill" id="handlePill" href="create-account.html" title="Your handle — tap to set it">
+        <span id="handleText">guest</span>
+      </a>
+      <span class="onair-pill" id="onairPill" role="status" aria-live="polite">
+        <span class="onair-lamp" aria-hidden="true"></span>
+        <span id="onairText">STANDBY</span>
+      </span>
+      <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">☰</button>
+    </div>
+  </header>
+  <nav class="mobile-nav" id="mobileNav" aria-label="Mobile">
+    <a href="station.html">Listen</a>
+    <a href="easel.html">The Easel</a>
+    <a href="channels.html">Channels</a>
+    <a href="shows.html">Shows</a>
+    <a href="archive.html">Archive</a>
+    <a href="request.html">Request Line</a>
+    <a href="join.html">Join</a>
+    <a href="adworm.html">Advertise</a>
+    <a href="https://www.patreon.com/c/cybercrowd" target="_blank" rel="noopener">Patreon</a>
+  </nav>
+
+  <main id="content">
+<section class="section" id="easel" aria-label="The easel — live cameras">
+      <div class="section-head">
+        <p class="eyebrow">Hands on the screen</p>
+        <h2>The&nbsp;Easel</h2>
+        <p class="section-sub">The screen is the easel. Four squares are the canvas — <strong>touch, hold, drag, let go</strong> to move them. Tap a camera below to load it. The chat is a dock: open, closed, or undocked and dragged anywhere. The sound never changes — only the layout.</p>
+      </div>
+
+      <div class="easel-wrap">
+        <div class="easel" id="easel">
+          <div class="video-square" data-cam="studio" tabindex="0" role="button" aria-label="Studio camera. Drag to move, double-tap to enlarge.">
+            <span class="vs-label">Studio Cam</span>
+            <span class="vs-state">Feed connects when the studio goes live</span>
+            <span class="vs-hint" aria-hidden="true">drag me</span>
+          </div>
+          <div class="video-square" data-cam="turntable" tabindex="0" role="button" aria-label="Turntable camera. Drag to move, double-tap to enlarge.">
+            <span class="vs-label">Turntable Cam</span>
+            <span class="vs-state">Feed connects when the studio goes live</span>
+            <span class="vs-hint" aria-hidden="true">drag me</span>
+          </div>
+          <div class="video-square" data-cam="vault" tabindex="0" role="button" aria-label="Vault camera. Drag to move, double-tap to enlarge.">
+            <span class="vs-label">Vault Cam</span>
+            <span class="vs-state">Feed connects when the studio goes live</span>
+            <span class="vs-hint" aria-hidden="true">drag me</span>
+          </div>
+          <div class="video-square" data-cam="crowd" tabindex="0" role="button" aria-label="Crowd camera. Drag to move, double-tap to enlarge.">
+            <span class="vs-label">Crowd Cam</span>
+            <span class="vs-state">Feed connects when the studio goes live</span>
+            <span class="vs-hint" aria-hidden="true">drag me</span>
+          </div>
+        </div>
+
+        <div class="cam-strip" id="camStrip" role="listbox" aria-label="Choose a camera">
+          <button class="cam-chip is-active" data-cam="studio" role="option" aria-selected="true">Studio</button>
+          <button class="cam-chip" data-cam="turntable" role="option" aria-selected="false">Turntable</button>
+          <button class="cam-chip" data-cam="vault" role="option" aria-selected="false">Vault</button>
+          <button class="cam-chip" data-cam="crowd" role="option" aria-selected="false">Crowd</button>
+        </div>
+        <p class="easel-note">Double-tap a square to enlarge it full-easel. Double-tap again to shrink it back.</p>
+        <p><button class="btn btn-primary" id="putMeOnBtn">PUT ME ON</button></p>
+        <p class="signal-state" id="putMeOnStatus" aria-live="polite" hidden></p>
+      </div>
+    </section>
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="footer">
+    <p class="footer-brand">CYBERCROWD&nbsp;RADIO</p>
+    <p class="footer-tag">A museum with a transmitter.</p>
+    <nav class="footer-nav" aria-label="Footer">
+      <a href="station.html">Listen</a><a href="easel.html">The Easel</a><a href="channels.html">Channels</a><a href="shows.html">Shows</a><a href="archive.html">Archive</a><a href="request.html">Request Line</a><a href="join.html">Join</a>
+    </nav>
+    <p class="footer-copy">© <span id="year">2026</span> Cybercrowd Radio. All rights reserved.</p>
+  </footer>
+
+  <!-- ============ adWorm corners: 4 fixed squares ============ -->
+  <div class="adworm-corner" data-adworm="corner-nw" role="complementary" aria-label="Advertisement"></div>
+  <div class="adworm-corner" data-adworm="corner-ne" role="complementary" aria-label="Advertisement"></div>
+  <div class="adworm-corner" data-adworm="corner-sw" role="complementary" aria-label="Advertisement"></div>
+  <div class="adworm-corner" data-adworm="corner-se" role="complementary" aria-label="Advertisement"></div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+  <script src="config.js"></script>
+  <script src="adworm.js"></script>
+  <script src="cc-easel.js"></script>
+  <script src="cc-page.js"></script>
+</body>
+</html>
