@@ -259,14 +259,18 @@
     }, 100); // tiny delay breaks the recursion chain
   }
 
+  var songEndInProgress = false;
   function onSongEnd() {
     if (stopped) return;
+    if (songEndInProgress) return; // prevent double-fire (ended + timeupdate)
+    songEndInProgress = true;
     deadStreak = 0; // a song actually played — reset the streak
     // Song ENDED (actually played). DJ talks about the NEXT song, then it plays.
     // Prefer known-working tracks so the music keeps flowing.
     trackIndex = pickNextTrack();
     // If AI DJ is off, skip the announcement and go straight to music.
     if (window.CCKineticEnabled === false) {
+      songEndInProgress = false;
       playCurrent();
       return;
     }
@@ -282,6 +286,7 @@
       preloader.load();
     } catch (e) {}
     djSay(script, function () {
+      songEndInProgress = false;
       if (!stopped) playCurrent();
     });
   }
