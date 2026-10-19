@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Your Account — Cybercrowd Radio</title>
+<style>
+  body { background: #0a0a0a; color: #e9c979; font-family: Georgia, serif; margin: 0; padding: 40px 20px; text-align: center; }
+  h1 { font-size: 2.5rem; margin-bottom: 10px; letter-spacing: 0.05em; }
+  p { color: #999; margin-bottom: 30px; }
+  form { max-width: 400px; margin: 0 auto; }
+  label { display: block; text-align: left; margin: 15px 0 5px; color: #c9a227; font-weight: bold; }
+  input { width: 100%; padding: 12px; font-size: 1rem; border: 2px solid #c9a227; border-radius: 8px; background: #1a1a1a; color: #fff; box-sizing: border-box; }
+  button { width: 100%; padding: 15px; margin-top: 25px; font-size: 1.1rem; font-weight: bold; color: #000; background: linear-gradient(180deg, #ffd700, #cc8800); border: none; border-radius: 8px; cursor: pointer; }
+  button:hover { opacity: 0.9; }
+  a { color: #c9a227; }
+</style>
+</head>
+<body>
+  <h1>Create Your Account</h1>
+  <p>Join the crowd. Pick your handle.</p>
+  <form id="createAccountForm">
+    <label for="email">Email</label>
+    <input type="email" id="email" required placeholder="you@example.com">
+    
+    <label for="handle">Choose your handle</label>
+    <input type="text" id="handle" required placeholder="Your DJ name" maxlength="30">
+    
+    <button type="submit">Create Account</button>
+  </form>
+  <p style="margin-top: 30px;"><a href="station.html">← Back to the station</a></p>
+
+<script>
+document.getElementById('createAccountForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var email = document.getElementById('email').value.trim();
+  var handle = document.getElementById('handle').value.trim();
+  if (!email || !handle) return;
+  try {
+    localStorage.setItem('ccr-handle', handle);
+    localStorage.setItem('ccr-email', email);
+  } catch (_) {}
+  window.location.href = 'station.html';
+});
+</script>
+</body>
+</html>
