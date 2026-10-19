@@ -16,19 +16,6 @@
   var statusEl = null;
   var tracks = [];
   var trackIndex = 0;
-  var lastTrackId = null; // avoid repeating the same song twice
-
-  // Preload TTS voices — mobile browsers load them async, first speak() gets default
-  try {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.getVoices();
-      if (window.speechSynthesis.onvoiceschanged !== undefined) {
-        window.speechSynthesis.onvoiceschanged = function () {
-          window.speechSynthesis.getVoices();
-        };
-      }
-    }
-  } catch (e) {}
 
   function setStatus(t) {
     if (statusEl) statusEl.textContent = t;
@@ -76,8 +63,8 @@
       window.speechSynthesis.cancel();
       var u = new SpeechSynthesisUtterance(text);
       u.rate = 1.0;    // steady, not rushed
-      u.pitch = 1.0;   // natural — female voice, James's choice
-      // ONE voice: find the best English female voice, no picker. Preloaded.
+      u.pitch = 0.5;   // deep — gruff older man
+      // ONE voice: find the most masculine English voice, no picker.
       try {
         var voices = window.speechSynthesis.getVoices();
         var best = null;
@@ -89,14 +76,15 @@
           // English only
           if (lang && lang.indexOf('en') !== 0) continue;
           var score = 0;
-          // Strong female indicators — James: "the girl really does a good job"
-          if (/female/.test(n)) score += 10;
-          if (/samantha|victoria|zira|aria|jenny|michelle|emma|sophia|karen|moira|tessa/.test(n)) score += 8;
-          // Penalize male/robot indicators
-          if (/male|david|daniel|james|george|fred/.test(n)) score -= 20;
+          // Strong male indicators
+          if (/male/.test(n)) score += 10;
+          if (/david|daniel|james|george|aaron|matthew|michael|john|robert|william|thomas|fred|alex/.test(n)) score += 8;
+          // Penalize female indicators
+          if (/female|samantha|victoria|zira|aria|jenny|michelle|emma|sophia/.test(n)) score -= 20;
           if (score > bestScore) { bestScore = score; best = v; }
         }
         if (best && bestScore > 0) u.voice = best;
+        // If no male voice found, the low pitch (0.5) masculinizes whatever's there.
       } catch (e) {}
       u.onend = once;
       u.onerror = once;
@@ -110,7 +98,6 @@
     if (stopped || !tracks.length) return;
     var t = tracks[trackIndex % tracks.length];
     var p = parseTrack(t.title);
-    lastTrackId = t.id; // remember so we don't repeat
     setStatus('Now playing: ' + t.title);
     try {
       // Reuse single audio element — mobile browsers choke on many Audio objects
@@ -119,21 +106,6 @@
         audio.preload = 'auto';
         audio.addEventListener('ended', onSongEnd);
         audio.addEventListener('error', skipDead);
-        // Backup end detection: some phones don't fire 'ended' reliably.
-        // If we're within 1.5s of the end and still playing, trigger the handoff.
-        var endFired = false;
-        audio.addEventListener('timeupdate', function () {
-          try {
-            if (!audio.duration || endFired || stopped) return;
-            var remaining = audio.duration - audio.currentTime;
-            if (remaining < 1.5 && remaining > 0) {
-              endFired = true;
-              onSongEnd();
-            }
-          } catch (e) {}
-        });
-        // Reset the end flag for each new song
-        audio.addEventListener('playing', function () { endFired = false; });
         // If the stream stalls with no error, don't hang — skip after 20s.
         audio.addEventListener('stalled', function () {
           clearTimeout(playWatchdog);
@@ -208,27 +180,19 @@
 
   function pickNextTrack() {
     var ids = tracks.map(function (t) { return t.id; });
-    // Never pick the same track twice in a row
-    function notLast(id) { return id !== lastTrackId; }
-    // Prefer known-working tracks (excluding the one just played)
-    var working = ids.filter(function (id) { return trackHealth.working[id] && notLast(id); });
+    // Prefer known-working tracks
+    var working = ids.filter(function (id) { return trackHealth.working[id]; });
     if (working.length > 0) {
       var wid = working[Math.floor(Math.random() * working.length)];
       return tracks.findIndex(function (t) { return t.id === wid; });
     }
-    // Avoid known-dead (unless everything is dead), exclude last played
-    var alive = ids.filter(function (id) { return !trackHealth.dead[id] && notLast(id); });
+    // Avoid known-dead (unless everything is dead)
+    var alive = ids.filter(function (id) { return !trackHealth.dead[id]; });
     if (alive.length > 0) {
       var aid = alive[Math.floor(Math.random() * alive.length)];
       return tracks.findIndex(function (t) { return t.id === aid; });
     }
-    // Fallback: any track except the last one
-    var others = ids.filter(notLast);
-    if (others.length > 0) {
-      var oid = others[Math.floor(Math.random() * others.length)];
-      return tracks.findIndex(function (t) { return t.id === oid; });
-    }
-    // Only one track exists — have to repeat it
+    // Everything is dead — try anything, maybe something came back
     return Math.floor(Math.random() * tracks.length);
   }
 
@@ -259,18 +223,14 @@
     }, 100); // tiny delay breaks the recursion chain
   }
 
-  var songEndInProgress = false;
   function onSongEnd() {
     if (stopped) return;
-    if (songEndInProgress) return; // prevent double-fire (ended + timeupdate)
-    songEndInProgress = true;
     deadStreak = 0; // a song actually played — reset the streak
     // Song ENDED (actually played). DJ talks about the NEXT song, then it plays.
     // Prefer known-working tracks so the music keeps flowing.
     trackIndex = pickNextTrack();
     // If AI DJ is off, skip the announcement and go straight to music.
     if (window.CCKineticEnabled === false) {
-      songEndInProgress = false;
       playCurrent();
       return;
     }
@@ -278,15 +238,7 @@
     var p = parseTrack(next.title);
     var script = kineticScript(p.title, p.artist);
     setStatus('DJ is talking…');
-    // Cue the next song WHILE the DJ talks — preload it so there's no gap.
-    try {
-      var preloader = new Audio();
-      preloader.preload = 'auto';
-      preloader.src = '/t/' + next.id;
-      preloader.load();
-    } catch (e) {}
     djSay(script, function () {
-      songEndInProgress = false;
       if (!stopped) playCurrent();
     });
   }
