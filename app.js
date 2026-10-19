@@ -114,8 +114,10 @@
 
   /* ---------- ticker ---------- */
   const track = $("tickerTrack");
-  const items = (cfg.ticker || []).map((t) => `<span>${t}</span><i>✦</i>`).join("");
-  track.innerHTML = items + items;
+  if (track) {
+    const items = (cfg.ticker || []).map((t) => `<span>${t}</span><i>✦</i>`).join("");
+    track.innerHTML = items + items;
+  }
 
   /* ---------- shows ---------- */
   const grid = $("showsGrid");
@@ -125,6 +127,7 @@
   const DAY_NAMES = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
   let liveShow = null;
   let todayShow = null;
+  if (grid) {
   (cfg.shows || []).forEach((s) => {
     const el = document.createElement("article");
     el.className = "show";
@@ -144,9 +147,11 @@
     grid.appendChild(el);
   });
   if (liveShow) {
-    $("liveNow").hidden = false;
-    $("liveNowName").textContent = liveShow.name;
+    const liveNowEl = $("liveNow"), liveNowNameEl = $("liveNowName");
+    if (liveNowEl) liveNowEl.hidden = false;
+    if (liveNowNameEl) liveNowNameEl.textContent = liveShow.name;
   }
+  } // end if (grid) — shows live on shows.html now
 
   /* ---------- day-aware hero: the station knows what day it is ---------- */
   function standbyText() {
@@ -158,14 +163,17 @@
 
   /* ---------- retired segments (preserved, never deleted) ---------- */
   const retiredList = $("retiredList");
+  if (retiredList) {
   (cfg.retiredSegments || []).forEach((r) => {
     const li = document.createElement("li");
     li.innerHTML = `<strong>${r.name}</strong> — ${r.note}`;
     retiredList.appendChild(li);
   });
+  } // end if (retiredList) — retired segments live on shows.html now
 
   /* ---------- channels ---------- */
   const channelsGrid = $("channelsGrid");
+  if (channelsGrid) {
   const channels = (cfg.channels || []).filter((c) => (c.src || "").trim() !== "");
   if (!channels.length) {
     channelsGrid.innerHTML = `
@@ -183,6 +191,7 @@
       channelsGrid.appendChild(el);
     });
   }
+  } // end if (channelsGrid) — channels live on channels.html now
 
   /* ---------- donor wall (local until the archive backend lands) ---------- */
   const donorWall = $("donorWall");
@@ -192,6 +201,7 @@
     catch (_) { return []; }
   }
   function renderDonors() {
+    if (!donorWall) return;
     const donors = loadDonors();
     donorWall.innerHTML = "";
     if (!donors.length) {
@@ -212,10 +222,12 @@
 
   /* ---------- archive mail line ---------- */
   const mailTo = (cfg.archive && cfg.archive.mailTo || "").trim();
-  if (mailTo) $("mailLine").textContent = "Mail your LPs to: " + mailTo;
+  const mailLineEl = $("mailLine");
+  if (mailTo && mailLineEl) mailLineEl.textContent = "Mail your LPs to: " + mailTo;
 
   /* ---------- membership tiers ---------- */
   const tiersGrid = $("tiersGrid");
+  if (tiersGrid) {
   const stripeLive = (cfg.stripePublishableKey || "").trim() !== "";
   (cfg.memberships || []).forEach((m, i) => {
     const el = document.createElement("div");
@@ -244,6 +256,7 @@
     el.appendChild(btn);
     tiersGrid.appendChild(el);
   });
+  } // end if (tiersGrid) — tiers live on join.html now
 
   /* ============================================================
      THE RECEIVER — honest live player
@@ -610,6 +623,7 @@
      Sound never changes — layout only.
      ============================================================ */
   const easel = $("easel");
+  if (easel) { // the easel lives on easel.html now
   const squares = Array.from(easel.querySelectorAll(".video-square"));
   let dragEl = null, dropTarget = null;
 
@@ -715,6 +729,7 @@
       target.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "nearest" });
     });
   });
+  } // end if (easel)
 
   /* ============================================================
      CHAT DOCK — open / closed / undocked-and-draggable
@@ -847,6 +862,7 @@
      ============================================================ */
   function wireForm(formId, msgId, okText) {
     const form = $(formId), msg = $(msgId);
+    if (!form || !msg) return;
     form.addEventListener("submit", (e) => {
       e.preventDefault();
       // TODO: POST to backend (Cloudflare Worker + D1/KV, or form service).
