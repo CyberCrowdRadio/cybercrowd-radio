@@ -27,7 +27,7 @@ window.STATION_CONFIG = {
      e.g. "https://stream.example.com:8000/live".
      Leave empty ("") and the player shows an honest offline state.
      The audio streaming server is still undecided — do not fake it. */
-  streamUrl: "",
+  streamUrl: "http://134.209.222.237:8000/stream",
 
   /* ---------- Firebase (chat) ----------
      James set this up 2026-10-17 for real-time chat.
