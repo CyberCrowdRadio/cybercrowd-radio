@@ -154,6 +154,11 @@
   try {
     var saved = localStorage.getItem('cc-track-health');
     if (saved) trackHealth = JSON.parse(saved);
+    // Clear stale dead list — the old 5-second watchdog poisoned it with
+    // false positives (slow-buffering tracks marked dead). Fresh start:
+    // let tracks prove themselves again instead of avoiding good songs.
+    trackHealth.dead = {};
+    saveHealth();
   } catch (_) {}
 
   function saveHealth() {
