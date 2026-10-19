@@ -46,8 +46,12 @@
   function setHandle(h) {
     h = (h || "").trim().toLowerCase().replace(/[^a-z0-9'_-]/g, "");
     if (!h) return false;
-    // Block cybercrowd for everyone — no exceptions
-    if (RESERVED.some(r => h.includes(r))) {
+    // Block cybercrowd for everyone EXCEPT the founder — James owns it.
+    // If your current handle is the founder handle, you can claim it.
+    var current = "";
+    try { current = localStorage.getItem(HANDLE_KEY) || ""; } catch (_) {}
+    var isFounder = (current.toLowerCase() === FOUNDER_HANDLE);
+    if (!isFounder && RESERVED.some(r => h.includes(r))) {
       say("That handle is reserved by the founder.");
       return false;
     }
