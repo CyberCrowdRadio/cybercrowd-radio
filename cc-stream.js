@@ -25,6 +25,9 @@
     if (window.CCConfig && window.CCConfig.STREAM_URL) {
       return window.CCConfig.STREAM_URL;
     }
+    if (window.STATION_CONFIG && window.STATION_CONFIG.streamUrl) {
+      return window.STATION_CONFIG.streamUrl;
+    }
     try {
       var saved = localStorage.getItem('cc-stream-url');
       if (saved) return saved;
