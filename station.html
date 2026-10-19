@@ -118,13 +118,23 @@
         <h2>Tip&nbsp;Jar</h2>
         <p class="section-sub">One tap. No wallets. Just tip.</p>
       </div>
-      <div>
-        <p class="now-playing">Balance: <span id="tipjarBalance">—</span></p>
-        <p><button id="tipjarBtn" class="btn btn-primary btn-lg">TIP 1 CRWD</button>
-        <button id="tipjarBuy" class="btn btn-secondary">ADD COINS</button></p>
-        <p class="signal-state" id="tipjarStatus" aria-live="polite">Loading...</p>
+      <div id="tipJarCard" style="max-width:420px;margin:0 auto;background:#0a0a0a;border:3px solid #c9a227;border-radius:16px;padding:28px 24px;text-align:center;position:relative;box-shadow:0 4px 24px rgba(201,162,39,0.25);">
+        <span style="position:absolute;left:18px;top:50%;transform:translateY(-50%);color:#c9a227;font-size:1.8rem;font-weight:300;">+</span>
+        <span style="position:absolute;right:18px;top:50%;transform:translateY(-50%);color:#c9a227;font-size:1.8rem;font-weight:300;">+</span>
+        <div style="font-size:3rem;margin-bottom:8px;">🫙</div>
+        <p class="now-playing" style="color:#e9c979;margin:0 0 16px;">Balance: <span id="tipjarBalance">—</span></p>
+        <button id="tipjarBtn" style="display:block;width:100%;padding:16px;margin-bottom:12px;font-size:1.15rem;font-weight:800;letter-spacing:0.08em;color:#2a1b0b;background:linear-gradient(180deg,#ffd700 0%,#ffaa00 50%,#cc8800 100%);border:2px solid #fff3c4;border-radius:10px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(255,215,0,0.5),inset 0 1px 0 rgba(255,255,255,0.5);">ADD A TIP</button>
+        <button id="tipjarBuy" style="display:block;width:100%;padding:12px;font-size:0.95rem;font-weight:700;letter-spacing:0.06em;color:#c9a227;background:transparent;border:1px solid #c9a227;border-radius:10px;cursor:pointer;">ADD COINS</button>
+        <p class="signal-state" id="tipjarStatus" aria-live="polite" style="margin:12px 0 0;font-size:0.85rem;color:#888;">Loading...</p>
+        <p style="margin:16px 0 0;color:#c9a227;font-weight:700;letter-spacing:0.2em;font-size:0.9rem;">TIP JAR</p>
         <div id="coinBannerSlot" style="margin-top:18px;"></div>
       </div>
+      <style>
+        #tipjarBtn::after{content:"";position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.7),transparent);animation:tipjar-bling 2.5s ease-in-out infinite;}
+        @keyframes tipjar-bling{0%{left:-80%;}55%{left:130%;}100%{left:130%;}}
+        #tipjarBtn:hover{filter:brightness(1.1);}
+        #tipjarBtn:active{filter:brightness(0.95);}
+      </style>
     </section>
 
     <!-- ============ MEMBERSHIP ============ -->
