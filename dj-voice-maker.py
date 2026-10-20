@@ -28,7 +28,8 @@
 #   python3 dj-voice-maker.py "You're listening to Cybercrowd Radio." --out kinetic.mp3
 # Setup: OPENAI_API_KEY must be set on the server. The key never
 # lives in this file. Voice can be changed in one place:
-# the KINETIC_TTS_VOICE setting.
+# the KINETIC_TTS_VOICE setting. Her performance direction
+# lives in one place: DJ_DIRECTION below.
 #
 import argparse
 import json
@@ -38,6 +39,14 @@ import sys
 import tempfile
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
+
+DJ_DIRECTION = (
+    "Voice: a woman in her thirties with grit in her throat - a late-night "
+    "FM rock DJ with Joan Jett attitude, warm and a little wild. "
+    "Delivery: fast, loose, and grinning, talking to one friend at 2 a.m., "
+    "never reading a script. Punch the words that matter and mean the howl. "
+    "Never sound like an announcer, a robot, or a voicemail menu."
+)
 
 
 def generate_voice(text, output="kinetic.mp3", *, voice=None, model=None):
@@ -58,11 +67,13 @@ def generate_voice(text, output="kinetic.mp3", *, voice=None, model=None):
     if destination.suffix.lower() != ".mp3":
         raise ValueError("Output filename must end in .mp3.")
     payload = {
-        "model": model or os.environ.get("KINETIC_TTS_MODEL", "tts-1"),
+        "model": model or os.environ.get("KINETIC_TTS_MODEL", "gpt-4o-mini-tts"),
         "voice": voice or os.environ.get("KINETIC_TTS_VOICE", "nova"),
         "input": text,
         "response_format": "mp3",
     }
+    if payload["model"] == "gpt-4o-mini-tts":
+        payload["instructions"] = DJ_DIRECTION
     request = Request(
         "https://api.openai.com/v1/audio/speech",
         data=json.dumps(payload).encode("utf-8"),
@@ -100,7 +111,7 @@ def main():
     parser.add_argument("text", help="The exact announcement to speak")
     parser.add_argument("--out", default="kinetic.mp3", help="Output MP3 path")
     parser.add_argument("--voice", default=None, help="Override the default nova voice")
-    parser.add_argument("--model", default=None, help="Override the default tts-1 model")
+    parser.add_argument("--model", default=None, help="Override the default gpt-4o-mini-tts model")
     args = parser.parse_args()
     try:
         result = generate_voice(args.text, args.out, voice=args.voice, model=args.model)
