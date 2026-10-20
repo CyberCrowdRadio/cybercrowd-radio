@@ -1,145 +1,140 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Email Confirmed — Cybercrowd Radio</title>
-  <meta name="description" content="Your Cybercrowd Radio email is confirmed." />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style.css" />
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='8' y='8' width='84' height='84' rx='6' fill='%231a120b' stroke='%23c9a227' stroke-width='5'/><circle cx='50' cy='50' r='22' fill='none' stroke='%23c9a227' stroke-width='4'/><circle cx='50' cy='50' r='5' fill='%23a93226'/></svg>" />
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Create Your Account — Cybercrowd Radio</title>
+<style>
+  body { background: #0a0a0a; color: #e9c979; font-family: Georgia, serif; margin: 0; padding: 40px 20px; text-align: center; }
+  h1 { font-size: 2.5rem; margin-bottom: 10px; letter-spacing: 0.05em; }
+  p { color: #999; margin-bottom: 30px; }
+  form { max-width: 400px; margin: 0 auto; }
+  label { display: block; text-align: left; margin: 15px 0 5px; color: #c9a227; font-weight: bold; }
+  input { width: 100%; padding: 12px; font-size: 1rem; border: 2px solid #c9a227; border-radius: 8px; background: #1a1a1a; color: #fff; box-sizing: border-box; }
+  button { width: 100%; padding: 15px; margin-top: 25px; font-size: 1.1rem; font-weight: bold; color: #000; background: linear-gradient(180deg, #ffd700, #cc8800); border: none; border-radius: 8px; cursor: pointer; }
+  button:hover { opacity: 0.9; }
+  a { color: #c9a227; }
+</style>
 </head>
-<body class="landing">
+<body>
+  <h1>Create Your Account</h1>
+  <p>Join the crowd. Pick your handle.</p>
+  <p id="emailDisplay" style="color:#c9a227;"></p>
+  <form id="createAccountForm">
+    <label for="handle">Choose your handle <button type="button" id="handleHelp" style="background:none;border:1px solid #c9a227;border-radius:50%;width:20px;height:20px;color:#c9a227;font-size:12px;cursor:pointer;padding:0;" aria-label="What is a handle?">?</button></label>
+    <input type="text" id="handle" required placeholder="Your DJ name" maxlength="30">
+    <p id="handleHelpText" style="display:none;color:#999;font-size:0.85rem;margin:5px 0 0;text-align:left;">Your handle is your original single-use account name. This is the person you may want to link to your other accounts. Handles containing "cybercrowd" are not allowed. We block impersonators — fakes built to look like originals for clickbaiting.</p>
+    
+    <label for="project">Project name <button type="button" id="projectHelp" style="background:none;border:1px solid #c9a227;border-radius:50%;width:20px;height:20px;color:#c9a227;font-size:12px;cursor:pointer;padding:0;" aria-label="What is a project name?">?</button></label>
+    <input type="text" id="project" placeholder="Name your show or channel" maxlength="60">
+    <p id="projectHelpText" style="display:none;color:#999;font-size:0.85rem;margin:5px 0 0;text-align:left;">Your project name is your show — your account header. It's the name people see.</p>
+    
+    <label for="password">Password <button type="button" id="passwordHelp" style="background:none;border:1px solid #c9a227;border-radius:50%;width:20px;height:20px;color:#c9a227;font-size:12px;cursor:pointer;padding:0;" aria-label="Password requirements?">?</button></label>
+    <input type="password" id="password" required placeholder="Choose a password" minlength="8" maxlength="29">
+    <p id="passwordHelpText" style="display:none;color:#999;font-size:0.85rem;margin:5px 0 0;text-align:left;">8 to 29 characters. Use uppercase, lowercase, a number, and a symbol.</p>
+    
+    <label for="confirmPassword">Confirm password</label>
+    <input type="password" id="confirmPassword" required placeholder="Re-enter your password" minlength="8" maxlength="29">
+    
+    <button type="submit">Create Account</button>
+  </form>
+  <p style="margin-top: 30px;"><a href="station.html">← Back to the station</a></p>
 
-  <main class="landing-wrap">
-    <section class="signup-card" aria-label="Email confirmation">
-      <p class="eyebrow">Cybercrowd Radio</p>
-      <h1 class="landing-h1" id="verifyTitle">Checking…</h1>
-      <p class="landing-sub" id="verifySub">Confirming your email.</p>
-      <div id="namePicker" hidden>
-        <p class="landing-sub">Now pick your handle — the name the crowd will see.</p>
-        <input id="handleInput" type="text" placeholder="Your handle" maxlength="24" autocomplete="off"
-          style="width:100%;padding:14px;font-size:1.1rem;border:2px solid #c9a227;border-radius:8px;background:#1a120b;color:#fff;margin-bottom:12px;box-sizing:border-box;">
-        <div style="display:flex;gap:12px;">
-          <button id="pickBtn" class="enter-btn" style="flex:1;">Pick It</button>
-          <button id="skipBtn" class="enter-btn" style="flex:1;background:transparent;border:1px solid #444;color:#888;">Skip</button>
-        </div>
-        <p class="landing-sub" style="font-size:0.85rem;margin-top:12px;">Use the same name as your socials so the crowd recognizes you.</p>
-      </div>
-      <div id="verifyCta" hidden>
-        <a class="enter-btn" href="station.html">ENTER THE STATION</a>
-      </div>
-      <p style="margin-top:20px;font-size:0.85rem;"><a href="#" id="reportLink" style="color:#888;">If this is not you, click to report</a></p>
-      <p class="back-line"><a href="index.html">← Back to the entrance</a></p>
-    </section>
-  </main>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
+<script src="config.js"></script>
+<script src="cc-auth.js"></script>
+<script>
+// Help toggles
+document.getElementById('handleHelp').addEventListener('click', function() {
+  var help = document.getElementById('handleHelpText');
+  help.style.display = help.style.display === 'none' ? 'block' : 'none';
+});
+document.getElementById('projectHelp').addEventListener('click', function() {
+  var help = document.getElementById('projectHelpText');
+  help.style.display = help.style.display === 'none' ? 'block' : 'none';
+});
+document.getElementById('passwordHelp').addEventListener('click', function() {
+  var help = document.getElementById('passwordHelpText');
+  help.style.display = help.style.display === 'none' ? 'block' : 'none';
+});
 
-  <footer class="landing-foot">
-    <p class="footer-brand">CYBERCROWD&nbsp;RADIO</p>
-    <p class="footer-copy">© <span id="year">2026</span> Cybercrowd Radio. All rights reserved.</p>
-  </footer>
+// Live password match - field glows blue when matched
+var passwordInput = document.getElementById('password');
+var confirmInput = document.getElementById('confirmPassword');
 
-  <script>
-    (function () {
-      document.getElementById("year").textContent = new Date().getFullYear();
-      var title = document.getElementById("verifyTitle");
-      var sub = document.getElementById("verifySub");
-      var cta = document.getElementById("verifyCta");
-      var namePicker = document.getElementById("namePicker");
-      var token = new URLSearchParams(window.location.search).get("token") || "";
-      if (!token) {
-        title.textContent = "No link found.";
-        sub.textContent = "That confirmation link is missing or broken — head back and sign up again.";
-        return;
-      }
-      fetch("/api/verify-email?token=" + encodeURIComponent(token))
-        .then(function (r) { return r.json(); })
-        .then(function (data) {
-          if (data && data.success) {
-            try {
-              localStorage.setItem("cybercrowd-verified", "1");
-              if (data.email) localStorage.setItem("cybercrowd-email", data.email);
-            } catch (e) {}
-            // Redirect to station.html with verified flag (signup overlay opens, audio keeps playing)
-            var email = (data.email || new URLSearchParams(window.location.search).get("email") || "");
-            window.location.href = "station.html?verified=1&email=" + encodeURIComponent(email);
-          } else {
-            title.textContent = "Link expired.";
-            sub.textContent = "That confirmation link is old or invalid — sign up again and we'll send a fresh one.";
-          }
-        })
-        .catch(function () {
-          title.textContent = "Couldn't reach us.";
-          sub.textContent = "Check your connection and try the link again.";
-        });
+function checkMatch() {
+  var pw = passwordInput.value;
+  var cpw = confirmInput.value;
+  if (!cpw) {
+    confirmInput.style.borderColor = '';
+    confirmInput.style.boxShadow = '';
+    return;
+  }
+  if (pw === cpw && pw.length >= 8) {
+    confirmInput.style.borderColor = '#2196F3';
+    confirmInput.style.boxShadow = '0 0 15px #2196F3';
+  } else {
+    confirmInput.style.borderColor = '';
+    confirmInput.style.boxShadow = '';
+  }
+}
+passwordInput.addEventListener('input', checkMatch);
+confirmInput.addEventListener('input', checkMatch);
 
-      function setupNamePicker() {
-        var input = document.getElementById("handleInput");
-        var pickBtn = document.getElementById("pickBtn");
-        var skipBtn = document.getElementById("skipBtn");
+// Get email from verification (URL param or sessionStorage)
+(function() {
+  var email = "";
+  try {
+    var params = new URLSearchParams(window.location.search);
+    email = params.get("email") || sessionStorage.getItem("cybercrowd_entry_email") || "";
+  } catch (_) {}
+  if (email) {
+    document.getElementById("emailDisplay").textContent = email;
+  }
+})();
 
-        function saveHandle(h) {
-          h = (h || "").trim().toLowerCase().replace(/[^a-z0-9'_-]/g, "");
-          if (h.includes("cybercrowd")) {
-            alert("That handle is reserved by the founder.");
-            return false;
-          }
-          if (!h) h = "guest";
-          try {
-            localStorage.setItem("ccr-handle", h);
-            var handles = JSON.parse(localStorage.getItem("cybercrowd-handles") || "[]");
-            handles.push(h);
-            localStorage.setItem("cybercrowd-handles", JSON.stringify(handles.slice(-5)));
-            var email = localStorage.getItem("cybercrowd-email") || "";
-            var list = JSON.parse(localStorage.getItem("cybercrowd-list") || "[]");
-            if (email && list.indexOf(email) === -1) list.push(email);
-            localStorage.setItem("cybercrowd-list", JSON.stringify(list));
-          } catch (e) {}
-          return true;
-        }
-
-        pickBtn.addEventListener("click", function() {
-          if (saveHandle(input.value)) window.location.href = "station.html";
-        });
-        input.addEventListener("keypress", function(e) {
-          if (e.key === "Enter" && saveHandle(input.value)) window.location.href = "station.html";
-        });
-        skipBtn.addEventListener("click", function() {
-          saveHandle("guest");
-          window.location.href = "station.html";
-        });
-        input.focus();
-      }
-    })();
-
-    // Report: "If this is not you"
-    document.getElementById('reportLink').addEventListener('click', function(e) {
-      e.preventDefault();
-      var token = new URLSearchParams(window.location.search).get("token") || "";
-      var email = new URLSearchParams(window.location.search).get("email") || "";
-      var report = {
-        type: 'impersonation',
-        token: token,
-        email: email,
-        timestamp: new Date().toISOString(),
-        userAgent: navigator.userAgent
-      };
-      // Save to Firebase if available, else localStorage
-      try {
-        if (window.firebase && window.firebase.database) {
-          window.firebase.database().ref('reports').push(report);
-        } else {
-          var reports = JSON.parse(localStorage.getItem('ccr-reports') || '[]');
-          reports.push(report);
-          localStorage.setItem('ccr-reports', JSON.stringify(reports));
-        }
-        alert('Reported. The admin will review this.');
-      } catch (err) {
-        alert('Report saved.');
-      }
-    });
-  </script>
+document.getElementById('createAccountForm').addEventListener('submit', function(e) {
+  e.preventDefault();
+  var handle = document.getElementById('handle').value.trim();
+  var project = document.getElementById('project').value.trim();
+  var password = document.getElementById('password').value;
+  var confirmPassword = document.getElementById('confirmPassword').value;
+  var email = document.getElementById('emailDisplay').textContent;
+  if (!handle || !password) return;
+  if (password.length < 8 || password.length > 29) {
+    alert('Password must be 8 to 29 characters.');
+    return;
+  }
+  if (password !== confirmPassword) {
+    alert('Passwords do not match.');
+    return;
+  }
+  var submitBtn = document.querySelector('#createAccountForm button[type="submit"]');
+  var origBtnText = submitBtn ? submitBtn.textContent : '';
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Creating...'; }
+  // Prefer the email verified via the blue link; fall back to the entry email.
+  var verifiedEmail = '';
+  try { verifiedEmail = sessionStorage.getItem('ccr-verified-email') || ''; } catch (_) {}
+  if (!verifiedEmail) verifiedEmail = email;
+  window.CCAuth.createAccount({
+    email: verifiedEmail,
+    password: password,
+    handle: handle,
+    project: project
+  }).then(function (acct) {
+    try {
+      localStorage.setItem('ccr-handle', acct.handle);
+      localStorage.setItem('ccr-email', acct.email);
+      if (project) localStorage.setItem('ccr-project', project);
+    } catch (_) {}
+    window.location.href = 'station.html';
+  }).catch(function (err) {
+    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origBtnText; }
+    alert(err.message || 'Could not create the account. Try again.');
+  });
+});
+</script>
 </body>
 </html>
