@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enter — Cybercrowd Radio</title>
+<style>
+  body { background: #0a0a0a; color: #e9c979; font-family: Georgia, serif; margin: 0; padding: 40px 20px; text-align: center; }
+  h1 { font-size: 2.5rem; margin-bottom: 10px; letter-spacing: 0.05em; }
+  p { color: #999; margin-bottom: 30px; }
+  .box { max-width: 400px; margin: 0 auto; }
+  label { display: block; text-align: left; margin: 15px 0 5px; color: #c9a227; font-weight: bold; }
+  input { width: 100%; padding: 12px; font-size: 1rem; border: 2px solid #c9a227; border-radius: 8px; background: #1a1a1a; color: #fff; box-sizing: border-box; }
+  button { width: 100%; padding: 15px; margin-top: 25px; font-size: 1.1rem; font-weight: bold; color: #000; background: linear-gradient(180deg, #ffd700, #cc8800); border: none; border-radius: 8px; cursor: pointer; }
+  button:disabled { opacity: 0.5; cursor: default; }
+  a { color: #c9a227; }
+</style>
+</head>
+<body>
+  <h1>Cybercrowd Radio</h1>
+
+  <div class="box" id="doorStepEmail">
+    <p>Enter your email to sign up...</p>
+    <label for="doorEmail">Email</label>
+    <input type="email" id="doorEmail" placeholder="yourname@mymail.com">
+    <div id="doorTurnstile" style="display:none;margin-top:15px;"><div class="cf-turnstile" data-sitekey="0x4AAAAAAFT4WC4u5rb2Gr56" data-callback="onDoorTurnstile"></div></div>
+    <button type="button" id="doorSend" disabled>Send</button>
+    <p id="doorStatus" style="color:#f44336;font-size:0.9rem;margin:12px 0 0;"></p>
+    <p style="margin-top:30px;"><a href="signin.html">Already a member? Sign in</a></p>
+  </div>
+
+  <div class="box" id="doorStepCheck" style="display:none;">
+    <h2 style="color:#e9c979;">Check your email</h2>
+    <p>We sent you a link. Tap the blue link in that email to verify it's you — then you create your account.</p>
+    <p style="margin-top:30px;"><a href="signin.html">Already a member? Sign in</a></p>
+  </div>
+
+<script src="cc-authority.js"></script>
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script>
+  var emailInput = document.getElementById('doorEmail');
+  var turnstileDiv = document.getElementById('doorTurnstile');
+  var sendBtn = document.getElementById('doorSend');
+  var statusText = document.getElementById('doorStatus');
+  var turnstileToken = '';
+  var turnstilePassed = false;
+
+  function isValidEmail(v) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  }
+
+  // Turnstile callback (human must touch it)
+  window.onDoorTurnstile = function(token) {
+    turnstileToken = token || '';
+    turnstilePassed = !!turnstileToken;
+    sendBtn.disabled = false;
+  };
+
+  // Show Turnstile when a valid email is typed
+  emailInput.addEventListener('input', function() {
+    if (isValidEmail(emailInput.value.trim())) {
+      turnstileDiv.style.display = 'block';
+    } else {
+      turnstileDiv.style.display = 'none';
+      turnstilePassed = false;
+      turnstileToken = '';
+      sendBtn.disabled = true;
+    }
+  });
+
+  // Send → ask Radio-authority; "check your email" only on its word
+  sendBtn.addEventListener('click', async function() {
+    var email = emailInput.value.trim();
+    if (!isValidEmail(email)) {
+      statusText.textContent = 'Please enter a valid email.';
+      return;
+    }
+    if (!turnstilePassed) {
+      statusText.textContent = 'Please complete the security check.';
+      return;
+    }
+    sendBtn.disabled = true;
+    var sendLabel = sendBtn.textContent;
+    sendBtn.textContent = 'Sending...';
+    var res = null;
+    try {
+      res = await window.CCAuthority.ask('/api/signup', {
+        email: email,
+        turnstileToken: turnstileToken
+      });
+    } catch (_) {}
+    if (!res || !res.success) {
+      var why = (res && res.error) ? String(res.error) : '';
+      statusText.textContent = (why === 'not human')
+        ? 'The security check did not pass. Please complete it and try again.'
+        : ((why === 'authority-unreachable' || why === 'authority-bad-answer')
+          ? 'The station could not be reached. Please try again.'
+          : (why || 'That did not go through. Please try again.'));
+      sendBtn.disabled = false;
+      sendBtn.textContent = sendLabel;
+      if (window.turnstile) { try { window.turnstile.reset(); } catch (_) {} }
+      turnstilePassed = false;
+      turnstileToken = '';
+      return;
+    }
+    try { sessionStorage.setItem('cybercrowd_entry_email', email); } catch (_) {}
+    document.getElementById('doorStepEmail').style.display = 'none';
+    document.getElementById('doorStepCheck').style.display = 'block';
+  });
+</script>
+</body>
+</html>
