@@ -15,8 +15,11 @@
   }
 
   // Turnstile callback (human must touch it)
-  window.onOverlayTurnstile = function() {
-    turnstilePassed = true;
+  var turnstileToken = '';
+
+  window.onOverlayTurnstile = function(token) {
+    turnstileToken = token || '';
+    turnstilePassed = !!turnstileToken;
     sendBtn.disabled = false;
     sendBtn.style.opacity = '1';
   };
@@ -28,6 +31,7 @@
     } else {
       turnstileDiv.style.display = 'none';
       turnstilePassed = false;
+      turnstileToken = '';
       sendBtn.disabled = true;
       sendBtn.style.opacity = '0.5';
     }
@@ -45,15 +49,34 @@
       return;
     }
     sendBtn.disabled = true;
+    var sendLabel = sendBtn.textContent;
     sendBtn.textContent = 'Sending...';
+
+    var res = null;
     try {
-      await fetch('/api/auth/send-verification', {
+      var resp = await fetch('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email })
-      }).catch(function() { return null; });
-      try { sessionStorage.setItem('cybercrowd_entry_email', email); } catch (_) {}
+        body: JSON.stringify({ email: email, turnstileToken: turnstileToken })
+      });
+      res = await resp.json().catch(function() { return null; });
     } catch (_) {}
+
+    if (!res || !(res.success || res.ok)) {
+      var why = (res && res.error) ? String(res.error) : '';
+      statusText.textContent = (why === 'not human')
+        ? 'The security check did not pass. Please complete it and try again.'
+        : (why || 'That did not go through. Please try again.');
+      sendBtn.disabled = false;
+      sendBtn.textContent = sendLabel;
+      if (window.turnstile) { try { window.turnstile.reset(); } catch (_) {} }
+      turnstilePassed = false;
+      turnstileToken = '';
+      return;
+    }
+
+    try { sessionStorage.setItem('cybercrowd_entry_email', email); } catch (_) {}
+
     stepEmail.style.display = 'none';
     stepCheck.style.display = 'block';
   });
