@@ -34,8 +34,8 @@
       <p class="mission">Caretaker. Archive. Receiver of lost LPs.</p>
       <p class="landing-lede">Large library with daily mail-ins. Forgotten vinyl, mailed in and spun on the air — every donor credited by name on the honor wall.</p>
 
-      <a class="enter-btn" href="enter.html" id="enterBtn">ENTER</a>
-      <p class="enter-note">Tap ENTER — sign up, or sign in if you are already a member.</p>
+      <a class="enter-btn" href="station.html" id="enterBtn">ENTER</a>
+      <p class="enter-note">Tap ENTER — the live stream starts.</p>
     </section>
 
     <!-- ============ WELCOME FEED + JESTER ============ -->
@@ -88,8 +88,8 @@
         // Members skip signup; new users get signup overlay on station (audio keeps playing)
         try {
           var list = JSON.parse(localStorage.getItem("cybercrowd-list") || "[]");
-          if (list.length === 0) enterBtn.href = "enter.html";
-        } catch (err) { enterBtn.href = "enter.html"; }
+          if (list.length === 0) enterBtn.href = "station.html?signup=1";
+        } catch (err) { enterBtn.href = "station.html?signup=1"; }
 
         enterBtn.addEventListener("click", function () {
           try { sessionStorage.setItem("ccr-autostart", "1"); } catch (e) {}
