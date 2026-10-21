@@ -1,8 +1,8 @@
 /* CCPage — shared behavior for station sub-pages.
- * One file, one job: nav toggle, footer year, handle display.
+ * One file, one job: nav toggle, footer year, stage name display.
  *
- * DOES: mobile nav open/close, footer year, show the saved handle.
- * DOES NOT: prompt for handles (that lives on create-account.html).
+ * DOES: mobile nav open/close, footer year, show the member's stage name.
+ * DOES NOT: prompt for names (that lives on create-account.html).
  * DOES NOT: touch the player, chat, or broadcast (station.html only).
  */
 (function () {
@@ -26,13 +26,12 @@
     });
   }
 
-  // Handle pill: display the saved handle. Tap goes to create-account.html.
-  // No prompts — James: "not a fucking bullshit fake".
+  // Stage name pill: display the member's stage name, held in memory only.
+  // The stage name is the letters the member picked and claimed — his ID.
+  // Nothing here invents a name.
   var ht = $("handleText");
   if (ht) {
-    try {
-      var h = localStorage.getItem("ccr-handle");
-      if (h) ht.textContent = h;
-    } catch (_) {}
+    var n = (window.CCAccount && window.CCAccount.stageName) || "";
+    if (n) ht.textContent = n;
   }
 })();
