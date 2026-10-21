@@ -10,10 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='8' y='8' width='84' height='84' rx='6' fill='%231a120b' stroke='%23c9a227' stroke-width='5'/><circle cx='50' cy='50' r='22' fill='none' stroke='%23c9a227' stroke-width='4'/><circle cx='50' cy='50' r='5' fill='%23a93226'/></svg>" />
-<script>
-  /* The wall: no session, no station. ENTER is not access. */
-  try { if (!localStorage.getItem('ccr-session')) { window.location.replace('enter.html'); } } catch (e) {}
-</script>
+<!-- The wall is the plaque now: no session, the plaque stands over the playing station. ENTER is not access to the controls. -->
 </head>
 <body>
   <a class="skip" href="#listen">Skip to the player</a>
@@ -32,7 +29,7 @@
       <a href="archive.html">Archive</a>
       <a href="request.html">Request Line</a>
       <a href="#" class="signupDoor">Sign up</a>
-      <a href="signin.html">Sign in</a>
+      <a href="#" class="signinDoor">Sign in</a>
       <a href="join.html">Join</a>
       <a href="adworm.html">Advertise</a>
       <a href="https://www.patreon.com/c/cybercrowd" target="_blank" rel="noopener">Patreon</a>
@@ -56,7 +53,7 @@
     <a href="archive.html">Archive</a>
     <a href="request.html">Request Line</a>
     <a href="#" class="signupDoor">Sign up</a>
-    <a href="signin.html">Sign in</a>
+    <a href="#" class="signinDoor">Sign in</a>
     <a href="join.html">Join</a>
     <a href="adworm.html">Advertise</a>
     <a href="https://www.patreon.com/c/cybercrowd" target="_blank" rel="noopener">Patreon</a>
@@ -204,11 +201,17 @@
         if (window.CCSignup) window.CCSignup.open('email');
       });
     });
+    document.querySelectorAll('.signinDoor').forEach(function(a) {
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+        if (window.CCSignup) window.CCSignup.open('signin');
+      });
+    });
   </script>
 
   <!-- Signup Overlay (audio keeps playing underneath) -->
-  <div id="signupOverlay" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.85);z-index:1000;overflow-y:auto;">
-    <div style="max-width:420px;margin:40px auto;background:#0a0a0a;border:3px solid #c9a227;border-radius:16px;padding:30px 25px;position:relative;">
+  <div id="signupOverlay" style="display:none;position:fixed;inset:0;background:rgba(8,8,8,0.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:1000;overflow-y:auto;">
+    <div style="max-width:420px;margin:40px auto;background:rgba(10,10,10,0.94);border:3px solid #c9a227;border-radius:16px;padding:30px 25px;position:relative;">
       <button id="closeSignup" style="position:absolute;top:10px;right:15px;background:none;border:none;color:#888;font-size:24px;cursor:pointer;">×</button>
       
       <!-- Step 1: Email -->
@@ -216,10 +219,10 @@
         <h2 style="color:#e9c979;font-family:Georgia,serif;margin:0 0 10px;text-align:center;">Sign Up</h2>
         <p style="color:#999;text-align:center;margin:0 0 20px;">Enter your email to sign up...</p>
         <input type="email" id="overlayEmail" placeholder="yourname@mymail.com" style="width:100%;padding:12px;font-size:1rem;border:2px solid #c9a227;border-radius:8px;background:#1a1a1a;color:#fff;box-sizing:border-box;margin-bottom:15px;">
-        <div id="overlayTurnstile" style="display:none;margin-bottom:15px;"><div class="cf-turnstile" data-sitekey="0x4AAAAAAFT4WC4u5rb2Gr56" data-callback="onOverlayTurnstile"></div></div>
+        <div id="overlayTurnstile" style="display:none;margin-bottom:15px;"><div class="cf-turnstile" data-sitekey="0x4AAAAAAFT4WC4u5rb2Gr56" data-callback="onOverlayTurnstile" data-expired-callback="onOverlayTurnstileExpired" data-error-callback="onOverlayTurnstileError"></div></div>
         <button id="overlaySend" disabled style="width:100%;padding:13px;font-size:1rem;font-weight:bold;color:#000;background:linear-gradient(180deg,#ffd700,#cc8800);border:none;border-radius:8px;cursor:pointer;opacity:0.5;">Send</button>
         <p id="overlayStatus" style="color:#f44336;font-size:0.85rem;text-align:center;margin:10px 0 0;"></p>
-        <p style="text-align:center;margin:12px 0 0;font-size:0.9rem;"><a href="signin.html" style="color:#c9a227;">Already a member? Sign in</a></p>
+        <p style="text-align:center;margin:12px 0 0;font-size:0.9rem;"><a href="#" id="plaqueToSignin" style="color:#c9a227;">Already a member? Sign in</a></p>
       </div>
 
       <!-- Step 2: Check email popup -->
@@ -248,6 +251,19 @@
         <input type="text" id="overlayZip" placeholder="Your zip code" maxlength="10" style="width:100%;padding:10px;border:2px solid #c9a227;border-radius:8px;background:#1a1a1a;color:#fff;box-sizing:border-box;">
         <p id="zipHelp2" style="display:none;color:#999;font-size:0.8rem;margin:5px 0;">Your zip code — so Kinetic announces your weather, not somebody else's.</p>
 <button id="overlayCreate" style="width:100%;padding:13px;margin-top:20px;font-size:1rem;font-weight:bold;color:#000;background:linear-gradient(180deg,#ffd700,#cc8800);border:none;border-radius:8px;cursor:pointer;">Activate</button>
+      </div>
+
+      <!-- Step 4: Sign in -->
+      <div id="signupStepSignin" style="display:none;">
+        <h2 style="color:#e9c979;font-family:Georgia,serif;margin:0 0 10px;text-align:center;">Sign In</h2>
+        <p style="color:#999;text-align:center;margin:0 0 20px;">Welcome back. The station kept playing.</p>
+        <label style="display:block;margin:10px 0 5px;color:#c9a227;font-weight:bold;font-size:0.85rem;">Email</label>
+        <input type="email" id="plaqueSigninEmail" placeholder="yourname@mymail.com" style="width:100%;padding:10px;border:2px solid #c9a227;border-radius:8px;background:#1a1a1a;color:#fff;box-sizing:border-box;">
+        <label style="display:block;margin:10px 0 5px;color:#c9a227;font-weight:bold;font-size:0.85rem;">Password</label>
+        <input type="password" id="plaqueSigninPassword" placeholder="Your password" minlength="8" maxlength="29" style="width:100%;padding:10px;border:2px solid #c9a227;border-radius:8px;background:#1a1a1a;color:#fff;box-sizing:border-box;">
+        <button id="plaqueSigninBtn" style="width:100%;padding:13px;margin-top:20px;font-size:1rem;font-weight:bold;color:#000;background:linear-gradient(180deg,#ffd700,#cc8800);border:none;border-radius:8px;cursor:pointer;">Sign in</button>
+        <p id="plaqueSigninStatus" style="color:#f44336;font-size:0.85rem;text-align:center;margin:10px 0 0;"></p>
+        <p style="text-align:center;margin:12px 0 0;font-size:0.9rem;"><a href="#" id="plaqueToSignup" style="color:#c9a227;">New here? Sign up</a></p>
       </div>
     </div>
   </div>
