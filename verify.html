@@ -20,7 +20,8 @@
   <h1>Create Your Account</h1>
   <p>Join the crowd. Pick your handle.</p>
   <p id="emailDisplay" style="color:#c9a227;"></p>
-  <form id="createAccountForm">
+  <p id="verifyStatus" style="color:#c9a227;">Checking your link...</p>
+  <form id="createAccountForm" style="display:none;">
     <label for="handle">Choose your handle <button type="button" id="handleHelp" style="background:none;border:1px solid #c9a227;border-radius:50%;width:20px;height:20px;color:#c9a227;font-size:12px;cursor:pointer;padding:0;" aria-label="What is a handle?">?</button></label>
     <input type="text" id="handle" required placeholder="Your DJ name" maxlength="30">
     <p id="handleHelpText" style="display:none;color:#999;font-size:0.85rem;margin:5px 0 0;text-align:left;">Your handle is your original single-use account name. This is the person you may want to link to your other accounts. Handles containing "cybercrowd" are not allowed. We block impersonators — fakes built to look like originals for clickbaiting.</p>
@@ -36,15 +37,15 @@
     <label for="confirmPassword">Confirm password</label>
     <input type="password" id="confirmPassword" required placeholder="Re-enter your password" minlength="8" maxlength="29">
     
-    <button type="submit">Create Account</button>
+    <label for="zip">Zip code <button type="button" id="zipHelp" style="background:none;border:1px solid #c9a227;border-radius:50%;width:20px;height:20px;color:#c9a227;font-size:12px;cursor:pointer;padding:0;" aria-label="Why a zip code?">?</button></label>
+    <input type="text" id="zip" required placeholder="Your zip code" maxlength="10">
+    <p id="zipHelpText" style="display:none;color:#999;font-size:0.85rem;margin:5px 0 0;text-align:left;">Your zip code — so Kinetic announces your weather, not somebody else's.</p>
+    
+    <button type="submit">Activate</button>
   </form>
   <p style="margin-top: 30px;"><a href="station.html">← Back to the station</a></p>
 
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
-<script src="config.js"></script>
-<script src="cc-auth.js"></script>
+<script src="cc-authority.js"></script>
 <script>
 // Help toggles
 document.getElementById('handleHelp').addEventListener('click', function() {
@@ -57,6 +58,10 @@ document.getElementById('projectHelp').addEventListener('click', function() {
 });
 document.getElementById('passwordHelp').addEventListener('click', function() {
   var help = document.getElementById('passwordHelpText');
+  help.style.display = help.style.display === 'none' ? 'block' : 'none';
+});
+document.getElementById('zipHelp').addEventListener('click', function() {
+  var help = document.getElementById('zipHelpText');
   help.style.display = help.style.display === 'none' ? 'block' : 'none';
 });
 
@@ -83,25 +88,42 @@ function checkMatch() {
 passwordInput.addEventListener('input', checkMatch);
 confirmInput.addEventListener('input', checkMatch);
 
-// Get email from verification (URL param or sessionStorage)
+// The gate: the comeback token in the email link is checked by
+// Radio-authority. No good token, no form — the form is not even
+// shown until the authority says the email is verified.
 (function() {
-  var email = "";
+  var status = document.getElementById('verifyStatus');
+  var form = document.getElementById('createAccountForm');
+  var token = '';
   try {
-    var params = new URLSearchParams(window.location.search);
-    email = params.get("email") || sessionStorage.getItem("cybercrowd_entry_email") || "";
+    token = new URLSearchParams(window.location.search).get('token') || '';
   } catch (_) {}
-  if (email) {
-    document.getElementById("emailDisplay").textContent = email;
+  if (!token) {
+    status.textContent = 'This page opens from the link in your email. Sign up at the station and tap that link.';
+    return;
   }
+  window.CCAuthority.ask('/api/verify-email', { token: token }).then(function(res) {
+    if (!res || !res.success || !res.email) {
+      status.textContent = 'That link is not good — it may have expired. Sign up again at the station to get a fresh one.';
+      return;
+    }
+    try {
+      sessionStorage.setItem('ccr-verify-token', token);
+      sessionStorage.setItem('ccr-verified-email', res.email);
+    } catch (_) {}
+    document.getElementById('emailDisplay').textContent = res.email;
+    status.style.display = 'none';
+    form.style.display = 'block';
+  });
 })();
 
 document.getElementById('createAccountForm').addEventListener('submit', function(e) {
   e.preventDefault();
   var handle = document.getElementById('handle').value.trim();
   var project = document.getElementById('project').value.trim();
+  var zip = document.getElementById('zip').value.trim();
   var password = document.getElementById('password').value;
   var confirmPassword = document.getElementById('confirmPassword').value;
-  var email = document.getElementById('emailDisplay').textContent;
   if (!handle || !password) return;
   if (password.length < 8 || password.length > 29) {
     alert('Password must be 8 to 29 characters.');
@@ -111,28 +133,43 @@ document.getElementById('createAccountForm').addEventListener('submit', function
     alert('Passwords do not match.');
     return;
   }
+  if (!zip) {
+    alert('Fill in your zip code.');
+    return;
+  }
+  var token = '';
+  try { token = sessionStorage.getItem('ccr-verify-token') || ''; } catch (_) {}
+  if (!token) {
+    alert('Verify your email first — tap the link in the email we sent you.');
+    return;
+  }
   var submitBtn = document.querySelector('#createAccountForm button[type="submit"]');
   var origBtnText = submitBtn ? submitBtn.textContent : '';
-  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Creating...'; }
-  // Prefer the email verified via the blue link; fall back to the entry email.
-  var verifiedEmail = '';
-  try { verifiedEmail = sessionStorage.getItem('ccr-verified-email') || ''; } catch (_) {}
-  if (!verifiedEmail) verifiedEmail = email;
-  window.CCAuth.createAccount({
-    email: verifiedEmail,
+  if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Activating...'; }
+  window.CCAuthority.ask('/api/create-account', {
+    token: token,
+    stageName: handle,
+    projectName: project,
     password: password,
-    handle: handle,
-    project: project
-  }).then(function (acct) {
+    zip: zip
+  }).then(function (res) {
+    if (!res || !res.success) {
+      if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origBtnText; }
+      var why = (res && res.error) ? String(res.error) : '';
+      alert((why === 'authority-unreachable' || why === 'authority-bad-answer')
+        ? 'The station could not be reached. Please try again.'
+        : (why || 'Could not create the account. Try again.'));
+      return;
+    }
     try {
-      localStorage.setItem('ccr-handle', acct.handle);
-      localStorage.setItem('ccr-email', acct.email);
+      localStorage.setItem('ccr-handle', handle);
+      localStorage.setItem('ccr-email', document.getElementById('emailDisplay').textContent);
       if (project) localStorage.setItem('ccr-project', project);
     } catch (_) {}
-    window.location.href = 'station.html';
-  }).catch(function (err) {
-    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = origBtnText; }
-    alert(err.message || 'Could not create the account. Try again.');
+    document.getElementById('createAccountForm').style.display = 'none';
+    var done = document.getElementById('verifyStatus');
+    done.style.display = 'block';
+    done.textContent = 'Your account is created. Sign in to enter.';
   });
 });
 </script>
