@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sign In — Cybercrowd Radio</title>
+<style>
+  body { background: #0a0a0a; color: #e9c979; font-family: Georgia, serif; margin: 0; padding: 40px 20px; text-align: center; }
+  h1 { font-size: 2.5rem; margin-bottom: 10px; letter-spacing: 0.05em; }
+  p { color: #999; margin-bottom: 30px; }
+  form { max-width: 400px; margin: 0 auto; }
+  label { display: block; text-align: left; margin: 15px 0 5px; color: #c9a227; font-weight: bold; }
+  input { width: 100%; padding: 12px; font-size: 1rem; border: 2px solid #c9a227; border-radius: 8px; background: #1a1a1a; color: #fff; box-sizing: border-box; }
+  button { width: 100%; padding: 15px; margin-top: 25px; font-size: 1.1rem; font-weight: bold; color: #000; background: linear-gradient(180deg, #ffd700, #cc8800); border: none; border-radius: 8px; cursor: pointer; }
+  a { color: #c9a227; }
+</style>
+</head>
+<body>
+  <h1>Sign In</h1>
+  <p>Already a member — welcome back.</p>
+  <form id="signinForm">
+    <label for="email">Email</label>
+    <input type="email" id="email" required placeholder="yourname@mymail.com">
+    <label for="password">Password</label>
+    <input type="password" id="password" required placeholder="Your password">
+    <button type="submit">Sign in</button>
+    <p id="signinStatus" style="color:#f44336;font-size:0.9rem;margin:12px 0 0;"></p>
+  </form>
+  <p style="margin-top: 30px;">No account yet? <a href="enter.html">Sign up</a></p>
+  <p><a href="index.html">← Back</a></p>
+
+<script src="cc-authority.js"></script>
+<script>
+document.getElementById('signinForm').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  var email = document.getElementById('email').value.trim();
+  var password = document.getElementById('password').value;
+  var status = document.getElementById('signinStatus');
+  var btn = document.querySelector('#signinForm button[type="submit"]');
+  var label = btn ? btn.textContent : '';
+  if (btn) { btn.disabled = true; btn.textContent = 'Signing in...'; }
+  var res = null;
+  try {
+    res = await window.CCAuthority.ask('/api/sign-in', { email: email, password: password });
+  } catch (_) {}
+  if (!res || !res.success) {
+    if (btn) { btn.disabled = false; btn.textContent = label; }
+    var why = (res && res.error) ? String(res.error) : '';
+    status.textContent = (why === 'authority-unreachable' || why === 'authority-bad-answer')
+      ? 'The station could not be reached. Please try again.'
+      : (why || 'That did not go through. Please try again.');
+    return;
+  }
+  try {
+    localStorage.setItem('ccr-handle', res.stageName);
+    localStorage.setItem('ccr-email', email);
+    if (res.projectName) localStorage.setItem('ccr-project', res.projectName);
+    localStorage.setItem('ccr-session', res.session);
+  } catch (_) {}
+  window.location.href = 'station.html';
+});
+</script>
+</body>
+</html>
