@@ -1,0 +1,13 @@
+# CYBERCROWD
+# LANE: LIVE STREAM - OCEAN DROPLET
+# FILE: dj-pull.service
+# JOB: Run the repo pull once, when the timer calls it.
+
+[Unit]
+Description=Cybercrowd Radio - Repo Pull
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/dj-pull.sh
