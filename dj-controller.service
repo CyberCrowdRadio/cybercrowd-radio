@@ -1,0 +1,19 @@
+# CYBERCROWD
+# LANE: LIVE STREAM - OCEAN DROPLET
+# FILE: dj-controller.service
+# JOB: Keep the DJ controller running, always.
+
+[Unit]
+Description=Cybercrowd Radio - DJ Controller (Kinetic)
+After=network-online.target liquidsoap-radio.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/cybercrowd
+ExecStart=/usr/bin/node /opt/cybercrowd/dj-controller.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
