@@ -24,6 +24,7 @@
 #
 
 settings.init.allow_root := true
+settings.server.telnet := true
 
 %include "dj-music-queue.liq"
 %include "dj-voice-queue.liq"
