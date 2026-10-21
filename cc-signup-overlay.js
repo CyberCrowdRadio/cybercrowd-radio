@@ -37,7 +37,7 @@
     }
   });
 
-  // Send → show "check your email"
+  // Send → ask Radio-authority; "check your email" only on its word
   sendBtn.addEventListener('click', async function() {
     var email = emailInput.value.trim();
     if (!isValidEmail(email)) {
@@ -54,19 +54,19 @@
 
     var res = null;
     try {
-      var resp = await fetch('/api/signup', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: email, turnstileToken: turnstileToken })
+      res = await window.CCAuthority.ask('/api/signup', {
+        email: email,
+        turnstileToken: turnstileToken
       });
-      res = await resp.json().catch(function() { return null; });
     } catch (_) {}
 
     if (!res || !(res.success || res.ok)) {
       var why = (res && res.error) ? String(res.error) : '';
       statusText.textContent = (why === 'not human')
         ? 'The security check did not pass. Please complete it and try again.'
-        : (why || 'That did not go through. Please try again.');
+        : ((why === 'authority-unreachable' || why === 'authority-bad-answer')
+          ? 'The station could not be reached. Please try again.'
+          : (why || 'That did not go through. Please try again.'));
       sendBtn.disabled = false;
       sendBtn.textContent = sendLabel;
       if (window.turnstile) { try { window.turnstile.reset(); } catch (_) {} }
@@ -110,17 +110,39 @@
   pwInput.addEventListener('input', checkMatch);
   confirmInput.addEventListener('input', checkMatch);
 
-  // Create account
-  document.getElementById('overlayCreate').addEventListener('click', function() {
+  // Create account — the authority builds it; this face only asks.
+  document.getElementById('overlayCreate').addEventListener('click', async function() {
     var handle = document.getElementById('overlayHandle').value.trim();
     var project = document.getElementById('overlayProject').value.trim();
+    var zipEl = document.getElementById('overlayZip');
+    var zip = zipEl ? zipEl.value.trim() : '';
     var pw = pwInput.value;
     var cpw = confirmInput.value;
     var email = document.getElementById('overlayEmailDisplay').textContent;
     if (!handle || !pw) { alert('Fill in handle and password.'); return; }
     if (pw.length < 8 || pw.length > 29) { alert('Password must be 8 to 29 characters.'); return; }
     if (pw !== cpw) { alert('Passwords do not match.'); return; }
-    if (handle.toLowerCase().includes('cybercrowd')) { alert('That handle is reserved.'); return; }
+    if (!zip) { alert('Fill in your zip code.'); return; }
+    var token = '';
+    try { token = sessionStorage.getItem('ccr-verify-token') || ''; } catch (_) {}
+    if (!token) { alert('Verify your email first — tap the link in the email we sent you.'); return; }
+    var res = null;
+    try {
+      res = await window.CCAuthority.ask('/api/create-account', {
+        token: token,
+        stageName: handle,
+        projectName: project,
+        password: pw,
+        zip: zip
+      });
+    } catch (_) {}
+    if (!res || !res.success) {
+      var why = (res && res.error) ? String(res.error) : '';
+      alert((why === 'authority-unreachable' || why === 'authority-bad-answer')
+        ? 'The station could not be reached. Please try again.'
+        : (why || 'That did not go through. Please try again.'));
+      return;
+    }
     try {
       localStorage.setItem('ccr-handle', handle);
       localStorage.setItem('ccr-email', email);
@@ -129,6 +151,7 @@
     closeOverlay();
     // Refresh handle pill if present
     if (window.updateHandlePill) window.updateHandlePill();
+    alert('Your account is created. Sign in to enter.');
   });
 
   // Close button
