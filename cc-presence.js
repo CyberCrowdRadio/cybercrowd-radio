@@ -22,9 +22,10 @@
   var uid = null;
 
   function getUid() {
-    // Reuse the handle system if available, else generate
+    // A signed-in member is counted under his stage name;
+    // a guest gets an anonymous counting id that shows nowhere.
     try {
-      var h = localStorage.getItem('ccr-handle');
+      var h = (window.CCAccount && window.CCAccount.stageName) || null;
       if (h) return 'h_' + h.replace(/[^a-z0-9]/gi, '').toLowerCase();
     } catch (e) {}
     // Fallback: random ID persisted in localStorage
