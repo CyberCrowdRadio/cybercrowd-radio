@@ -1,0 +1,20 @@
+# REPO: CyberCrowdRadio/cybercrowd-radio
+# LANE: droplet (hand-carried, like dj-controller.service)
+# FILE: dj-bowl-keeper.service
+# LIVES AT: /etc/systemd/system/dj-bowl-keeper.service
+# JOB: Run the bowl keeper as a service — start it, and restart it if it ever falls.
+
+[Unit]
+Description=Cybercrowd Radio bowl keeper
+After=network-online.target liquidsoap-radio.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/cybercrowd
+ExecStart=/usr/bin/node /opt/cybercrowd/dj-bowl-keeper.js
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
