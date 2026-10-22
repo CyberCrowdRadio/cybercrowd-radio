@@ -122,7 +122,11 @@
       } catch (_) {}
       if (!res || !(res.success || res.ok)) {
         var why = (res && res.error) ? String(res.error) : '';
-        els.statusText.textContent = (why === 'not human')
+        if (why === 'email failed') {
+          // Diagnostic window: show Postmark's own verdict, not a summary.
+          els.statusText.textContent = 'Email failed - Postmark code ' +
+            ((res && res.pmStatus) || '?') + ': ' + ((res && res.pmDetail) || 'no detail returned');
+        } else els.statusText.textContent = (why === 'not human')
           ? 'The security check did not pass. Please complete it and try again.'
           : ((why === 'authority-unreachable' || why === 'authority-bad-answer')
             ? 'The station could not be reached. Please try again.'
