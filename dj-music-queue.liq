@@ -27,5 +27,5 @@
 #
 
 music_queue = request.queue(id="music_queue")
-folder_music = playlist(mode="randomize", reload="watch", "/opt/cybercrowd/music")
+folder_music = playlist(mode="randomize", "/opt/cybercrowd/music")
 music = fallback(track_sensitive=false, [music_queue, folder_music])
