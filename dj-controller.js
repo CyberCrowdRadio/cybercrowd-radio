@@ -24,13 +24,15 @@ speech writer for the words, have the voice maker record the
 clips ahead of time, and push the finished clips into the
 voice queue through the stream's own server door.
 
-Her standing lines - the opening, the station ID, the between
-songs - are recorded once, before they are needed, and replay
-from the shelf. A song intro is recorded the moment its song
-starts, so she talks over the start of the song with the music
-ducked under her; an intro that is not ready inside its
-window is skipped, never played late, never played over the
-wrong song. A song whose title or artist names an AI music
+Nothing in this file speaks on a clock. There are no timers
+here: no opening, no station ID, no between-songs lines fired
+by the minute. A song intro is recorded the first time its
+song starts - filed on the shelf under the song's own name -
+and replayed free every time that song comes around again.
+An intro that is not ready inside its window is shelved for
+next time: never aired late, never played over the wrong
+song, never deleted, never re-bought. A start of this file
+buys nothing. A song whose title or artist names an AI music
 generator is never announced.
 
 If anything fails, the music plays on. This file can miss a
@@ -69,24 +71,12 @@ var MOUNT = '/stream';
 var POLL_MS = 5000;
 
 var INTRO_DEADLINE_MS = 12000;
-var MIN_GAP_MS = 90000;
-var ID_EVERY_MS = 20 * 60 * 1000;
-var BETWEEN_EVERY_MS = 15 * 60 * 1000;
-var OPENING_EVERY_MS = 30 * 60 * 1000;
-var CLIP_KEEP_MS = 10 * 60 * 1000;
 
 var BANNED = ['suno', 'sonvia', 'donna'];
 
 var writer = null;
 var lastTitle = null;
-var lastPushAt = 0;
 var introBusy = false;
-
-var standing = {
-  opening: path.join(VOICE_DIR, 'opening.mp3'),
-  stationId: path.join(VOICE_DIR, 'station-id.mp3'),
-  betweenSongs: path.join(VOICE_DIR, 'between-songs.mp3')
-};
 
 function log(line) {
   console.log(new Date().toISOString() + ' [dj-controller] ' + line);
@@ -145,7 +135,6 @@ function pushClip(file) {
     });
     socket.on('data', function (data) {
       log('queue answered: ' + String(data).trim());
-      lastPushAt = Date.now();
       settle(true);
     });
     socket.on('timeout', function () {
@@ -200,6 +189,22 @@ function splitTrack(title) {
   return { artist: artist, song: song };
 }
 
+// The shelf name for a song's intro: the song's own name,
+// made file-safe, plus a short stable hash of the full
+// "artist - song" string. Same song, same file, forever.
+function shelfFile(artist, song) {
+  var full = artist + ' - ' + song;
+  var clean = full.toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  var hash = 5381;
+  for (var i = 0; i < full.length; i++) {
+    hash = ((hash << 5) + hash + full.charCodeAt(i)) >>> 0;
+  }
+  var hex = ('000000' + hash.toString(16)).slice(-6);
+  return path.join(VOICE_DIR, 'intro-' + clean + '-' + hex + '.mp3');
+}
+
 function doIntro(title, changeAt) {
   var parts = splitTrack(title);
   if (!parts) {
@@ -207,19 +212,24 @@ function doIntro(title, changeAt) {
     return;
   }
   introBusy = true;
-  var outFile = path.join(VOICE_DIR, 'intro-' + changeAt + '.mp3');
+  var outFile = shelfFile(parts.artist, parts.song);
+  if (fs.existsSync(outFile)) {
+    pushClip(outFile).then(function (pushed) {
+      introBusy = false;
+      if (pushed) log('intro on air (shelf): ' + title);
+    });
+    return;
+  }
   var words = writer.words('songIntro', parts.song, parts.artist);
   makeClip(words, outFile).then(function (ok) {
     introBusy = false;
     if (!ok) return;
     if (Date.now() - changeAt > INTRO_DEADLINE_MS) {
-      log('intro late, skipped: ' + title);
-      fs.unlink(outFile, function () {});
+      log('intro late, shelved for next time: ' + title);
       return;
     }
     pushClip(outFile).then(function (pushed) {
-      if (pushed) log('intro on air: ' + title);
-      setTimeout(function () { fs.unlink(outFile, function () {}); }, CLIP_KEEP_MS);
+      if (pushed) log('intro on air (new): ' + title);
     });
   });
 }
@@ -241,28 +251,6 @@ function poll() {
   });
 }
 
-function pushStanding(file, label) {
-  if (introBusy) return;
-  if (Date.now() - lastPushAt < MIN_GAP_MS) return;
-  if (!fs.existsSync(file)) {
-    log(label + ' clip missing from the shelf, skipped');
-    return;
-  }
-  pushClip(file).then(function (pushed) {
-    if (pushed) log(label + ' on air');
-  });
-}
-
-function prepareStanding() {
-  var jobs = Object.keys(standing).map(function (moment) {
-    var file = standing[moment];
-    if (fs.existsSync(file)) return Promise.resolve();
-    log('recording standing clip: ' + moment);
-    return makeClip(writer.words(moment), file);
-  });
-  return Promise.all(jobs);
-}
-
 function main() {
   loadEnv();
   if (!process.env.OPENAI_API_KEY) {
@@ -275,14 +263,8 @@ function main() {
     log('speech writer did not load - the DJ cannot speak. Music is untouched.');
     return;
   }
-  prepareStanding().then(function () {
-    log('Kinetic is on the clock.');
-    pushStanding(standing.opening, 'opening');
-    setInterval(poll, POLL_MS);
-    setInterval(function () { pushStanding(standing.stationId, 'station ID'); }, ID_EVERY_MS);
-    setInterval(function () { pushStanding(standing.betweenSongs, 'between songs'); }, BETWEEN_EVERY_MS);
-    setInterval(function () { pushStanding(standing.opening, 'opening'); }, OPENING_EVERY_MS);
-  });
+  log('Kinetic is on air - intros only, no timers.');
+  setInterval(poll, POLL_MS);
 }
 
 main();
