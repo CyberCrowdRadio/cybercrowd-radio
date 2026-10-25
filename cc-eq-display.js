@@ -27,6 +27,15 @@
    Layout, in order, by flex order on the seat: display panel first,
    song name underneath the picture inside the panel, popup buttons
    second, faders row hidden third, reset fourth, countdown fifth.
+   LABEL IS BUTTON, SAME SPOT: display labels under the song name
+   are the buttons themselves, one Bass, one 250, one Voice, one
+   4000, one Top, inside the panel, tap that spot and the glass
+   door fader pops up. No second row below the display. Popup
+   buttons row below the display is a duplicate, outside the
+   screen, confusing, people tap the label and nothing happens.
+   This file hides that duplicate row, not deletes it, and wires
+   the label buttons to the popup open job, so label and button
+   are the same spot, one spot per band, not two.
    Faders row is hidden, not deleted. Faders logic stays standing,
    popup sets the same values the row sets, reset still works, and
    the row returns if this file is removed. No permanent faders
@@ -244,9 +253,11 @@ window.CCEQDisplay = (function () {
       ".cc-eq-display-chart canvas{display:block;width:100%;height:100%}" +
       ".cc-eq-display-song{margin:12px 24px 0;padding:12px 14px;border:1px solid #c9a22733;background:#000000;color:#ffd700;font-size:16px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
       ".cc-eq-display-labels{display:flex;justify-content:space-between;margin:12px 26px 0 44px;color:#c9a227;font-size:11px}" +
-      ".cc-eq-display-labels span{flex:1;text-align:center}" +
+      ".cc-eq-display-btn{flex:1;text-align:center;color:#ffd700;background:#000000;border:1px solid #c9a227;padding:10px 4px;cursor:pointer;font:inherit;font-size:13px}" +
+      ".cc-eq-display-btn:active{background:#c9a227;color:#000000}" +
       ".cc-eq-display-footer{margin-top:20px;padding:14px 21px;border-top:1px solid #c9a22733;display:flex;justify-content:space-between;gap:12px;font-size:9px;color:#8a6d1b}" +
       ".cc-eq-popup-root{order:2}" +
+      ".cc-eq-popup-row{display:none !important}" +
       ".cc-eq-seat-faders{order:3;display:none !important}" +
       ".cc-eq-seat-reset{order:4}" +
       ".cc-eq-seat-countdown{order:5}";
@@ -258,11 +269,19 @@ window.CCEQDisplay = (function () {
       '<div class="cc-eq-display-top"><div><div class="cc-eq-display-overline">SIGNAL PEAK</div><div class="cc-eq-display-big"><span id="ccEqPeakValue">--</span> <small>dBFS</small></div></div><span class="cc-eq-display-small">15 BARS / 5 TRIFECTAS</span></div>' +
       '<div class="cc-eq-display-chart"><canvas id="ccEqSpectrum" aria-label="Live audio equalizer, black and gold, five trifectas"></canvas></div>' +
       '<div class="cc-eq-display-song" id="ccEqSongName">Standby</div>' +
-      '<div class="cc-eq-display-labels"><span>Bass</span><span>250</span><span>Voice</span><span>4000</span><span>Top</span></div>' +
+      '<div class="cc-eq-display-labels"><button type="button" class="cc-eq-display-btn" data-cc-band="0">Bass</button><button type="button" class="cc-eq-display-btn" data-cc-band="1">250</button><button type="button" class="cc-eq-display-btn" data-cc-band="2">Voice</button><button type="button" class="cc-eq-display-btn" data-cc-band="3">4000</button><button type="button" class="cc-eq-display-btn" data-cc-band="4">Top</button></div>' +
       '<div class="cc-eq-display-footer"><span>LIVE AUDIO ANALYSIS</span><span>THREE PER CHANNEL</span><span>PEAK HOLD 250 ms</span></div>';
     canvas = panel.querySelector("#ccEqSpectrum");
     peakEl = panel.querySelector("#ccEqPeakValue");
     songEl = panel.querySelector("#ccEqSongName");
+    panel.querySelectorAll(".cc-eq-display-btn").forEach(function (btn) {
+      btn.addEventListener("click", function () {
+        var i = parseInt(btn.getAttribute("data-cc-band"), 10) || 0;
+        try {
+          if (window.CCEQPopup && window.CCEQPopup.open) window.CCEQPopup.open(i);
+        } catch (e) {}
+      });
+    });
     ctx2d = canvas.getContext("2d");
     canvas.width = 600;
     canvas.height = 220;
