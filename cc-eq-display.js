@@ -1,71 +1,61 @@
-/* CYBERCROWD RADIO — black and gold trifecta equalizer display.
-   One job: the equalizer picture on top, black and gold, old school,
-   eye pleasing, with the song name underneath the picture.
-   What it is: fifteen gold bars on black, grouped into five trifectas,
-   three bars per button, in order left to right: Bass, 250, Voice,
-   4000, Top. Three Bass, three 250s, three Voice, three 4000s, three
-   Tops. When you move a button, its trifecta moves together, so you
-   can actually see the trifecta of that channel move, not one thin
-   bar lost in ninety six, and not one single bar alone.
-   Colors: black and gold only. Black panel, gold border, gold bars,
-   gold baseline, gold fader line, gold text. No blue, no white, no
-   red, no green. Those colors were abusive, not eye pleasing. Gold
-   and black is the station theme, black not brown.
-   Old school: an eight year old walks up, opens the glass door,
-   plays with a button, moves it, and over there on the panel that
-   one little fader glider changes the picture. The kid does not
-   know mid range or voices or trebles, but he knows the button
-   over here does thump thump thump thump thump of the bass.
-   Play, see, hear, no jargon first. Buttons are simplified, black
-   and gold, eye pleasing, click a button and the fader pops up.
-   Glass door: the popup file is the glass door. Button opens the
-   door, fader comes up, close the door or swipe left or right
-   according to the starting button. Bass far left, no left swipe,
-   only right to 250 and so on, continuous, straight line, no
-   circle. This file does not change swipe, it does not change
-   popup, it does not change faders, engine, rail, gate, or trial.
-   Layout, in order, by flex order on the seat: display panel first,
-   song name underneath the picture inside the panel, popup buttons
-   second, faders row hidden third, reset fourth, countdown fifth.
-   LABEL IS BUTTON, SAME SPOT: display labels under the song name
-   are the buttons themselves, one Bass, one 250, one Voice, one
-   4000, one Top, inside the panel, tap that spot and the glass
-   door fader pops up. No second row below the display. Popup
-   buttons row below the display is a duplicate, outside the
-   screen, confusing, people tap the label and nothing happens.
-   This file hides that duplicate row, not deletes it, and wires
-   the label buttons to the popup open job, so label and button
-   are the same spot, one spot per band, not two.
-   Faders row is hidden, not deleted. Faders logic stays standing,
-   popup sets the same values the row sets, reset still works, and
-   the row returns if this file is removed. No permanent faders
-   row underneath the equalizer picture, as ordered.
-   Song name: underneath the spectrum, inside the panel, gold text
-   on black, from the page nowPlaying element, clean title only,
-   no bracket junk. The sentence format, This song blah is titled
-   blah, is NOT guessed here, because the real example was not
-   given yet. Song name zone shows clean title only for now, and
-   that sentence will be one line change when the real example
-   is given, not a rebuild.
+/* CYBERCROWD RADIO — golden equalizer in the tuner.
+   One job, one spot: the little area that says CYBERCROWD RADIO.
+   That little spot used to be a red needle going left and right.
+   Now it is a golden thing doing its thing, with parameters
+   slightly underneath that, inside that same little area.
+   Not a square panel taking the whole screen. Not a full screen
+   meter. Compact, dial window size, wide and short, rounded,
+   black and gold only, fitting the tuner area it lives in.
+   Golden thing: fifteen gold bars on black, grouped into five
+   trifectas, three bars per button, in order left to right:
+   Bass, 250, Voice, 4000, Top. Three Bass, three 250s, three
+   Voice, three 4000s, three Tops. When you move a button, its
+   trifecta moves together, so you can see the trifecta move.
+   Parameters slightly underneath: Bass, 250, Voice, 4000, Top
+   are buttons, slightly underneath the golden bars, inside the
+   same little area, black and gold, tap one and the glass door
+   fader pops up. Label is button, same spot, one Bass, one 250,
+   one Voice, one 4000, one Top, no second row below, popup
+   buttons row below is hidden, not deleted, popup panel still
+   pops up when a parameter button is tapped.
+   Song label outside: song label is NOT inside this panel.
+   Song label comes in outside the buttons of the EQ, and
+   everything underneath that is landed. This file creates a
+   separate song label zone outside the panel, underneath the
+   parameters, landed, gold text on black, clean title only,
+   from the page nowPlaying element, no bracket junk. The
+   sentence format, This song blah is titled blah, is NOT
+   guessed here, real example not given yet, clean title only
+   for now, one line change later, not a rebuild.
+   Glass door: button opens the door, fader comes up, close
+   the door or swipe left or right according to the starting
+   button. Bass far left, no left swipe, only right to 250 and
+   so on, continuous, straight line, no circle. This file does
+   not change swipe, popup, faders, engine, rail, gate, trial.
+   Layout, in order: panel first, song label outside second,
+   popup panel third, faders row hidden fourth, reset fifth,
+   countdown sixth. Faders row hidden, not deleted, popup sets
+   same values, reset still works, row returns if this file
+   is removed. No square panel, no red needle, no scale.
    Live only: song data is live analyser data, never synthetic,
    never simulated, flat when no live audio. Fader gain is read
-   live from the faders themselves, every frame, and applied to
-   the bars in that band, so moving Bass moves the Bass trifecta,
-   moving Top moves the Top trifecta, normal to tripping.
-   Analyser: FFT 4096, smoothing 0.52, minus 90 to 0, peak hold
-   250 ms, carried from the vector top part, reformatted to
-   trifecta, not stripped to a simple meter.
-   Authority: display only. Owns the panel, the canvas, the song
-   name zone, the analyser, the draw loop, and the seat order and
-   faders row hidden rule for this layout. Does not own faders,
-   engine, rail, gate, trial, popup, or sound. Does not change
-   sound, does not touch faders, engine, or rail files.
-   This file alone does nothing visible until station.html loads
-   it after mount, same wiring rule as before.
+   live from the faders, every frame, applied to bars in that
+   band, so moving Bass moves Bass trifecta, moving Top moves
+   Top trifecta. Analyser: FFT 4096, smoothing 0.52, minus 90
+   to 0, peak hold 250 ms, carried, reformatted to trifecta.
+   Authority: display only. Owns panel, canvas, song label
+   outside zone, analyser, draw loop, seat order. Does not own
+   faders, engine, rail, gate, trial, popup, or sound. Does not
+   change sound, does not touch faders, engine, or rail files.
+   This file alone does nothing visible until station.html
+   loads it after mount, same wiring rule as before.
+   This version supersedes the label button version pending
+   before it, do not place that version, place this version.
 */
 "use strict";
 window.CCEQDisplay = (function () {
   var panel = null;
+  var songZone = null;
   var canvas = null;
   var ctx2d = null;
   var peakEl = null;
@@ -159,7 +149,7 @@ window.CCEQDisplay = (function () {
   }
 
   function draw(now) {
-    var dt, i, j, idx, width, height, left, top, bottom, usable, nyquist, hz, bin, levelDb, target, gain, speed, x, barWidth, groupGap, barGap, barHeight, y, faderLineY, faderVal, signalPeak, rms, sum, v;
+    var dt, i, j, idx, width, height, left, top, bottom, usable, nyquist, hz, bin, levelDb, target, gain, speed, x, barWidth, groupGap, barGap, barHeight, y, faderLineY, faderVal, signalPeak, sum, v;
     requestAnimationFrame(draw);
     if (!canvas || !ctx2d) return;
     if (!lastTime) lastTime = now;
@@ -167,14 +157,11 @@ window.CCEQDisplay = (function () {
     lastTime = now;
     width = canvas.width;
     height = canvas.height;
-    left = 28; top = 14; bottom = height - 9; usable = bottom - top;
+    left = 20; top = 6; bottom = height - 6; usable = bottom - top;
     ctx2d.clearRect(0, 0, width, height);
     ctx2d.strokeStyle = GOLD_DARK;
     ctx2d.lineWidth = 1;
     ctx2d.beginPath(); ctx2d.moveTo(left, bottom); ctx2d.lineTo(width - 6, bottom); ctx2d.stroke();
-    ctx2d.font = "8px monospace";
-    ctx2d.fillStyle = GOLD_DARK;
-    for (i = 0; i < 5; i++) ctx2d.fillText("-" + (i * 18), 0, top + usable * i / 5 + 3);
     if (!analyser) {
       if (peakEl) peakEl.textContent = "--";
       return;
@@ -189,7 +176,6 @@ window.CCEQDisplay = (function () {
       if (v > signalPeak) signalPeak = v;
       sum += timeData[i] * timeData[i];
     }
-    rms = Math.sqrt(sum / timeData.length);
     if (peakEl) peakEl.textContent = signalPeak > 0.00001 ? db(signalPeak).toFixed(1) : "-INF";
     nyquist = analyser.context ? analyser.context.sampleRate / 2 : 22050;
     barGap = 4;
@@ -238,42 +224,42 @@ window.CCEQDisplay = (function () {
     styleEl = document.createElement("style");
     styleEl.setAttribute("data-cc-eq-display", "1");
     styleEl.textContent =
-      ".cc-eq-seat{display:flex;flex-direction:column;gap:12px}" +
-      ".cc-eq-display-panel{order:1;position:relative;background:#000000;border:1px solid #c9a227;box-shadow:inset 0 1px #c9a22733,0 16px 45px #00000020;overflow:hidden;color:#c9a227;font-family:monospace;font-size:11px;width:100%}" +
-      ".cc-eq-display-panel::after{content:'';position:absolute;top:-1px;left:20px;width:55px;height:1px;background:#ffd700}" +
-      ".cc-eq-display-head{display:flex;align-items:center;justify-content:space-between;padding:19px 21px;border-bottom:1px solid #c9a22733}" +
+      ".cc-eq-seat{display:flex;flex-direction:column;gap:8px}" +
+      ".cc-eq-display-panel{order:1;position:relative;background:#000000;border:1px solid #c9a227;border-radius:16px;box-shadow:inset 0 1px #c9a22733,0 8px 20px #00000020;overflow:hidden;color:#c9a227;font-family:monospace;font-size:11px;width:100%}" +
+      ".cc-eq-display-head{display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:1px solid #c9a22733}" +
       ".cc-eq-display-title{font-size:10px;letter-spacing:1.5px;color:#ffd700}" +
-      ".cc-eq-display-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#ffd700;box-shadow:0 0 10px #ffd70060;margin-right:8px}" +
+      ".cc-eq-display-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#ffd700;margin-right:8px}" +
       ".cc-eq-display-small{font-size:9px;color:#8a6d1b}" +
-      ".cc-eq-display-top{display:flex;justify-content:space-between;padding:22px 24px 0}" +
-      ".cc-eq-display-overline{color:#8a6d1b;font-size:9px;letter-spacing:2px}" +
-      ".cc-eq-display-big{font:600 39px sans-serif;color:#ffd700}" +
-      ".cc-eq-display-big small{font:10px monospace;color:#8a6d1b}" +
-      ".cc-eq-display-chart{height:220px;margin:0 16px 0 12px;position:relative}" +
+      ".cc-eq-display-chart{height:80px;margin:6px 12px 0 8px;position:relative}" +
       ".cc-eq-display-chart canvas{display:block;width:100%;height:100%}" +
-      ".cc-eq-display-song{margin:12px 24px 0;padding:12px 14px;border:1px solid #c9a22733;background:#000000;color:#ffd700;font-size:16px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
-      ".cc-eq-display-labels{display:flex;justify-content:space-between;margin:12px 26px 0 44px;color:#c9a227;font-size:11px}" +
-      ".cc-eq-display-btn{flex:1;text-align:center;color:#ffd700;background:#000000;border:1px solid #c9a227;padding:10px 4px;cursor:pointer;font:inherit;font-size:13px}" +
+      ".cc-eq-display-labels{display:flex;justify-content:space-between;margin:6px 12px 8px;color:#c9a227;font-size:11px}" +
+      ".cc-eq-display-btn{flex:1;text-align:center;color:#ffd700;background:#000000;border:1px solid #c9a227;border-radius:8px;padding:6px 4px;cursor:pointer;font:inherit;font-size:12px}" +
       ".cc-eq-display-btn:active{background:#c9a227;color:#000000}" +
-      ".cc-eq-display-footer{margin-top:20px;padding:14px 21px;border-top:1px solid #c9a22733;display:flex;justify-content:space-between;gap:12px;font-size:9px;color:#8a6d1b}" +
-      ".cc-eq-popup-root{order:2}" +
+      ".cc-eq-song-outside{order:2;margin:0;padding:8px 12px;border:1px solid #c9a227;border-radius:8px;background:#000000;color:#ffd700;font-size:14px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}" +
+      ".cc-eq-popup-root{order:3}" +
       ".cc-eq-popup-row{display:none !important}" +
-      ".cc-eq-seat-faders{order:3;display:none !important}" +
-      ".cc-eq-seat-reset{order:4}" +
-      ".cc-eq-seat-countdown{order:5}";
+      ".cc-eq-seat-faders{order:4;display:none !important}" +
+      ".cc-eq-seat-reset{order:5}" +
+      ".cc-eq-seat-countdown{order:6}";
     document.head.appendChild(styleEl);
     panel = document.createElement("section");
     panel.className = "cc-eq-display-panel";
     panel.innerHTML =
-      '<div class="cc-eq-display-head"><div class="cc-eq-display-title"><span class="cc-eq-display-dot"></span>LIVE EQUALIZER</div><span class="cc-eq-display-small">FFT 4096 / LIVE ONLY</span></div>' +
-      '<div class="cc-eq-display-top"><div><div class="cc-eq-display-overline">SIGNAL PEAK</div><div class="cc-eq-display-big"><span id="ccEqPeakValue">--</span> <small>dBFS</small></div></div><span class="cc-eq-display-small">15 BARS / 5 TRIFECTAS</span></div>' +
-      '<div class="cc-eq-display-chart"><canvas id="ccEqSpectrum" aria-label="Live audio equalizer, black and gold, five trifectas"></canvas></div>' +
-      '<div class="cc-eq-display-song" id="ccEqSongName">Standby</div>' +
-      '<div class="cc-eq-display-labels"><button type="button" class="cc-eq-display-btn" data-cc-band="0">Bass</button><button type="button" class="cc-eq-display-btn" data-cc-band="1">250</button><button type="button" class="cc-eq-display-btn" data-cc-band="2">Voice</button><button type="button" class="cc-eq-display-btn" data-cc-band="3">4000</button><button type="button" class="cc-eq-display-btn" data-cc-band="4">Top</button></div>' +
-      '<div class="cc-eq-display-footer"><span>LIVE AUDIO ANALYSIS</span><span>THREE PER CHANNEL</span><span>PEAK HOLD 250 ms</span></div>';
+      '<div class="cc-eq-display-head"><div class="cc-eq-display-title"><span class="cc-eq-display-dot"></span>CYBERCROWD RADIO</div><span class="cc-eq-display-small">LIVE / <span id="ccEqPeakValue">--</span> dBFS</span></div>' +
+      '<div class="cc-eq-display-chart"><canvas id="ccEqSpectrum" aria-label="Golden equalizer in the tuner, five trifectas"></canvas></div>' +
+      '<div class="cc-eq-display-labels"><button type="button" class="cc-eq-display-btn" data-cc-band="0">Bass</button><button type="button" class="cc-eq-display-btn" data-cc-band="1">250</button><button type="button" class="cc-eq-display-btn" data-cc-band="2">Voice</button><button type="button" class="cc-eq-display-btn" data-cc-band="3">4000</button><button type="button" class="cc-eq-display-btn" data-cc-band="4">Top</button></div>';
     canvas = panel.querySelector("#ccEqSpectrum");
     peakEl = panel.querySelector("#ccEqPeakValue");
-    songEl = panel.querySelector("#ccEqSongName");
+    ctx2d = canvas.getContext("2d");
+    canvas.width = 600;
+    canvas.height = 80;
+    seat.parentNode.insertBefore(panel, seat);
+    songZone = document.createElement("div");
+    songZone.className = "cc-eq-song-outside";
+    songZone.id = "ccEqSongOutside";
+    songZone.textContent = "Standby";
+    seat.parentNode.insertBefore(songZone, seat);
+    songEl = songZone;
     panel.querySelectorAll(".cc-eq-display-btn").forEach(function (btn) {
       btn.addEventListener("click", function () {
         var i = parseInt(btn.getAttribute("data-cc-band"), 10) || 0;
@@ -282,10 +268,6 @@ window.CCEQDisplay = (function () {
         } catch (e) {}
       });
     });
-    ctx2d = canvas.getContext("2d");
-    canvas.width = 600;
-    canvas.height = 220;
-    seat.parentNode.insertBefore(panel, seat);
     updateSongName();
     setInterval(updateSongName, 2000);
     connectTimer = setInterval(function () {
