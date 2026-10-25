@@ -73,9 +73,7 @@
         <div class="receiver" role="region" aria-label="Live radio receiver">
           <div class="receiver-face">
             <div class="dial-window">
-              <div class="dial-scale" aria-hidden="true"></div>
-              <div class="dial-needle" id="dialNeedle" aria-hidden="true"></div>
-              <p class="dial-readout" id="dialReadout">CYBERCROWD RADIO</p>
+              <div id="eqSeat" aria-label="Listener equalizer"></div>
             </div>
             <div class="receiver-controls">
               <button class="power-btn" id="playBtn" aria-label="Play live stream">
@@ -91,7 +89,6 @@
               </label>
             </div>
           </div>
-          <p class="receiver-note" id="playerNote">One 15-second teaser is the invitation — the live show is the thing. Hit play when we're on the air.</p>
           <div class="mode-switch" role="group" aria-label="Broadcast mode">
             <button class="mode-btn is-active" id="modeAIDJ" style="display:none" aria-pressed="true">AI DJ</button>
             <button class="mode-btn" id="modeStraight" style="display:none" aria-pressed="false">STRAIGHT R2</button>
@@ -194,6 +191,13 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <script src="cc-authority.js"></script>
   <script src="cc-signup-overlay.js"></script>
+  <script src="cc-eq-engine.js"></script>
+  <script src="cc-eq-rail.js"></script>
+  <script src="cc-eq-faders.js"></script>
+  <script src="cc-eq-reset.js"></script>
+  <script src="cc-eq-gate.js"></script>
+  <script src="cc-eq-trial.js"></script>
+  <script src="cc-eq-mount.js"></script>
   <script>
     document.querySelectorAll('.signupDoor').forEach(function(a) {
       a.addEventListener('click', function(e) {
