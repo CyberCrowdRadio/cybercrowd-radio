@@ -309,7 +309,12 @@
     const url = streamUrl;
     try {
       if (!audio) {
-        audio = new Audio(url);
+        audio = new Audio();
+        audio.crossOrigin = "anonymous";
+        audio.src = url;
+        audio.setAttribute("data-cc-player", "1");
+        window.CCPlayerAudio = audio;
+        if (window.CCEQRail) window.CCEQRail.attachTo(audio);
         audio.preload = "none";
         audio.volume = vol.value / 100;
         vol.addEventListener("input", () => (audio.volume = vol.value / 100));
@@ -404,7 +409,12 @@
       const url = (cfg.streamUrl || "").trim();
       if (url) {
         // Studio stream is ready — play it.
-        audio = new Audio(url);
+        audio = new Audio();
+        audio.crossOrigin = "anonymous";
+        audio.src = url;
+        audio.setAttribute("data-cc-player", "1");
+        window.CCPlayerAudio = audio;
+        if (window.CCEQRail) window.CCEQRail.attachTo(audio);
         audio.play().then(() => setLive(true)).catch(() => setLive(false));
       } else {
         // No studio stream yet — station ID on repeat.
