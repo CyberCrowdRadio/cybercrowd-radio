@@ -21,8 +21,8 @@
   var initialized = false;
 var seenKeys = {};
   var retries = 0;
-  function getRosterEl() { return document.getElementById("ccWelcomeRoster"); }
-  // Roster element is ccWelcomeRoster in station.html.
+  function getRosterEl() { ensureWelcomeArea(); return document.getElementById("ccWelcomeRoster"); } function ensureWelcomeStyle() { if (document.getElementById("ccWelcomeStyle")) return; var s = document.createElement("style"); s.id = "ccWelcomeStyle"; s.textContent = '#ccWelcomeArea{position:absolute;top:auto;left:0;margin:0;width:200px;background:transparent;border:0;box-shadow:none;padding:0;color:#f5edd8;text-align:left;pointer-events:none;z-index:1} #ccWelcomeArea p{margin:0 0 8px;font-size:1rem;line-height:1.3;color:#f5edd8;white-space:nowrap} #ccWelcomeRoster{list-style:none;margin:0;padding:0;height:170px;overflow-y:auto;overflow-x:hidden;pointer-events:auto} #ccWelcomeRoster li{margin:0 0 6px;font-size:0.9rem;line-height:1.35;overflow-wrap:normal;word-break:normal} @keyframes ccWelcomeUp{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}} #ccWelcomeRoster li.cc-welcome-new{animation:ccWelcomeUp 0.6s ease-out} @media (max-width:860px){#ccWelcomeArea{position:static;margin:0;margin-bottom:12px;width:auto}#ccWelcomeRoster{height:auto;overflow:visible}}'; if (document.head) document.head.appendChild(s); } function ensureWelcomeArea() { ensureWelcomeStyle(); var a = document.getElementById("ccWelcomeArea"); if (a) return a; var p = document.getElementById("ccWelcomePlaceholder"); a = document.createElement("div"); a.id = "ccWelcomeArea"; a.setAttribute("aria-label", "Welcome"); var t = document.createElement("p"); t.textContent = "welcome"; var u = document.createElement("ul"); u.id = "ccWelcomeRoster"; u.setAttribute("aria-live", "polite"); a.appendChild(t); a.appendChild(u); if (p) { p.appendChild(a); } else { var r = document.querySelector(".receiver"); if (r && r.parentNode) { r.parentNode.insertBefore(a, r); } else if (document.body) { document.body.appendChild(a); } else { return null; } } return a; }
+  // Roster element ccWelcomeRoster is built by this file into the ccWelcomePlaceholder in station.html. Welcome markup and CSS live here, not in station.html. StageName is the handle only; project is separate and is not shown here. Guest is kept as its own stacked category, labeled Guest, alongside stageName handles. No maximum length is set in this file.
   function setRosterLine(text) {
     var roster = getRosterEl();
     if (!roster) return;
@@ -30,7 +30,7 @@ var seenKeys = {};
 //
 //
 //
-if (roster.lastChild) roster.scrollTop = roster.scrollHeight;
+/* Do not scroll to the bottom: the first arrival stays at the top, under the fixed welcome line. */
     var li = document.createElement("li");
     li.textContent = text;
     roster.appendChild(li);
@@ -59,15 +59,15 @@ if (roster.lastChild) roster.scrollTop = roster.scrollHeight;
         current[key] = displayName(val); order.push(key);
       });
     }
-    visitors.sort(function (a, b) {
+    var visitors = []; visitors.sort(function (a, b) {
       return displayName(a).toLowerCase().localeCompare(displayName(b).toLowerCase());
     });
     var i; var visitors = [];
     for (i = roster.children.length - 1; i >= 0; i--) { if (!current[roster.children[i].getAttribute("data-key")]) roster.removeChild(roster.children[i]); }
-for (i = 0; i < roster.children.length; i++) { var k = roster.children[i].getAttribute("data-key"); if (current[k]) roster.children[i].textContent = current[k]; }
-order.forEach(function (key) { if (seenKeys[key]) return; seenKeys[key] = true; var li = document.createElement("li"); li.setAttribute("data-key", key); li.textContent = current[key]; li.className = "cc-welcome-new"; roster.appendChild(li); });
+for (i = 0; i < roster.children.length; i++) { var k = roster.children[i].getAttribute("data-key"); if (current[k]) roster.children[i].textContent = current[k]; roster.children[i].setAttribute("data-category", current[k] === "Guest" ? "guest" : "verified"); }
+order.forEach(function (key) { if (seenKeys[key]) return; seenKeys[key] = true; var li = document.createElement("li"); li.setAttribute("data-key", key); li.setAttribute("data-category", current[key] === "Guest" ? "guest" : "verified"); li.textContent = current[key]; li.className = "cc-welcome-new"; roster.appendChild(li); });
 Object.keys(seenKeys).forEach(function (k) { if (!current[k]) delete seenKeys[k]; });
-if (roster.lastChild) roster.scrollTop = roster.scrollHeight;
+/* Do not scroll to the bottom: the first arrival stays at the top, under the fixed welcome line. */
     // Empty roster stays empty: no placeholder names, only real presence names.
     visitors.forEach(function (val) {
       var li = document.createElement("li");
@@ -79,7 +79,7 @@ if (roster.lastChild) roster.scrollTop = roster.scrollHeight;
     if (!presenceRef) return;
     try { presenceRef.once("value", function (snap) { render(snap.val()); }); } catch (e) {}
   }
-  function init() {
+  function init() { ensureWelcomeArea();
     if (initialized) return;
     if (typeof firebase === "undefined") {
       showCountOnly();
