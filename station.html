@@ -73,16 +73,16 @@
         <!-- The receiver: a 1950s-style tuner, honest about signal -->
         <!-- WELCOME SCROLL: new separate area outside the receiver, in the empty area left of it, below the hero text, at dial-window and EQ height. It is NOT inside the receiver, receiver-face, dial-window, or the EQ. The receiver is unchanged, and this absolute area does not move it. No box, no border, no background, words only. -->
       <style>
-      #ccWelcomeArea{position:absolute;top:auto;left:0;margin-top:48px;width:118px;background:transparent;border:0;box-shadow:none;padding:0;color:#f5edd8;text-align:left;pointer-events:none;z-index:1}
-      #ccWelcomeArea p{margin:0 0 8px;font-size:1rem;line-height:1.3;color:#f5edd8}
-      #ccWelcomeRoster{list-style:none;margin:0;padding:0;height:170px;overflow:hidden}
-      #ccWelcomeRoster li{margin:0 0 6px;font-size:0.9rem;line-height:1.35;overflow-wrap:break-word}
+      #ccWelcomeArea{position:absolute;top:auto;left:0;margin:0;width:200px;background:transparent;border:0;box-shadow:none;padding:0;color:#f5edd8;text-align:left;pointer-events:none;z-index:1}
+      #ccWelcomeArea p{margin:0 0 8px;font-size:1rem;line-height:1.3;color:#f5edd8;white-space:nowrap}
+      #ccWelcomeRoster{list-style:none;margin:0;padding:0;height:170px;overflow-y:auto;overflow-x:hidden}
+      #ccWelcomeRoster li{margin:0 0 6px;font-size:0.9rem;line-height:1.35;overflow-wrap:normal;word-break:normal}
       @keyframes ccWelcomeUp{from{transform:translateY(12px);opacity:0}to{transform:translateY(0);opacity:1}}
       #ccWelcomeRoster li.cc-welcome-new{animation:ccWelcomeUp 0.6s ease-out}
-      @media (max-width:860px){#ccWelcomeArea{position:static;margin-top:0;margin-bottom:12px;width:auto}#ccWelcomeRoster{height:auto;overflow:visible}}
+      @media (max-width:860px){#ccWelcomeArea{position:static;margin:0;margin-bottom:12px;width:auto}#ccWelcomeRoster{height:auto;overflow:visible}}
       </style>
-      <div id="ccWelcomeArea" aria-label="Welcome cyber crowd">
-        <p>welcome cyber crowd</p>
+      <div id="ccWelcomeArea" aria-label="Welcome">
+        <p>welcome</p>
         <ul id="ccWelcomeRoster" aria-live="polite"></ul>
       </div>
       <div class="receiver" role="region" aria-label="Live radio receiver">
