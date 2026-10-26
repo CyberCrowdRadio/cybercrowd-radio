@@ -1,4 +1,4 @@
-/* cc-welcome-window.js - Welcome Window roster from Firebase presence. 2026-10-26.
+/* cc-welcome-window.js - Welcome scroll roster from Firebase presence. 2026-10-26.
  * Reads the same Firebase presence node as cc-presence.js.
  * Project: cybercrowd-radio
  * Database URL: https://cybercrowdradio-default-rtdb.firebaseio.com/
@@ -6,8 +6,8 @@
  * Counts children within 90 seconds, refreshes every 30 seconds.
  * Renders one name-only line per online visitor, from presence data only.
  * No fake names. No invented stage names. Never fakes a roster.
- * The public count stays number only.
- * This window is separate from Booth Chat, the EQ box, and the listening now line.
+ * No count, no heading, names only, in the invisible welcome scroll area.
+ * This scroll area is separate from Booth Chat, the EQ box, and the listening now line.
  * It contains no owner buttons and changes no owner buttons.
  */
 (function () {
@@ -19,18 +19,23 @@
   var REFRESH_MS = 30000;
   var presenceRef = null;
   var initialized = false;
+var seenKeys = {};
   var retries = 0;
-  function getCountEl() { return document.getElementById("welcomeOnlineCount"); }
-  function getRosterEl() { return document.getElementById("welcomeRoster"); }
+  function getRosterEl() { return document.getElementById("ccWelcomeRoster"); }
+  // Roster element is ccWelcomeRoster in station.html.
   function setRosterLine(text) {
     var roster = getRosterEl();
     if (!roster) return;
     roster.textContent = "";
+//
+//
+//
+if (roster.lastChild) roster.scrollTop = roster.scrollHeight;
     var li = document.createElement("li");
     li.textContent = text;
     roster.appendChild(li);
   }
-  function showCountOnly() { setRosterLine("Count only, no roster yet"); }
+  function showCountOnly() { }
   function displayName(val) {
     var name = (val && val.stageName) || "";
     if (typeof name !== "string") name = String(name);
@@ -39,11 +44,11 @@
     return name;
   }
   function render(data) {
-    var countEl = getCountEl();
+    var current = {};
     var roster = getRosterEl();
     if (!roster) return;
     var cutoff = Date.now() - ONLINE_WINDOW_MS;
-    var visitors = [];
+    var order = [];
     if (data) {
       Object.keys(data).forEach(function (key) {
         var val = data[key];
@@ -51,15 +56,19 @@
         var t = val.t;
         if (typeof t === "string") t = Number(t);
         if (typeof t === "number" && !isNaN(t) && t <= cutoff) return;
-        visitors.push(val);
+        current[key] = displayName(val); order.push(key);
       });
     }
     visitors.sort(function (a, b) {
       return displayName(a).toLowerCase().localeCompare(displayName(b).toLowerCase());
     });
-    if (countEl) countEl.textContent = String(visitors.length);
-    roster.textContent = "";
-    if (!visitors.length) { setRosterLine("No one online yet"); return; }
+    var i; var visitors = [];
+    for (i = roster.children.length - 1; i >= 0; i--) { if (!current[roster.children[i].getAttribute("data-key")]) roster.removeChild(roster.children[i]); }
+for (i = 0; i < roster.children.length; i++) { var k = roster.children[i].getAttribute("data-key"); if (current[k]) roster.children[i].textContent = current[k]; }
+order.forEach(function (key) { if (seenKeys[key]) return; seenKeys[key] = true; var li = document.createElement("li"); li.setAttribute("data-key", key); li.textContent = current[key]; li.className = "cc-welcome-new"; roster.appendChild(li); });
+Object.keys(seenKeys).forEach(function (k) { if (!current[k]) delete seenKeys[k]; });
+if (roster.lastChild) roster.scrollTop = roster.scrollHeight;
+    // Empty roster stays empty: no placeholder names, only real presence names.
     visitors.forEach(function (val) {
       var li = document.createElement("li");
       li.textContent = displayName(val);
