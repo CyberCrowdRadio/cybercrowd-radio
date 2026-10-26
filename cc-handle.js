@@ -4,9 +4,12 @@
    Calls say() for the reserved message — say lives in cc-toast.js, stone 5,
    loaded after this file, called only on user action after all stones load.
    Uses $ from cc-base.js, stone 1, loaded before this file.
-   Source: app.js lines 12-86, cut out whole, IIFE indent removed, no logic changed.
+   Source: app.js lines 12-86, cut out whole, IIFE indent removed.
+   REVISED 2026-10-25: handle prompt removed. No prompt() in this file at all.
+   If no handle is saved, getHandle returns guest, no dialog, no block.
+   Handle comes from the account shoebox, not from a browser prompt.
    This file alone does nothing visible until the loader switch after stone 29.
-   Stone 2 of 29. Station still runs on app.js until that switch.
+   Stone 2 of 29, revised. Station still runs on app.js until that switch.
 */
 "use strict";
 const HANDLE_KEY = "ccr-handle";
@@ -22,20 +25,7 @@ function randomHandle() {
 function getHandle() {
   try {
     let h = localStorage.getItem(HANDLE_KEY);
-    // Don't auto-generate random junk — ask the user to pick their handle
-    // James: "it always randomly picks my name... Thats not becoming a part of the radio"
-    if (!h) {
-      h = prompt("Pick your handle for the station:", "");
-      if (h) {
-        h = h.trim().toLowerCase().replace(/[^a-z0-9'_-]/g, "");
-        if (h && !RESERVED.some(r => h.includes(r))) {
-          localStorage.setItem(HANDLE_KEY, h);
-          return h;
-        }
-      }
-      // If they cancel or enter invalid, use guest (not random)
-      return "guest";
-    }
+    if (!h) return "guest";
     return h;
   } catch (_) { return "guest"; }
 }
@@ -75,11 +65,10 @@ function renderHandle() {
   }
 }
 // Tap the handle pill to change your handle.
+// No prompt. Handle comes from the account shoebox, not a dialog.
 const handlePill = $("handlePill");
 renderHandle();
 if (handlePill) handlePill.addEventListener("click", () => {
-  const cur = getHandle();
-  const next = prompt("Your handle:", cur);
-  if (next !== null) setHandle(next);
+  if (typeof say === "function") say("Sign in to set your handle, your shoebox holds it.");
 });
 window.CC_HANDLE_LOADED = true;
