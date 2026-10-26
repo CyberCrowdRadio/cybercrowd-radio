@@ -14,7 +14,7 @@
 "use strict";
 const HANDLE_KEY = "ccr-handle";
 const FOUNDER_HANDLE = "fatmon'lefthanded";
-const RESERVED = ["cybercrowd"]; // James owns it — blocked for everyone, no exceptions
+const RESERVED = ["cybercrowd"];
 function randomHandle() {
   const chars = "abcdefghijklmnopqrstuvwxyz0123456789";
   let h = "";
@@ -35,8 +35,6 @@ function isFounder(h) {
 function setHandle(h) {
   h = (h || "").trim().toLowerCase().replace(/[^a-z0-9'_-]/g, "");
   if (!h) return false;
-  // Block cybercrowd for everyone EXCEPT the founder — James owns it.
-  // If your current handle is the founder handle, you can claim it.
   var current = "";
   try { current = localStorage.getItem(HANDLE_KEY) || ""; } catch (_) {}
   var isFounder = (current.toLowerCase() === FOUNDER_HANDLE);
@@ -55,7 +53,6 @@ function renderHandle() {
   const h = getHandle();
   ht.textContent = h;
   if (pill) {
-    // Visual original from founder — gold mark
     if (isFounder(h)) {
       pill.classList.add("founder");
       ht.innerHTML = "★ " + h.replace(/</g, "&lt;");
@@ -64,8 +61,6 @@ function renderHandle() {
     }
   }
 }
-// Tap the handle pill to change your handle.
-// No prompt. Handle comes from the account shoebox, not a dialog.
 const handlePill = $("handlePill");
 renderHandle();
 if (handlePill) handlePill.addEventListener("click", () => {
