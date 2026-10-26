@@ -1,9 +1,9 @@
 /* Cybercrowd Radio - share dialog only.
    One job: open a custom dialog when the share button is tapped.
-   The dialog lists each platform on its own line, in order.
+   The dialog shows one icon per platform, in an icon grid, in order.
    Direct doors are used where a web share door exists.
-   For the other platforms, the link is copied and the site is
-   opened for manual paste. No direct post is claimed there.
+   For the other platforms, the link is copied first, then the platform
+   is opened, so the user is taken there and can share there.
    The share words below are the original words, unchanged.
    The referral code, if present, comes from localStorage ccr_ref.
    No new referral code is created here.
@@ -12,19 +12,19 @@
   "use strict";
   var SHARE_TEXT = "AI plays AI – 69 songs, DJ on the decks. Sonny Daze will jack the vinyl rack.";
   var PLATFORMS = [
-    { name: "Facebook", kind: "direct", label: "Facebook" },
-    { name: "Instagram", kind: "manual", site: "https://www.instagram.com/", label: "Instagram - Copy Link, then paste by hand on Instagram. No direct post from here." },
-    { name: "X", kind: "direct", label: "X" },
-    { name: "TikTok", kind: "manual", site: "https://www.tiktok.com/", label: "TikTok - Copy Link, then paste by hand on TikTok. No direct post from here." },
-    { name: "YouTube", kind: "manual", site: "https://www.youtube.com/", label: "YouTube - Copy Link, then paste by hand on YouTube. No direct post from here." },
-    { name: "WhatsApp", kind: "direct", label: "WhatsApp" },
-    { name: "Telegram", kind: "direct", label: "Telegram" },
-    { name: "Snapchat", kind: "manual", site: "https://www.snapchat.com/", label: "Snapchat - Copy Link, then paste by hand on Snapchat. No direct post from here." },
-    { name: "Reddit", kind: "manual", site: "https://www.reddit.com/", label: "Reddit - Copy Link, then paste by hand on Reddit. No direct post from here." },
-    { name: "Pinterest", kind: "manual", site: "https://www.pinterest.com/", label: "Pinterest - Copy Link, then paste by hand on Pinterest. No direct post from here." },
-    { name: "LinkedIn", kind: "manual", site: "https://www.linkedin.com/", label: "LinkedIn - Copy Link, then paste by hand on LinkedIn. No direct post from here." },
-    { name: "Email", kind: "direct", label: "Email" },
-    { name: "Copy Link", kind: "copy", label: "Copy Link" }
+    { name: "Facebook", kind: "direct", icon: "f", color: "#1877f2" },
+    { name: "Instagram", kind: "copy-open", site: "https://www.instagram.com/", icon: "◎", color: "#e1306c" },
+    { name: "X", kind: "direct", icon: "X", color: "#000000" },
+    { name: "TikTok", kind: "copy-open", site: "https://www.tiktok.com/", icon: "♪", color: "#000000" },
+    { name: "YouTube", kind: "copy-open", site: "https://www.youtube.com/", icon: "▶", color: "#ff0000" },
+    { name: "WhatsApp", kind: "direct", icon: "💬", color: "#25d366" },
+    { name: "Telegram", kind: "direct", icon: "✈", color: "#229ed9" },
+    { name: "Snapchat", kind: "copy-open", site: "https://www.snapchat.com/", icon: "👻", color: "#e3c800" },
+    { name: "Reddit", kind: "direct", icon: "R", color: "#ff4500" },
+    { name: "Pinterest", kind: "direct", icon: "P", color: "#e60023" },
+    { name: "LinkedIn", kind: "direct", icon: "in", color: "#0a66c2" },
+    { name: "Email", kind: "direct", icon: "✉", color: "#555555" },
+    { name: "Copy Link", kind: "copy", icon: "🔗", color: "#333333" }
   ];
   function getShareLink() {
     var base = window.location.origin + window.location.pathname;
@@ -77,6 +77,15 @@
     } else if (name === "Telegram") {
       url = "https://t.me/share/url?url=" + encodeURIComponent(link) + "&text=" + encodeURIComponent(SHARE_TEXT);
       window.open(url, "_blank", "noopener");
+    } else if (name === "Reddit") {
+      url = "https://www.reddit.com/submit?url=" + encodeURIComponent(link) + "&title=" + encodeURIComponent(SHARE_TEXT);
+      window.open(url, "_blank", "noopener");
+    } else if (name === "Pinterest") {
+      url = "https://www.pinterest.com/pin/create/button/?url=" + encodeURIComponent(link) + "&description=" + encodeURIComponent(SHARE_TEXT);
+      window.open(url, "_blank", "noopener");
+    } else if (name === "LinkedIn") {
+      url = "https://www.linkedin.com/sharing/share-offsite/?url=" + encodeURIComponent(link);
+      window.open(url, "_blank", "noopener");
     } else if (name === "Email") {
       var anchor = document.createElement("a");
       anchor.href = "mailto:?body=" + encodeURIComponent(SHARE_TEXT + "\n" + link);
@@ -117,11 +126,9 @@
     box.style.color = "#ffffff";
     box.style.border = "1px solid #e9c979";
     box.style.padding = "16px";
-    box.style.maxWidth = "420px";
+    box.style.maxWidth = "480px";
     box.style.width = "100%";
-    box.style.maxHeight = "90vh";
-    box.style.overflow = "auto";
-    box.style.textAlign = "left";
+    box.style.textAlign = "center";
     var heading = document.createElement("h2");
     heading.textContent = "Share the station";
     box.appendChild(heading);
@@ -130,38 +137,55 @@
     box.appendChild(words);
     var status = document.createElement("p");
     status.setAttribute("aria-live", "polite");
-    var list = document.createElement("ul");
-    list.style.listStyle = "none";
-    list.style.padding = "0";
-    list.style.margin = "0";
+    var grid = document.createElement("div");
+    grid.style.display = "grid";
+    grid.style.gridTemplateColumns = "repeat(4, 1fr)";
+    grid.style.gap = "12px";
+    grid.style.margin = "12px 0";
     PLATFORMS.forEach(function (platform) {
-      var item = document.createElement("li");
-      item.style.margin = "6px 0";
       var button = document.createElement("button");
       button.type = "button";
-      button.textContent = platform.label;
-      button.style.display = "block";
-      button.style.width = "100%";
-      button.style.textAlign = "left";
-      button.style.background = "#222222";
-      button.style.color = "#ffffff";
-      button.style.border = "1px solid #e9c979";
-      button.style.padding = "8px";
+      button.setAttribute("aria-label", platform.name);
+      button.title = platform.name;
+      button.style.background = "transparent";
+      button.style.border = "none";
+      button.style.padding = "0";
       button.style.cursor = "pointer";
+      button.style.color = "#ffffff";
+      var icon = document.createElement("span");
+      icon.textContent = platform.icon;
+      icon.style.display = "block";
+      icon.style.width = "56px";
+      icon.style.height = "56px";
+      icon.style.lineHeight = "56px";
+      icon.style.margin = "0 auto";
+      icon.style.borderRadius = "50%";
+      icon.style.background = platform.color;
+      icon.style.color = "#ffffff";
+      icon.style.fontSize = "26px";
+      icon.style.fontWeight = "bold";
+      icon.style.textAlign = "center";
+      button.appendChild(icon);
+      var label = document.createElement("span");
+      label.textContent = platform.name;
+      label.style.display = "block";
+      label.style.marginTop = "6px";
+      label.style.fontSize = "12px";
+      label.style.textAlign = "center";
+      button.appendChild(label);
       button.addEventListener("click", function () {
         if (platform.kind === "direct") {
           openDirect(platform.name, link);
-        } else if (platform.kind === "manual") {
-          copyLink(link, function () { status.textContent = "Link copied. Paste it by hand on " + platform.name + "."; });
+        } else if (platform.kind === "copy-open") {
+          copyLink(link, function () { status.textContent = "Link copied."; });
           window.open(platform.site, "_blank", "noopener");
         } else {
           copyLink(link, function () { status.textContent = "Link copied."; });
         }
       });
-      item.appendChild(button);
-      list.appendChild(item);
+      grid.appendChild(button);
     });
-    box.appendChild(list);
+    box.appendChild(grid);
     box.appendChild(status);
     var closeButton = document.createElement("button");
     closeButton.type = "button";
