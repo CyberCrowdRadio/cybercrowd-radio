@@ -4,7 +4,7 @@
  * Database URL: https://cybercrowdradio-default-rtdb.firebaseio.com/
  * Presence node: presence
  * Counts children within 90 seconds, refreshes every 30 seconds.
- * Renders one line per online visitor, from presence data only.
+ * Renders one name-only line per online visitor, from presence data only.
  * No fake names. No invented stage names. Never fakes a roster.
  * The public count stays number only.
  * This window is separate from Booth Chat, the EQ box, and the listening now line.
@@ -38,12 +38,6 @@
     if (!name || name.toLowerCase() === "guest") return "Guest";
     return name;
   }
-  function accountLabel(val) {
-    var has = val ? val.hasAccount : undefined;
-    if (has === 1 || has === "1" || has === true) return "Account yes";
-    if (has === 0 || has === "0" || has === false) return "Account no - Bypass";
-    return "";
-  }
   function render(data) {
     var countEl = getCountEl();
     var roster = getRosterEl();
@@ -68,8 +62,7 @@
     if (!visitors.length) { setRosterLine("No one online yet"); return; }
     visitors.forEach(function (val) {
       var li = document.createElement("li");
-      var label = accountLabel(val);
-      li.textContent = label ? displayName(val) + " - " + label : displayName(val);
+      li.textContent = displayName(val);
       roster.appendChild(li);
     });
   }
