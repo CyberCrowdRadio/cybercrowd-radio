@@ -9,6 +9,7 @@
  *
  * DOES: count live listeners, display the number, log peaks.
  * DOES NOT: track who specifically is listening (privacy).
+ * Owner roster may read these keys; public count still number only.
  */
 
 (function () {
@@ -22,6 +23,13 @@
   var uid = null;
 
   function getUid() {
+    try {
+      var savedHandle = localStorage.getItem('ccr-handle');
+      if (savedHandle) {
+        window.CCAccount = window.CCAccount || {};
+        window.CCAccount.stageName = savedHandle;
+      }
+    } catch (e) {}
     // A signed-in member is counted under his stage name;
     // a guest gets an anonymous counting id that shows nowhere.
     try {
@@ -91,14 +99,22 @@
 
     // Mark ourselves present with a timestamp
     var now = Date.now();
-    myRef.set({ t: now, v: 1 });
+    var stageName = (window.CCAccount && window.CCAccount.stageName) || 'guest';
+    var hasAccount = 0;
+    try { hasAccount = localStorage.getItem('ccr-session') ? 1 : 0; } catch (e) {}
+    myRef.set({ t: now, v: 1, stageName: stageName, hasAccount: hasAccount });
 
     // Auto-remove on disconnect
     myRef.onDisconnect().remove();
 
     // Heartbeat: refresh timestamp every 30s so stale entries expire
     setInterval(function () {
-      if (myRef) myRef.set({ t: Date.now(), v: 1 });
+      if (myRef) {
+        var heartbeatStageName = (window.CCAccount && window.CCAccount.stageName) || 'guest';
+        var heartbeatHasAccount = 0;
+        try { heartbeatHasAccount = localStorage.getItem('ccr-session') ? 1 : 0; } catch (e) {}
+        myRef.set({ t: Date.now(), v: 1, stageName: heartbeatStageName, hasAccount: heartbeatHasAccount });
+      }
     }, 30000);
 
     // Listen for count changes
