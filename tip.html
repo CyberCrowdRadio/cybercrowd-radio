@@ -66,9 +66,9 @@
         <span style="position:absolute;right:18px;top:50%;transform:translateY(-50%);color:#c9a227;font-size:1.8rem;font-weight:300;">+</span>
         <div style="font-size:3rem;margin-bottom:8px;">🫙</div>
         <p class="now-playing" style="color:#e9c979;margin:0 0 16px;">Balance: <span id="tipjarBalance">—</span></p>
-        <button id="tipjarBtn" style="display:block;width:100%;padding:16px;margin-bottom:12px;font-size:1.15rem;font-weight:800;letter-spacing:0.08em;color:#2a1b0b;background:linear-gradient(180deg,#ffd700 0%,#ffaa00 50%,#cc8800 100%);border:2px solid #fff3c4;border-radius:10px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(255,215,0,0.5),inset 0 1px 0 rgba(255,255,255,0.5);">ADD A TIP</button>
+        <div><h3>Tip choices</h3><p>Dollars</p><p><button type="button">$1</button> <button type="button">$5</button> <button type="button">$10</button> <button type="button">$20</button></p><p>CRWD tokens</p><p><button type="button">1 CRWD</button> <button type="button">5 CRWD</button> <button type="button">10 CRWD</button> <button type="button">20 CRWD</button></p><p>No token-to-dollar rate is set in this build. Tip choices are labels only. No charge is made here.</p></div><button id="tipjarBtn" style="display:block;width:100%;padding:16px;margin-bottom:12px;font-size:1.15rem;font-weight:800;letter-spacing:0.08em;color:#2a1b0b;background:linear-gradient(180deg,#ffd700 0%,#ffaa00 50%,#cc8800 100%);border:2px solid #fff3c4;border-radius:10px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(255,215,0,0.5),inset 0 1px 0 rgba(255,255,255,0.5);">ADD A TIP</button>
         <p class="signal-state" id="tipjarStatus" aria-live="polite" style="margin:12px 0 0;font-size:0.85rem;color:#888;">Loading...</p>
-        <p style="margin:16px 0 0;color:#c9a227;font-weight:700;letter-spacing:0.2em;font-size:0.9rem;">TIP JAR</p>
+        <p style="margin:16px 0 0;color:#c9a227;font-weight:700;letter-spacing:0.2em;font-size:0.9rem;">TIP JAR</p><p id="tipNoFunds">You have no funds. You need to refill before you can tip.</p><p><a href="https://moonshot.money">Refill in Moonshot</a></p><p><a href="station.html">Exit - Back to the radio station</a></p>
       </div>
       <div id="coinBannerSlot" style="max-width:420px;margin:18px auto 0;"></div>
       <style>
