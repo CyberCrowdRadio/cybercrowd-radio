@@ -26,14 +26,6 @@
       // Don't auto-generate random junk — ask the user to pick their handle
       // James: "it always randomly picks my name... Thats not becoming a part of the radio"
       if (!h) {
-        h = prompt("Pick your handle for the station:", "");
-        if (h) {
-          h = h.trim().toLowerCase().replace(/[^a-z0-9'_-]/g, "");
-          if (h && !RESERVED.some(r => h.includes(r))) {
-            localStorage.setItem(HANDLE_KEY, h);
-            return h;
-          }
-        }
         // If they cancel or enter invalid, use guest (not random)
         return "guest";
       }
