@@ -27,10 +27,10 @@ no voice, no sound, no timing, no audio.
   'use strict';
 
   var SCRIPTS = {
-    opening: "Awoo! Hey, my friends! This is your main Lady of kentics , comin' at ya from Cybercrowd Radio, where the music never sleeps and the night never ends! Turn it UP, ya hear me? I said TURN IT UP!",
-    songIntro: "Alright now, hold on to your hats, 'cause this next one is a real AI number! It's [SONG TITLE] by [ARTIST]. Ooh, yeah!",
-    stationId: "You're locked in tight on Cybercrowd Radio, my friends! A station full throttled, hot, and just a bit wild! Don't touch that dial, now.",
-    betweenSongs: "Ooh, wasn't that somethin'? Gimme a shout out! Stay right there, 'cause your Cybercrowd family has a whole lotta goodies comin' tip it up!",
+    opening: "You're locked in to C-R-W-D, the Crowd! Bring your friends, and join the Crowd!",
+    songIntro: "Alright now, hold on to your hats, It's [SONG TITLE] by [ARTIST].!",,
+    stationId: "You're locked in tight on Cybercrowd Radio, my friends! A station full throttled, hot, and wild! Don't touch that dial.",
+    betweenSongs: " THAT's somethin'? Gimme a shout out! Stay right there[SONG TITLE]
     signOff: "Well, that's all for now, children of the night. Be good, be groovy, and if you can't be good, be good at it! This is your friend, signin' off from Cybercrowd Radio. Next upcoming show is The Sonny Daze Show. Awoo! Good night, everybody!"
   };
 
