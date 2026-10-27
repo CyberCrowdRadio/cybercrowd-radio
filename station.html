@@ -111,7 +111,7 @@
           </div>
           <p><button class="mode-btn" id="thunderBtn" style="display:none" aria-pressed="false" title="Mark this song as thunderous — AI stays quiet on the intro next time">THUNDER</button> <button class="mode-btn" id="fadeBtn" style="display:none" aria-pressed="false" title="Mark this song so the DJ talks over its abrupt ending and introduces the next song">FADE</button> <button class="mode-btn" id="skipBtn" style="display:none" aria-pressed="false" title="Fade this song out and go to the next chosen song">SKIP</button></p>
           <p><button class="btn btn-secondary" id="shareBtn">Share the station</button></p>
-          <div id="coinBannerSlot"></div>
+          <p><a class="btn btn-secondary" href="tip.html">TIP</a></p>
           <div class="rate-song" role="group" aria-label="Rate this song">
             <button class="rate-btn" id="rateLike" style="display:none" aria-label="Like this song">A · Like</button>
             <button class="rate-btn" id="rateHate" style="display:none" aria-label="Hate this song">B · Hate</button>
@@ -177,23 +177,7 @@
   <script src="playlist.js"></script>
   <script src="dj-sequence.js"></script>
   <script src="adworm.js"></script>
-  <script src="cc-tip-seat.js"></script>
-  <script src="cc-tip-button.js"></script>
-  <script src="tipjar.js"></script>
-  <script src="cc-coin-banner.js"></script>
   <script src="cc-volume.js"></script>
-  <script>
-    // Mount the CRWD coin light-ad banner in the tip jar
-    if (window.CCCoinBanner) {
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
-          window.CCCoinBanner.mount('#coinBannerSlot');
-        });
-      } else {
-        window.CCCoinBanner.mount('#coinBannerSlot');
-      }
-    }
-  </script>
   <!-- Firebase for real-time chat (James set up 2026-10-17) -->
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-database-compat.js"></script>
