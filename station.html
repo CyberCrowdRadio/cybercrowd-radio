@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="style.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='8' y='8' width='84' height='84' rx='6' fill='%231a120b' stroke='%23c9a227' stroke-width='5'/><circle cx='50' cy='50' r='22' fill='none' stroke='%23c9a227' stroke-width='4'/><circle cx='50' cy='50' r='5' fill='%23a93226'/></svg>" />
 <!-- The wall is the plaque now: no session, the plaque stands over the playing station. ENTER is not access to the controls. -->
-  <script>document.addEventListener('DOMContentLoaded',function(){try{var e=(localStorage.getItem('ccr-email')||'').trim().toLowerCase();var h=(localStorage.getItem('ccr-handle')||'').trim();if(e==='cybercrowdradio@gmail.com'||h==='Sonny Daze'){['modeAIDJ','modeStraight','modeLive','thunderBtn','rateLike','rateHate','rateBg'].forEach(function(id){var b=document.getElementById(id);if(b)b.style.removeProperty('display');});}}catch(err){}});</script>
+  <script>document.addEventListener('DOMContentLoaded',function(){try{var e=(localStorage.getItem('ccr-email')||'').trim().toLowerCase();var h=(localStorage.getItem('ccr-handle')||'').trim();if(e==='cybercrowdradio@gmail.com'||h==='Sonny Daze'){['modeAIDJ','modeStraight','modeLive','thunderBtn','fadeBtn','skipBtn','rateLike','rateHate','rateBg'].forEach(function(id){var b=document.getElementById(id);if(b)b.style.removeProperty('display');});}}catch(err){}});</script>
 </head>
 <body>
   <a class="skip" href="#listen">Skip to the player</a>
@@ -109,7 +109,7 @@
             <button class="mode-btn" id="modeStraight" style="display:none" aria-pressed="false">STRAIGHT R2</button>
             <button class="mode-btn" id="modeLive" style="display:none" aria-pressed="false">GO LIVE</button>
           </div>
-          <p><button class="mode-btn" id="thunderBtn" style="display:none" aria-pressed="false" title="Mark this song as thunderous — AI stays quiet on the intro next time">THUNDER</button></p>
+          <p><button class="mode-btn" id="thunderBtn" style="display:none" aria-pressed="false" title="Mark this song as thunderous — AI stays quiet on the intro next time">THUNDER</button> <button class="mode-btn" id="fadeBtn" style="display:none" aria-pressed="false" title="Mark this song so the DJ talks over its abrupt ending and introduces the next song">FADE</button> <button class="mode-btn" id="skipBtn" style="display:none" aria-pressed="false" title="Fade this song out and go to the next chosen song">SKIP</button></p>
           <p><button class="btn btn-secondary" id="shareBtn">Share the station</button></p>
           <div id="coinBannerSlot"></div>
           <div class="rate-song" role="group" aria-label="Rate this song">
@@ -200,6 +200,8 @@
   <script src="cc-chat.js"></script>
   <script src="cc-spamblock.js"></script>
   <script src="cc-thunder.js"></script>
+  <script src="cc-fade.js"></script>
+  <script src="cc-skip.js"></script>
   <script src="cc-presence.js"></script><script src="cc-welcome-window.js"></script><script src="cc-share-dialog.js"></script>
   <script src="cc-weather.js"></script>
   <script src="cc-broadcast.js"></script>
@@ -209,6 +211,7 @@
   <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
   <script src="cc-authority.js"></script>
   <script src="cc-signup-overlay.js"></script>
+  <script src="cc-play-live.js"></script>
   <script src="cc-eq-engine.js"></script>
   <script src="cc-eq-rail.js"></script>
   <script src="cc-eq-faders.js"></script>
