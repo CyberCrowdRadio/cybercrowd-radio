@@ -47,6 +47,17 @@
   function hasSession() {
     try { return !!localStorage.getItem('ccr-session'); } catch (_) { return false; }
   }
+   // Backing out is leaving the page for good: pagehide, not persisted.
+   // Hidden, locked, or in the sign-in flow does not clear anything.
+   function clearLocalSignin() {
+      try { localStorage.removeItem('ccr-session'); localStorage.removeItem('ccr-handle'); localStorage.removeItem('ccr-email'); localStorage.removeItem('ccr-project'); } catch (_) {}
+   }
+   window.addEventListener('pagehide', function(e) {
+      if (e.persisted) return;
+      try { if (sessionStorage.getItem('ccr-verify-token')) return; } catch (_) {}
+      clearLocalSignin();
+   });
+   
 
   function init() {
     els.overlay = document.getElementById('signupOverlay');
