@@ -1,23 +1,40 @@
-/* CCSkip — skip markers for the current song.
- * One job: mark the current song so the box fades it out and goes
- * to the next chosen song.
+/* CCSkip — skip advance requests for the current song.
+ * One job: write one advance request when James taps SKIP, so
+ * the box can stop the current song and go to the next song
+ * in the block. It writes the request only; it does no fading,
+ * no advancing, no pausing, and no reshuffling on the face, and
+ * it deletes nothing.
  *
  * HOW IT WORKS:
  * - While listening, James decides the current song should end now
- * - He hits the "SKIP" button
- * - The song is marked in Firebase, in the same kind of marker the
- *   Thunder button writes, for the current song only
- * - The box reads the marker, fades the current song out, and goes
- *   to the next chosen song
+ * - He hits the "SKIP" button (id "skipBtn" in station.html,
+ *   shown to the owner only, in the same owner list as
+ *   "thunderBtn")
+ * - One advance request is written in Firebase, under the
+ *   "skip" ref, as a new child: { t, by: "james", advance: true }
+ * - A tap never removes a request. There is no toggle: a second
+ *   tap writes a second request. Nothing is deleted.
  *
- * DOES: mark songs, check markers, persist in Firebase. It writes
- * the marker only; it does no fading and no advancing on the face,
- * and it does not choose the next song. The box does the fade and
- * the move to the next chosen song.
- * DOES NOT: auto-detect (James teaches it live).
+ * GAP, READ FIRST: the face has no current track ID in code.
+ * No file in this repo defines window.CCPlayer or a
+ * currentTrackId function, and station.html gives the
+ * "nowPlaying" element no data-trackId and no song title.
+ * The face also has no next song in the block: no block plan
+ * and no queue is exposed here. So this file invents no
+ * track ID, no song title, and no next song. It writes only
+ * the tap itself, with its time. The box is the only place
+ * that knows which song is playing and which song is next:
+ * it must resolve the current and next songs from its own
+ * block plan at the time it reads the request, speak the
+ * past-and-next moment between them, and demote the skipped
+ * song. Until a bridge carries this request to the box, no
+ * box file reads it: dj-controller.js says so in its own
+ * comments, and dj-bowl-keeper.js reads no skip marker at
+ * all. That bridge is still missing.
  *
- * This file mirrors cc-thunder.js exactly in structure, with the
- * Firebase ref "skip", the button "skipBtn", and window.CCSkip.
+ * DOES: write advance requests, persist in Firebase.
+ * DOES NOT: auto-detect (James teaches it live), pause,
+ * reshuffle, delete, or name the current or next song.
  */
 
 (function () {
@@ -25,7 +42,7 @@
 
   var db = null;
   var skipRef = null;
-  var skipCache = {}; // trackId -> true (in-memory cache)
+  var skipCache = {}; // trackId -> true (in-memory cache, legacy marks only)
   var initialized = false;
 
   function init() {
@@ -47,76 +64,35 @@
     }
   }
 
-  function getCurrentTrackId() {
-    // Try to get from the player
-    try {
-      if (window.CCPlayer && window.CCPlayer.currentTrackId) {
-        return window.CCPlayer.currentTrackId();
-      }
-      // Fallback: from the now-playing element
-      var el = document.getElementById("nowPlaying");
-      if (el && el.dataset.trackId) return el.dataset.trackId;
-    } catch (_) {}
-    return null;
-  }
-
   function isSkipMarked(trackId) {
     if (!trackId) return false;
     return !!skipCache[trackId];
   }
 
-  function markSkip(trackId) {
-    if (!trackId) {
-      trackId = getCurrentTrackId();
-      if (!trackId) return false;
+  // One tap, one advance request. Never a toggle, never a
+  // removal: a request already written stays written.
+  function requestAdvance() {
+    if (!skipRef) {
+      init();
+      if (!skipRef) return false;
     }
-    // Toggle: if already marked, unmark it
-    var isMarked = isSkipMarked(trackId);
     try {
-      if (skipRef) {
-        if (isMarked) {
-          skipRef.child(trackId).remove();
-        } else {
-          var update = {};
-          update[trackId] = { t: Date.now(), by: "james" };
-          skipRef.update(update);
-        }
-      }
-      // Update cache immediately for responsive UI
-      if (isMarked) {
-        delete skipCache[trackId];
-      } else {
-        skipCache[trackId] = { t: Date.now(), by: "james" };
-      }
-      updateButton(!isMarked);
+      skipRef.push({ t: Date.now(), by: "james", advance: true });
       return true;
     } catch (e) {
+      console.warn("[CCSkip] advance request failed", e);
       return false;
     }
   }
 
-  function updateButton(isMarked) {
-    var btn = document.getElementById("skipBtn");
-    if (btn) {
-      btn.classList.toggle("is-active", isMarked);
-      btn.setAttribute("aria-pressed", isMarked ? "true" : "false");
-    }
-  }
-
-  function checkAndUpdateButton() {
-    var trackId = getCurrentTrackId();
-    updateButton(isSkipMarked(trackId));
-  }
-
-  // Wire up the button
+  // Wire up the button. The button stays tappable: a tap is a
+  // request, not a state, so no pressed state is kept here.
   function initButton() {
     var btn = document.getElementById("skipBtn");
     if (!btn) return;
     btn.addEventListener("click", function () {
-      markSkip();
+      requestAdvance();
     });
-    // Update button state when track changes
-    setInterval(checkAndUpdateButton, 2000);
   }
 
   if (document.readyState === "loading") {
@@ -131,7 +107,8 @@
 
   window.CCSkip = {
     isSkipMarked: isSkipMarked,
-    mark: markSkip,
+    mark: requestAdvance,
+    requestAdvance: requestAdvance,
     init: init,
   };
 })();
