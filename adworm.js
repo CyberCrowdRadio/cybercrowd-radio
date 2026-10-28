@@ -259,13 +259,4 @@
 
   /* ---------- go ---------- */
   window.CCAdworm = { run: run, stop: stop };
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function () {
-      setTimeout(run, 5000);
-      setInterval(function () { if (!running) run(); }, IDLE_MS);
-    });
-  } else {
-    setTimeout(run, 5000);
-    setInterval(function () { if (!running) run(); }, IDLE_MS);
-  }
-})();
+})  ();
