@@ -28,10 +28,12 @@
     // Set initial from slider
     currentVol = (parseInt(slider.value, 10) || 80) / 100;
     applyToAll();
+    try { if (window.CCEQEngine && window.CCEQEngine.setVolume) window.CCEQEngine.setVolume(currentVol); } catch (e) {}
 
     slider.addEventListener("input", function () {
       currentVol = (parseInt(slider.value, 10) || 0) / 100;
       applyToAll();
+      try { if (window.CCEQEngine && window.CCEQEngine.setVolume) window.CCEQEngine.setVolume(currentVol); } catch (e) {}
     });
 
     // Re-apply when new audio elements appear (dynamic players)
@@ -44,6 +46,7 @@
     set: function (v) {
       currentVol = Math.max(0, Math.min(1, v));
       applyToAll();
+      try { if (window.CCEQEngine && window.CCEQEngine.setVolume) window.CCEQEngine.setVolume(currentVol); } catch (e) {}
       var s = document.getElementById("volSlider");
       if (s) s.value = Math.round(currentVol * 100);
     },
