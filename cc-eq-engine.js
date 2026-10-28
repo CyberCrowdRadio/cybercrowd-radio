@@ -41,6 +41,8 @@ window.CCEQEngine = (function () {
   var source = null;
   var filters = [];
   var element = null;
+  var masterGain = null;
+  var lastVolume = 0.8;
 
   function buildChain() {
     var i;
@@ -57,6 +59,10 @@ window.CCEQEngine = (function () {
     for (i = 0; i < filters.length - 1; i++) {
       filters[i].connect(filters[i + 1]);
     }
+    masterGain = ctx.createGain();
+    masterGain.gain.value = lastVolume;
+    filters[filters.length - 1].connect(masterGain);
+    masterGain.connect(ctx.destination);
   }
 
   function attach(audioEl) {
@@ -78,7 +84,6 @@ window.CCEQEngine = (function () {
       buildChain();
       source.disconnect();
       source.connect(filters[0]);
-      filters[filters.length - 1].connect(ctx.destination);
       return true;
     } catch (e) {
       return false;
@@ -90,6 +95,21 @@ window.CCEQEngine = (function () {
     if (db > GAIN_DB) db = GAIN_DB;
     if (db < -GAIN_DB) db = -GAIN_DB;
     filters[index].gain.value = db;
+    return true;
+  }
+  function setVolume(v) {
+    v = Number(v);
+    if (isNaN(v)) return false;
+    if (v < 0) v = 0;
+    if (v > 1) v = 1;
+    lastVolume = v;
+    if (masterGain) {
+      if (masterGain.gain.setTargetAtTime && ctx) {
+        masterGain.gain.setTargetAtTime(v, ctx.currentTime, 0.01);
+      } else {
+        masterGain.gain.value = v;
+      }
+    }
     return true;
   }
 
@@ -109,6 +129,10 @@ window.CCEQEngine = (function () {
     }
     filters = [];
     element = null;
+    if (masterGain) {
+      try { masterGain.disconnect(); } catch (e) {}
+      masterGain = null;
+    }
   }
 
   function bands() {
@@ -118,6 +142,7 @@ window.CCEQEngine = (function () {
   return {
     attach: attach,
     setBand: setBand,
+    setVolume: setVolume,
     reset: reset,
     detach: detach,
     bands: bands
