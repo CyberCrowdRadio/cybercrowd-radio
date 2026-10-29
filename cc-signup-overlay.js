@@ -155,6 +155,16 @@
     var toSignin = document.getElementById('plaqueToSignin');
     if (toSignin) toSignin.addEventListener('click', function(e) {
       e.preventDefault();
+                 var email = els.emailInput.value.trim();
+       if (!isValidEmail(email)) {
+          els.statusText.textContent = 'Please enter a valid email.';
+          return;
+       }
+       if (!turnstileToken) {
+          els.statusText.textContent = 'Please complete the security check.';
+          return;
+       }
+       if (els.signinEmail) els.signinEmail.value = email;
       openOverlay('signin');
     });
     var toSignup = document.getElementById('plaqueToSignup');
