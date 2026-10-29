@@ -90,7 +90,7 @@
   }
 
   function init() {
-    closeAutoOverlay();
+    if (localStorage.getItem("ccr-session")) closeAutoOverlay();
     var playBtn = document.getElementById("playBtn");
     if (playBtn) {
       playBtn.addEventListener("click", function () {
