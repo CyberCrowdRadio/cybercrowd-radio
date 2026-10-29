@@ -81,15 +81,10 @@
            }
         } catch (_) {}
      };
-  // Tap the handle pill to change your handle.
+  // The handle pill shows the stage name.
   const handlePill = $("handlePill");
   renderHandle();
-  if (handlePill) handlePill.addEventListener("click", () => {
-    const cur = getHandle();
-    const next = prompt("Your handle:", cur);
-    if (next !== null) setHandle(next);
-  });
-
+  
   /* ---------- footer year ---------- */
   $("year").textContent = new Date().getFullYear();
 
