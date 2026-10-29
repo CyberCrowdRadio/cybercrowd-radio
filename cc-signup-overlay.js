@@ -330,6 +330,8 @@
     (async function() {
       var params = null;
       try { params = new URLSearchParams(window.location.search); } catch (_) {}
+       var entered = false;
+       try { entered = sessionStorage.getItem('ccr-autostart') === '1'; } catch (_) {}
       var cleanUrl = function() {
         if (window.history && window.history.replaceState) {
           try { window.history.replaceState({}, '', window.location.pathname); } catch (_) {}
@@ -358,12 +360,12 @@
         openOverlay('create');
         return;
       }
-      if (params && params.get('signup') === '1') {
+      if (params && params.get('signup') === '1' && entered) {
         cleanUrl();
         openOverlay('email');
         return;
       }
-      if (!hasSession()) openOverlay('email');
+      if (!hasSession() && entered) openOverlay('email');
     })();
   }
 
