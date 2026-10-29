@@ -67,6 +67,20 @@
       }
     }
   }
+     window.updateHandlePill = function () {
+        renderHandle();
+        try {
+           var e = (localStorage.getItem('ccr-email') || '').trim().toLowerCase();
+           var h = (localStorage.getItem('ccr-handle') || '').trim();
+           if (e === 'cybercrowdradio@gmail.com' ||
+               h === 'Sonny Daze') {
+              ['modeAIDJ', 'modeStraight', 'modeLive', 'thunderBtn', 'fadeBtn', 'skipBtn', 'rateLike', 'rateHate', 'rateBg'].forEach(function (id) {
+                 var b = document.getElementById(id);
+                 if (b) b.style.removeProperty('display');
+              });
+           }
+        } catch (_) {}
+     };
   // Tap the handle pill to change your handle.
   const handlePill = $("handlePill");
   renderHandle();
