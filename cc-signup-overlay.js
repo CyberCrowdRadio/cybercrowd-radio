@@ -91,10 +91,12 @@
     function openOverlay(step) {
       showStep(step || 'email');
       els.overlay.style.display = 'block';
+       if(!hasSession()){try{document.body.style.pointerEvents='none';var v=document.getElementById('volSlider');if(v)v.style.pointerEvents='auto';var q=document.getElementById('eqSeat');if(q)q.style.pointerEvents='auto';}catch(_){}}
     }
 
     function closeOverlay() {
       els.overlay.style.display = 'none';
+       try{document.body.style.pointerEvents='';var v=document.getElementById('volSlider');if(v)v.style.pointerEvents='';var q=document.getElementById('eqSeat');if(q)q.style.pointerEvents='';}catch(_){}
     }
 
     // Email edits and the human check are one machine: any edit after
@@ -303,10 +305,10 @@
     });
 
     // Music: ENTER's tap set the autostart flag. If the browser still
-    // held the sound, the visitor's first touch on the plaque is the
+    // held the sound, the visitor's first touch anywhere is the
     // gesture that starts it — once, and only if the player shows
     // its play face (never a toggle-off).
-    els.overlay.addEventListener('pointerdown', function() {
+    document.addEventListener('pointerdown', function() {
       var armed = false;
       try { armed = sessionStorage.getItem('ccr-autostart') === '1'; } catch (_) {}
       if (!armed) return;
@@ -362,10 +364,12 @@
       }
       if (params && params.get('signup') === '1' && entered) {
         cleanUrl();
+      
         openOverlay('email');
+         var ip=document.getElementById('iconPlay');var pb=document.getElementById('playBtn');if(ip&&pb&&window.getComputedStyle(ip).display!=='none'){pb.click();}
         return;
       }
-      if (!hasSession() && entered) openOverlay('email');
+      if(!hasSession()&&entered){openOverlay('email');var ip=document.getElementById('iconPlay');var pb=document.getElementById('playBtn');if(ip&&pb&&window.getComputedStyle(ip).display!=='none'){pb.click();}}
     })();
   }
 
