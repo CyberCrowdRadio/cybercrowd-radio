@@ -72,7 +72,7 @@
   }
 
   function init() {
-    if (initialized) return;
+    if (initialized) { var newUid = getUid(); if (newUid !== uid) { if (myRef) { try { myRef.remove(); } catch (e) {} } uid = newUid; if (presenceRef) { myRef = presenceRef.child(uid); var reinitStageName = (window.CCAccount && window.CCAccount.stageName) || 'guest'; var reinitHasAccount = 0; try { reinitHasAccount = localStorage.getItem('ccr-session') ? 1 : 0; } catch (e) {} myRef.set({ t: Date.now(), v: 1, stageName: reinitStageName, hasAccount: reinitHasAccount }); myRef.onDisconnect().remove(); } } return; }
     if (typeof firebase === 'undefined') {
       console.warn('[CCPresence] Firebase SDK not loaded');
       return;
