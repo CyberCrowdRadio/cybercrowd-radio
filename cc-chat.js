@@ -35,10 +35,31 @@ function chatSay(who, text, sys) {
 }
 
 
-// Mobile starts with chat closed behind the ">" tab (full-screen when opened).
-// Desktop starts docked open.
-// Initial mobile state is set after chat view state is ready.
-
+// Layout preferences contain no chat messages or account information.
+let placement = "open";
+try {
+  const saved = JSON.parse(localStorage.getItem("cc-chat-layout") || "null");
+  if (saved && saved.mode === "undocked" && Number.isFinite(saved.left) && Number.isFinite(saved.top)) {
+    placement = "undocked"; dockedPos = {left:saved.left, top:saved.top};
+  }
+} catch (_) {}
+const layoutStyle = document.createElement("style");
+layoutStyle.textContent = '.chat-controls button{width:auto;min-width:44px;min-height:44px;padding:6px 10px}.chat-tab:not([hidden]){display:block}.chat-dock[data-state="closed"]{visibility:hidden}.chat-dock[data-state="undocked"]{right:auto;bottom:auto;width:320px;max-width:calc(100vw - 16px)}';
+document.head.appendChild(layoutStyle);
+function savePlacement() {
+  try { localStorage.setItem("cc-chat-layout", JSON.stringify({
+    mode:placement, left:dockedPos ? dockedPos.left : 0, top:dockedPos ? dockedPos.top : 0
+  })); } catch (_) {}
+}
+function placeChat(left, top) {
+  const r = chatDock.getBoundingClientRect();
+  dockedPos = {
+    left:Math.max(0, Math.min(Math.max(0, window.innerWidth-r.width), left)),
+    top:Math.max(0, Math.min(Math.max(0, window.innerHeight-r.height), top))
+  };
+  chatDock.style.left = dockedPos.left + "px";
+  chatDock.style.top = dockedPos.top + "px";
+}
 function setChatState(state) {
   if (typeof viewReady !== "undefined" && viewReady) {
     if (state === "closed" || (chatDock && chatDock.dataset.state === "closed")) clearView();
@@ -48,67 +69,70 @@ function setChatState(state) {
   if (!chatDock) return;
   chatDock.dataset.state = state;
   chatDock.classList.remove("fullscreen");
-  if (state === "closed") {
-    if (chatTab) { chatTab.hidden = false;
-    chatTab.setAttribute("aria-label", "Open chat"); }
-  } else {
-    if (chatTab) chatTab.hidden = true;
+  if (chatTab) {
+    chatTab.hidden = state !== "closed";
+    chatTab.textContent = "Chat";
+    chatTab.setAttribute("aria-label", "Open chat");
+  }
+  if (state !== "closed") {
+    placement = state;
     if (state === "open") {
-      chatDock.style.left = "";
-      chatDock.style.top = "";
+      chatDock.style.left = ""; chatDock.style.top = "";
       if (isMobile()) chatDock.classList.add("fullscreen");
+    } else {
+      placeChat(dockedPos ? dockedPos.left : 16, dockedPos ? dockedPos.top : 16);
     }
-    if (state === "undocked" && dockedPos) {
-      chatDock.style.left = dockedPos.left + "px";
-      chatDock.style.top = dockedPos.top + "px";
-    }
-    setTimeout(() => { if (chatInput) chatInput.focus({ preventScroll: true }); }, 380);
+    savePlacement();
+    setTimeout(() => { if (chatInput) chatInput.focus({preventScroll:true}); }, 380);
+  }
+  if (chatUndockBtn) {
+    chatUndockBtn.textContent = placement === "undocked" ? "Dock" : "Undock";
+    chatUndockBtn.setAttribute("aria-label", placement === "undocked" ? "Dock chat" : "Undock chat — drag the header to move");
+    chatUndockBtn.title = chatUndockBtn.getAttribute("aria-label");
   }
 }
-
-if (chatMinBtn) chatMinBtn.addEventListener("click", () => setChatState("closed"));
-if (chatTab) chatTab.addEventListener("click", () => setChatState("open"));
+if (chatMinBtn) {
+  chatMinBtn.textContent = "–";
+  chatMinBtn.setAttribute("aria-label", "Minimize chat");
+  chatMinBtn.addEventListener("click", () => setChatState("closed"));
+}
+if (chatTab) chatTab.addEventListener("click", () => setChatState(placement));
 if (chatUndockBtn) chatUndockBtn.addEventListener("click", () => {
   if (chatDock.dataset.state === "undocked") setChatState("open");
   else {
     const r = chatDock.getBoundingClientRect();
-    dockedPos = { left: r.left, top: r.top };
-    chatDock.style.left = r.left + "px";
-    chatDock.style.top = Math.min(r.top, window.innerHeight - 200) + "px";
+    dockedPos = {left:r.left, top:r.top};
     setChatState("undocked");
-    if (typeof window.say === "function") window.say("Chat undocked — drag the header anywhere.");
   }
 });
-
-// drag the dock by its header (touch + mouse)
+// Drag only the header; release leaves the box in place.
 let cDrag = null;
-if (chatHead) chatHead.addEventListener("pointerdown", (e) => {
-  if (e.target.closest("button")) return;
+if (chatHead) chatHead.addEventListener("pointerdown", e => {
+  if (e.target.closest("button") || (e.button !== undefined && e.button !== 0)) return;
   if (chatDock.dataset.state !== "undocked") {
     const r = chatDock.getBoundingClientRect();
-    dockedPos = { left: r.left, top: r.top };
-    chatDock.style.left = r.left + "px";
-    chatDock.style.top = Math.min(r.top, window.innerHeight - 200) + "px";
-    chatDock.dataset.state = "undocked";
+    dockedPos = {left:r.left, top:r.top};
+    setChatState("undocked");
   }
-  cDrag = { x: e.clientX - chatDock.getBoundingClientRect().left, y: e.clientY - chatDock.getBoundingClientRect().top };
+  const r = chatDock.getBoundingClientRect();
+  cDrag = {id:e.pointerId, x:e.clientX-r.left, y:e.clientY-r.top};
   chatHead.setPointerCapture(e.pointerId);
+  e.preventDefault();
 });
-if (chatHead) chatHead.addEventListener("pointermove", (e) => {
-  if (!cDrag || !chatHead.hasPointerCapture(e.pointerId)) return;
-  const x = Math.max(0, Math.min(window.innerWidth - 120, e.clientX - cDrag.x));
-  const y = Math.max(0, Math.min(window.innerHeight - 60, e.clientY - cDrag.y));
-  chatDock.style.left = x + "px";
-  chatDock.style.top = y + "px";
+if (chatHead) chatHead.addEventListener("pointermove", e => {
+  if (!cDrag || cDrag.id !== e.pointerId || !chatHead.hasPointerCapture(e.pointerId)) return;
+  placeChat(e.clientX-cDrag.x, e.clientY-cDrag.y);
 });
-["pointerup", "pointercancel"].forEach((ev) => {
+["pointerup","pointercancel","lostpointercapture"].forEach(ev => {
   if (chatHead) chatHead.addEventListener(ev, () => {
-    if (cDrag) {
-      const r = chatDock.getBoundingClientRect();
-      dockedPos = { left: r.left, top: r.top };
-    }
+    if (cDrag) savePlacement();
     cDrag = null;
   });
+});
+window.addEventListener("resize", () => {
+  if (chatDock && chatDock.dataset.state === "undocked" && dockedPos) {
+    placeChat(dockedPos.left,dockedPos.top); savePlacement();
+  }
 });
 
 
@@ -256,7 +280,7 @@ if (chatForm) chatForm.addEventListener("submit", async function(e) {
   finally { sending = false; }
 });
 viewReady = true;
-if (isMobile()) setChatState("closed");
+setChatState(isMobile() ? "closed" : placement);
 window.addEventListener("storage", function(e) {
   if (e.key === "ccr-session") { clearView(); refreshIdentity(); }
 });
