@@ -1,4 +1,5 @@
 /* CYBERCROWD RADIO — golden equalizer in the tuner.
+   OPEN EQ reveals all five existing faders together; RESET keeps its own job.
    One job, one spot: the little area that says CYBERCROWD RADIO.
    That little spot used to be a red needle going left and right.
    Now it is a golden thing doing its thing, with parameters
@@ -239,7 +240,10 @@ window.CCEQDisplay = (function () {
       ".cc-eq-popup-root{order:3}" +
       ".cc-eq-popup-row{display:none !important}" +
       ".cc-eq-seat-faders{order:4;display:none !important}" +
-      ".cc-eq-seat-reset{order:5}" +
+      ".cc-eq-seat.cc-eq-all-open .cc-eq-seat-faders{display:flex !important;max-width:100%;overflow-x:auto}" +
+      ".cc-eq-seat-reset{order:5;gap:12px;flex-wrap:wrap;align-items:center}" +
+      ".cc-eq-open-button{background:#000;color:#ffd700;border:2px solid #c9a227;border-radius:8px;padding:16px 24px;min-height:56px;font-size:18px;font-weight:700;letter-spacing:1px;cursor:pointer}" +
+      ".cc-eq-open-button:focus-visible{outline:3px solid #ffd700;outline-offset:3px}" +
       ".cc-eq-seat-countdown{order:6}";
     document.head.appendChild(styleEl);
     panel = document.createElement("section");
@@ -268,6 +272,25 @@ window.CCEQDisplay = (function () {
         } catch (e) {}
       });
     });
+    var eqSeat = seat.parentNode;
+    var actions = eqSeat.querySelector(".cc-eq-seat-reset");
+    if (actions) {
+      seat.id = "ccEqAllAdjustments";
+      var openButton = document.createElement("button");
+      openButton.type = "button";
+      openButton.className = "cc-eq-open-button";
+      openButton.textContent = "OPEN EQ";
+      openButton.setAttribute("aria-controls", seat.id);
+      openButton.setAttribute("aria-expanded", "false");
+      openButton.title = "Open all five sound adjustments. Make it yours.";
+      openButton.addEventListener("click", function () {
+        var expanded = eqSeat.classList.toggle("cc-eq-all-open");
+        openButton.setAttribute("aria-expanded", String(expanded));
+        openButton.textContent = expanded ? "CLOSE EQ" : "OPEN EQ";
+        if (expanded && window.CCEQPopup && window.CCEQPopup.close) window.CCEQPopup.close();
+      });
+      actions.insertBefore(openButton, actions.firstChild);
+    }
     updateSongName();
     setInterval(updateSongName, 2000);
     connectTimer = setInterval(function () {
