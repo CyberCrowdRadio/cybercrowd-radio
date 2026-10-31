@@ -1,6 +1,6 @@
 /* CYBERCROWD RADIO — shared World chat dock.
    Reads booth-chat from Firebase. Account authority supplies the stage
-   name and explicit canChat permission. No email, ZIP, or session is
+   name. Free posts go through the account authority. No email, ZIP, or session is
    written to messages. Existing dock controls stay in this file. */
 "use strict";
 /* ============================================================
@@ -130,7 +130,7 @@ function connect() {
     }, function() { status("Chat could not load. Your radio keeps playing."); });
     window.firebase.database().ref(".info/connected").on("value", function(snapshot) {
       connected = snapshot.val() === true;
-      status(connected ? "World chat. Read along; paid chat access is checked when you post." : "Chat is offline. Your radio keeps playing.");
+      status(connected ? "World chat — free with your signed-in account." : "Chat is offline. Your radio keeps playing.");
     });
   } catch (_) { status("Chat could not connect. Reload to try again."); }
 }
@@ -146,18 +146,16 @@ if (chatForm) chatForm.addEventListener("submit", async function(e) {
   if (!session || !window.CCAuthority) { status("Sign in to use your stage name in chat."); return; }
   sending = true;
   try {
-    const account = await window.CCAuthority.ask("/api/session", { session: session });
-    if (!account || !account.success || !account.stageName) {
-      status("Please sign in again. Your message is still here."); return;
+    const result = await window.CCAuthority.ask("/api/chat", { session: session, text: text });
+    if (!result || result.success !== true) {
+      const error = result && result.error;
+      status(error === "sign in required"
+        ? "Please sign in again. Your message is still here."
+        : (error === "chat setup required"
+          ? "World chat is being connected. Your message is still here."
+          : "Your message could not be posted. It is still here; try again."));
+      return;
     }
-    if (account.canChat !== true) {
-      status("You can read World chat. Paid writing access is not confirmed for this account."); return;
-    }
-    await room.push({
-      stageName: account.stageName,
-      text: text,
-      createdAt: window.firebase.database.ServerValue.TIMESTAMP
-    });
     if (chatInput.value.trim() === text) chatInput.value = "";
     status("World chat");
   } catch (_) {
