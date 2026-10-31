@@ -115,7 +115,7 @@ if (chatHead) chatHead.addEventListener("pointermove", (e) => {
 
 let room = null, connected = false, sending = false;
 let snapshotValue = null, currentRound = null, baseline = new Set();
-let ownSender = "", host = false, identityRound = "", firstSnapshot = true;
+let ownSender = "", host = false, moderator = false, identityRound = "", firstSnapshot = true;
 let liveView = !isMobile(), viewReady = false;
 const note = chatDock && chatDock.querySelector(".chat-note");
 function status(text) { if (note) note.textContent = text; }
@@ -134,8 +134,14 @@ function button(label, fn) {
 const roundLabel = document.createElement("p");
 roundLabel.style.cssText = "padding:0 12px;color:#e9c979";
 const clearButton = button("Clear my view", clearView);
+button("Roles & reports", () => window.open("administration.html", "_blank", "noopener"));
 const resetButton = button("Start new round", () => hostAction("reset"));
-const tenButton = button("Next 10", () => hostAction("next10"));
+const roundCount = document.createElement("input");
+roundCount.type = "number"; roundCount.min = "1"; roundCount.step = "1";
+roundCount.placeholder = "Number of comments"; roundCount.setAttribute("aria-label", "Number of comments in the round");
+roundCount.style.cssText = "width:180px;min-height:44px;font:inherit;padding:8px";
+roundCount.hidden = true; actions.appendChild(roundCount);
+const tenButton = button("Start numbered round", () => hostAction("numbered"));
 resetButton.hidden = true; tenButton.hidden = true;
 if (chatMsgs && chatMsgs.parentNode) {
   chatMsgs.parentNode.insertBefore(actions, chatMsgs);
@@ -156,16 +162,16 @@ function render() {
     const m = rows[key];
     if (!m || typeof m.stageName !== "string" || typeof m.text !== "string") return;
     chatSay((m.number ? "#" + m.number + " " : "") + m.stageName.slice(0,60), m.text.slice(0,240));
-    if (identityRound === currentRound && m.sender === ownSender) {
+    if (identityRound === currentRound && (m.sender === ownSender || moderator)) {
       const li = chatMsgs.lastElementChild;
       const retract = document.createElement("button");
-      retract.type = "button"; retract.textContent = "Retract";
-      retract.setAttribute("aria-label", "Retract your message");
+      retract.type = "button"; retract.textContent = m.sender === ownSender ? "Retract" : "Remove";
+      retract.setAttribute("aria-label", m.sender === ownSender ? "Retract your message" : "Remove message as moderator");
       retract.style.cssText = "margin:8px;min-height:44px;color:#e9c979;background:#101719;border:1px solid #c9a227;border-radius:6px";
       retract.addEventListener("click", async () => {
         retract.disabled = true;
         try {
-          const answer = await ask("retract", {messageId:key});
+          const answer = await ask(m.sender === ownSender ? "retract" : "remove", {messageId:key});
           if (!answer || !answer.success) { status("Could not retract that message. Try again."); retract.disabled = false; }
         } catch (_) { status("Could not retract that message. Try again."); retract.disabled = false; }
       });
@@ -177,21 +183,26 @@ async function refreshIdentity() {
   try {
     const result = await ask("status");
     host = !!(result && result.success && result.host);
+    moderator = !!(result && result.success && result.moderator);
     ownSender = result && result.success ? result.sender || "" : "";
     identityRound = result && result.success ? result.round || "" : "";
-    resetButton.hidden = !host; tenButton.hidden = !host;
+    resetButton.hidden = !host; tenButton.hidden = !host; roundCount.hidden = !host;
     render();
-  } catch (_) { resetButton.hidden = true; tenButton.hidden = true; }
+  } catch (_) { resetButton.hidden = true; tenButton.hidden = true; roundCount.hidden = true; }
 }
 async function hostAction(action) {
   if (!host || sending) return;
-  if (!window.confirm(action === "next10"
-      ? "Clear the shared room and number the next ten messages?"
+  const limit = action === "numbered" ? Number(roundCount.value) : undefined;
+  if (action === "numbered" && (!Number.isSafeInteger(limit) || limit < 1)) {
+    status("Choose a whole number of comments, starting at 1."); roundCount.focus(); return;
+  }
+  if (!window.confirm(action === "numbered"
+      ? "Clear the shared room and number the next " + limit + " messages?"
       : "Clear the shared room and start a new round?")) return;
   sending = true;
   resetButton.disabled = true; tenButton.disabled = true;
   try {
-    const result = await ask(action);
+    const result = await ask(action, limit === undefined ? {} : {limit});
     status(result && result.success ? "New round started." : "The room could not be reset. Try again.");
   } catch (_) { status("The room could not be reset. Try again."); }
   finally { sending = false; resetButton.disabled = false; tenButton.disabled = false; }
@@ -209,8 +220,9 @@ function connect() {
       currentRound = snapshotValue.meta.id;
       if (firstSnapshot) { clearView(); firstSnapshot = false; }
       else if (changed) { baseline = new Set(); refreshIdentity(); }
-      roundLabel.textContent = snapshotValue.meta.mode === "next10"
-        ? "Next 10: " + Math.min(snapshotValue.meta.count,10) + " of 10 received"
+      const limit = snapshotValue.meta.mode === "next10" ? 10 : snapshotValue.meta.limit;
+      roundLabel.textContent = limit
+        ? "Numbered round: " + Math.min(snapshotValue.meta.count,limit) + " of " + limit + " received"
         : "Live World chat";
       render();
     }, function() { status("Chat could not load. Your radio keeps playing."); });
