@@ -47,17 +47,6 @@
   function hasSession() {
     try { return !!localStorage.getItem('ccr-session'); } catch (_) { return false; }
   }
-   // Backing out is leaving the page for good: pagehide, not persisted.
-   // Hidden, locked, or in the sign-in flow does not clear anything.
-   function clearLocalSignin() {
-      try { localStorage.removeItem('ccr-session'); localStorage.removeItem('ccr-handle'); localStorage.removeItem('ccr-email'); localStorage.removeItem('ccr-project'); } catch (_) {}
-   }
-   window.addEventListener('pagehide', function(e) {
-      if (e.persisted) return;
-      try { if (sessionStorage.getItem('ccr-verify-token')) return; } catch (_) {}
-      clearLocalSignin();
-   });
-   
 
   function init() {
     els.overlay = document.getElementById('signupOverlay');
@@ -91,7 +80,7 @@
     function openOverlay(step) {
       showStep(step || 'email');
       els.overlay.style.display = 'block';
-       if(!hasSession()){try{document.body.style.pointerEvents='none';var v=document.getElementById('volSlider');if(v)v.style.pointerEvents='auto';var q=document.getElementById('eqSeat');if(q)q.style.pointerEvents='auto';}catch(_){}}
+
     }
 
     function closeOverlay() {
@@ -157,16 +146,7 @@
     var toSignin = document.getElementById('plaqueToSignin');
     if (toSignin) toSignin.addEventListener('click', function(e) {
       e.preventDefault();
-                 var email = els.emailInput.value.trim();
-       if (!isValidEmail(email)) {
-          els.statusText.textContent = 'Please enter a valid email.';
-          return;
-       }
-       if (!turnstileToken) {
-          els.statusText.textContent = 'Please complete the security check.';
-          return;
-       }
-       if (els.signinEmail) els.signinEmail.value = email;
+      if (els.signinEmail) els.signinEmail.value = els.emailInput.value.trim();
       openOverlay('signin');
     });
     var toSignup = document.getElementById('plaqueToSignup');
@@ -240,13 +220,15 @@
           : (why || 'That did not go through. Please try again.'));
         return;
       }
-      // Created. The plaque's other face takes it from here.
+      // The account exists; sign in using the password just submitted.
       if (els.signinEmail) els.signinEmail.value = email;
       if (els.signinStatus) {
         els.signinStatus.style.color = '#8bc34a';
         els.signinStatus.textContent = 'Your account is created. Sign in to enter.';
       }
-      showStep('signin');
+      els.signinPassword.value = pw;
+      await doSignin();
+      if (!hasSession()) showStep('signin');
     });
 
     // Sign in — the authority judges the password and hands back the
@@ -284,25 +266,20 @@
         if (res.projectName) localStorage.setItem('ccr-project', res.projectName);
       } catch (_) {}
       closeOverlay();
-      if (window.updateHandlePill) window.updateHandlePill();
+      publishAccount();
+      try { sessionStorage.removeItem('ccr-verify-token'); } catch (_) {}
+      pwInput.value = '';
+      confirmInput.value = '';
+      els.signinPassword.value = '';
     }
     if (els.signinBtn) els.signinBtn.addEventListener('click', doSignin);
     if (els.signinPassword) els.signinPassword.addEventListener('keydown', function(e) {
       if (e.key === 'Enter') { e.preventDefault(); doSignin(); }
     });
 
-    // The × is a courtesy for members, not a door for the unsigned:
-    // without a session the plaque stands.
+    // Signup can be put aside while the station keeps playing.
     var closeBtn = document.getElementById('closeSignup');
-    if (closeBtn) closeBtn.addEventListener('click', function() {
-      if (hasSession()) { closeOverlay(); return; }
-      if (els.stepSignin && els.stepSignin.style.display === 'block') {
-        els.signinStatus.style.color = '#f44336';
-        els.signinStatus.textContent = 'Sign in to enter — the station keeps playing.';
-      } else {
-        els.statusText.textContent = 'Sign up or sign in to enter — the station keeps playing.';
-      }
-    });
+    if (closeBtn) closeBtn.addEventListener('click', closeOverlay);
 
     // Music: ENTER's tap set the autostart flag. If the browser still
     // held the sound, the visitor's first touch anywhere is the
@@ -320,6 +297,40 @@
       }
     }, { once: true });
 
+    function publishAccount() {
+      var name = '';
+      try { name = localStorage.getItem('ccr-handle') || ''; } catch (_) {}
+      window.CCAccount = window.CCAccount || {};
+      window.CCAccount.stageName = name;
+      var label = document.getElementById('handleText');
+      if (label) label.textContent = name || 'guest';
+      if (window.CCPresence) window.CCPresence.init();
+      if (window.CCWelcomeWindow) window.CCWelcomeWindow.refresh();
+    }
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'ccr-email' && hasSession()) {
+        closeOverlay();
+        publishAccount();
+      }
+    });
+
+    // Fifteen minutes to settle in. Expiry is a reminder, never an audio stop.
+    var started = Date.now();
+    try {
+      started = Number(sessionStorage.getItem('ccr-entry-start')) || started;
+      sessionStorage.setItem('ccr-entry-start', String(started));
+    } catch (_) {}
+    var reminder = document.getElementById('signupTimeNote');
+    function updateTimeNote() {
+      if (!reminder) return;
+      var remaining = Math.max(0, Math.ceil((started + 15 * 60000 - Date.now()) / 60000));
+      reminder.textContent = hasSession() ? 'Welcome. Enjoy the radio.'
+        : (remaining ? 'The radio keeps playing. You have ' + remaining + ' minutes to finish signup.'
+          : 'Finish signup when you are ready. The radio keeps playing.');
+    }
+    updateTimeNote();
+    setInterval(updateTimeNote, 30000);
+
     // Public API
     window.CCSignup = {
       open: openOverlay,
@@ -334,6 +345,11 @@
       try { params = new URLSearchParams(window.location.search); } catch (_) {}
        var entered = false;
        try { entered = sessionStorage.getItem('ccr-autostart') === '1'; } catch (_) {}
+      if (entered) {
+        var play = document.getElementById('playBtn');
+        var icon = document.getElementById('iconPlay');
+        if (play && icon && window.getComputedStyle(icon).display !== 'none') play.click();
+      }
       var cleanUrl = function() {
         if (window.history && window.history.replaceState) {
           try { window.history.replaceState({}, '', window.location.pathname); } catch (_) {}
@@ -354,22 +370,14 @@
         }
         return;
       }
-      if (params && params.get('verified') === '1') {
-        var vemail = params.get('email') || '';
-        try { vemail = vemail || sessionStorage.getItem('cybercrowd_entry_email') || ''; } catch (_) {}
-        document.getElementById('overlayEmailDisplay').textContent = vemail;
-        cleanUrl();
-        openOverlay('create');
-        return;
-      }
       if (params && params.get('signup') === '1' && entered) {
         cleanUrl();
       
         openOverlay('email');
-         var ip=document.getElementById('iconPlay');var pb=document.getElementById('playBtn');if(ip&&pb&&window.getComputedStyle(ip).display!=='none'){pb.click();}
+
         return;
       }
-      if(!hasSession()&&entered){openOverlay('email');var ip=document.getElementById('iconPlay');var pb=document.getElementById('playBtn');if(ip&&pb&&window.getComputedStyle(ip).display!=='none'){pb.click();}}
+      if(!hasSession()&&entered) openOverlay('email');
     })();
   }
 

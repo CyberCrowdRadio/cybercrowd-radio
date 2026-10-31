@@ -44,6 +44,7 @@ var seenKeys = {};
     return name;
   }
   function render(data) {
+    var i;
     var current = {};
     var roster = getRosterEl();
     if (!roster) return;

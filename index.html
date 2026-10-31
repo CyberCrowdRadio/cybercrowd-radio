@@ -92,7 +92,7 @@
         } catch (err) { enterBtn.href = "station.html?signup=1"; }
 
         enterBtn.addEventListener("click", function () {
-          try { sessionStorage.setItem("ccr-autostart", "1"); } catch (e) {}
+          try { sessionStorage.setItem("ccr-autostart", "1"); sessionStorage.setItem("ccr-entry-start", String(Date.now())); } catch (e) {}
         });
       }
 
