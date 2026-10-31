@@ -222,9 +222,10 @@
   </script>
 
   <!-- Signup Overlay (audio keeps playing underneath) -->
-  <div id="signupOverlay" style="display:none;pointer-events:none;">
+  <div id="signupOverlay" style="display:none;pointer-events:none;position:fixed;inset:0;overflow-y:auto;z-index:1000;">
     <div style="max-width:420px;margin:40px auto;background:rgba(10,10,10,0.94);border:3px solid #c9a227;border-radius:16px;padding:30px 25px;position:relative;pointer-events:auto;">
       
+      <p id="signupProgress" role="status" style="font-size:1.25rem;font-weight:bold;color:#ffd700;">Step 1 of 3 — Your email</p>
       <button type="button" id="closeSignup" aria-label="Put signup aside and keep listening" style="font-size:1.1rem;padding:12px;margin-bottom:16px;">Keep listening — finish later</button>
       <p id="signupTimeNote" role="status" style="color:#fff;font-size:1.1rem;line-height:1.5;"></p>
       <!-- Step 1: Email -->
@@ -233,7 +234,7 @@
         <p style="color:#999;text-align:center;margin:0 0 20px;">Enter your email to sign up...</p>
         <input type="email" id="overlayEmail" placeholder="yourname@mymail.com" style="width:100%;padding:12px;font-size:1rem;border:2px solid #c9a227;border-radius:8px;background:#1a1a1a;color:#fff;box-sizing:border-box;margin-bottom:15px;">
         <div id="overlayTurnstile" style="display:none;margin-bottom:15px;"><div class="cf-turnstile" data-sitekey="0x4AAAAAAFT4WC4u5rb2Gr56" data-callback="onOverlayTurnstile" data-expired-callback="onOverlayTurnstileExpired" data-error-callback="onOverlayTurnstileError"></div></div>
-        <button id="overlaySend" disabled style="width:100%;padding:13px;font-size:1rem;font-weight:bold;color:#000;background:linear-gradient(180deg,#ffd700,#cc8800);border:none;border-radius:8px;cursor:pointer;opacity:0.5;">Send</button>
+        <button id="overlaySend" disabled style="width:100%;padding:13px;font-size:1rem;font-weight:bold;color:#000;background:linear-gradient(180deg,#ffd700,#cc8800);border:none;border-radius:8px;cursor:pointer;opacity:0.5;">Send verification email</button>
         <p id="overlayStatus" style="color:#f44336;font-size:0.85rem;text-align:center;margin:10px 0 0;"></p>
         <p style="text-align:center;margin:12px 0 0;font-size:0.9rem;"><a href="#" id="plaqueToSignin" style="color:#c9a227;">Already a member? Sign in</a></p>
       </div>
@@ -241,8 +242,9 @@
       <!-- Step 2: Check email popup -->
       <div id="signupStepCheck" style="display:none;text-align:center;">
         <h2 style="color:#e9c979;font-family:Georgia,serif;margin:0 0 15px;">CYBERCROWD RADIO</h2>
-        <p style="color:#fff;font-size:1.1rem;">Check your email and verify your email.</p>
-        <p style="color:#888;font-size:0.85rem;margin-top:15px;">The station keeps playing.</p>
+        <p style="color:#fff;font-size:1.1rem;">Open your email and tap “Confirm my email”. Your account setup opens from that link.</p>
+        <p style="color:#888;font-size:0.85rem;margin-top:15px;">The radio keeps playing here while you check your email.</p>
+        <button type="button" id="signupChangeEmail" style="padding:14px;font-size:1.1rem;">Wrong address or need a new link?</button>
       </div>
 
       <!-- Step 3: Create account -->
@@ -263,7 +265,8 @@
                 <label style="display:block;margin:10px 0 5px;color:#c9a227;font-weight:bold;font-size:0.85rem;">Zip code <button type="button" class="helpBtn" data-help="zipHelp2" style="background:none;border:1px solid #c9a227;border-radius:50%;width:20px;height:20px;color:#c9a227;font-size:12px;cursor:pointer;padding:0;">?</button></label>
         <input type="text" id="overlayZip" placeholder="Your zip code" maxlength="10" style="width:100%;padding:10px;border:2px solid #c9a227;border-radius:8px;background:#1a1a1a;color:#fff;box-sizing:border-box;">
         <p id="zipHelp2" style="display:none;color:#999;font-size:0.8rem;margin:5px 0;">Your zip code — so Kinetic announces your weather, not somebody else's.</p>
-<button id="overlayCreate" style="width:100%;padding:13px;margin-top:20px;font-size:1rem;font-weight:bold;color:#000;background:linear-gradient(180deg,#ffd700,#cc8800);border:none;border-radius:8px;cursor:pointer;">Activate</button>
+<button id="overlayCreate" style="width:100%;padding:13px;margin-top:20px;font-size:1rem;font-weight:bold;color:#000;background:linear-gradient(180deg,#ffd700,#cc8800);border:none;border-radius:8px;cursor:pointer;">Finish &amp; listen</button>
+<p id="signupCreateStatus" role="alert" style="color:#ffb4ab;font-size:1.1rem;line-height:1.5;"></p>
       </div>
 
       <!-- Step 4: Sign in -->

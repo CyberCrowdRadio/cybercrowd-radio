@@ -1,15 +1,14 @@
-/* cc-signup-overlay.js — The plaque: the door of the station, floating
-   over it as glass. The station plays behind it; the plaque keeps the
-   visitor from doing anything but listening until the account says
-   otherwise. Steps: email (with the human check) → check your email →
-   create (when the blue link brings them back with the token) →
-   sign in → the plaque lifts. The face only asks; Radio-authority
-   judges. The pass has ONE source of truth — the token itself — and
-   editing the email resets the widget and the button together, so
-   the two can never disagree (the wedge that stranded the old door). */
+/* cc-signup-overlay.js — Listener signup sequence.
+   Email → confirm email → finish account → automatic sign-in.
+   Numbered steps resume after refresh or dismissal. Validation stays
+   beside the form. Radio-authority verifies and creates accounts.
+   This face never pauses audio or creates an account locally. */
 (function() {
   var turnstileToken = '';
   var els = {};
+  var currentStep = 'email';
+  var sending = false;
+  var creating = false;
 
   function isValidEmail(v) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -71,6 +70,13 @@
     }
 
     function showStep(name) {
+      currentStep = name;
+      try { sessionStorage.setItem('ccr-signup-step', name); } catch (_) {}
+      var progress = document.getElementById('signupProgress');
+      if (progress) progress.textContent = name === 'signin' ? 'Welcome back'
+        : (name === 'email' ? 'Step 1 of 3 — Your email'
+          : (name === 'check' ? 'Step 2 of 3 — Tap the link in your email'
+            : 'Step 3 of 3 — Finish your account'));
       els.stepEmail.style.display = name === 'email' ? 'block' : 'none';
       els.stepCheck.style.display = name === 'check' ? 'block' : 'none';
       els.stepCreate.style.display = name === 'create' ? 'block' : 'none';
@@ -78,8 +84,9 @@
     }
 
     function openOverlay(step) {
-      showStep(step || 'email');
+      showStep(step === 'signin' ? 'signin' : (currentStep === 'signin' ? 'email' : currentStep));
       els.overlay.style.display = 'block';
+      els.overlay.scrollTop = 0;
 
     }
 
@@ -103,6 +110,7 @@
 
     // Send → ask Radio-authority; "check your email" only on its word.
     els.sendBtn.addEventListener('click', async function() {
+      if (sending) return;
       var email = els.emailInput.value.trim();
       if (!isValidEmail(email)) {
         els.statusText.textContent = 'Please enter a valid email.';
@@ -112,6 +120,8 @@
         els.statusText.textContent = 'Please complete the security check.';
         return;
       }
+      sending = true;
+      els.emailInput.disabled = true;
       els.sendBtn.disabled = true;
       var sendLabel = els.sendBtn.textContent;
       els.sendBtn.textContent = 'Sending...';
@@ -122,7 +132,9 @@
           turnstileToken: turnstileToken
         });
       } catch (_) {}
-      if (!res || !(res.success || res.ok)) {
+      sending = false;
+      els.emailInput.disabled = false;
+      if (!res || res.success !== true) {
         var why = (res && res.error) ? String(res.error) : '';
         if (why === 'email failed') {
           // Diagnostic window: show Postmark's own verdict, not a summary.
@@ -139,7 +151,16 @@
       }
       try { sessionStorage.setItem('cybercrowd_entry_email', email); } catch (_) {}
       resetTurnstile();
+      els.sendBtn.textContent = sendLabel;
       showStep('check');
+    });
+
+    var changeEmail = document.getElementById('signupChangeEmail');
+    if (changeEmail) changeEmail.addEventListener('click', function() {
+      resetTurnstile();
+      showStep('email');
+      els.statusText.textContent = 'Check your address, complete the security check, then send a new link.';
+      els.emailInput.focus();
     });
 
     // Inside-the-plaque switches between the door's two faces.
@@ -189,6 +210,14 @@
     // Create account — the authority builds it; this face only asks.
     var createBtn = document.getElementById('overlayCreate');
     if (createBtn) createBtn.addEventListener('click', async function() {
+      if (creating) return;
+      var createStatus = document.getElementById('signupCreateStatus');
+      function problem(message, field) {
+        if (createStatus) createStatus.textContent = message;
+        var input = field && document.getElementById(field);
+        if (input) input.focus();
+      }
+      if (createStatus) createStatus.textContent = '';
       var handle = document.getElementById('overlayHandle').value.trim();
       var project = document.getElementById('overlayProject').value.trim();
       var zipEl = document.getElementById('overlayZip');
@@ -196,13 +225,16 @@
       var pw = pwInput.value;
       var cpw = confirmInput.value;
       var email = document.getElementById('overlayEmailDisplay').textContent;
-      if (!handle || !pw) { alert('Fill in handle and password.'); return; }
-      if (pw.length < 8 || pw.length > 29) { alert('Password must be 8 to 29 characters.'); return; }
-      if (pw !== cpw) { alert('Passwords do not match.'); return; }
-      if (!zip) { alert('Fill in your zip code.'); return; }
+      if (!handle || !pw) { problem('Enter your stage name and password.', !handle ? 'overlayHandle' : 'overlayPassword'); return; }
+      if (pw.length < 8 || pw.length > 29) { problem('Password must be 8 to 29 characters.', 'overlayPassword'); return; }
+      if (pw !== cpw) { problem('Your passwords do not match.', 'overlayConfirm'); return; }
+      if (!zip) { problem('Enter your ZIP code. It stays private.', 'overlayZip'); return; }
       var token = '';
       try { token = sessionStorage.getItem('ccr-verify-token') || ''; } catch (_) {}
-      if (!token) { alert('Verify your email first — tap the link in the email we sent you.'); return; }
+      if (!token) { problem('Open the link in your verification email to continue.'); return; }
+      creating = true;
+      createBtn.disabled = true;
+      createBtn.textContent = 'Finishing…';
       var res = null;
       try {
         res = await window.CCAuthority.ask('/api/create-account', {
@@ -213,9 +245,12 @@
           zip: zip
         });
       } catch (_) {}
+      creating = false;
+      createBtn.disabled = false;
+      createBtn.textContent = 'Finish & listen';
       if (!res || !res.success) {
         var why = (res && res.error) ? String(res.error) : '';
-        alert((why === 'authority-unreachable' || why === 'authority-bad-answer')
+        problem((why === 'authority-unreachable' || why === 'authority-bad-answer')
           ? 'The station could not be reached. Please try again.'
           : (why || 'That did not go through. Please try again.'));
         return;
@@ -267,6 +302,8 @@
       } catch (_) {}
       closeOverlay();
       publishAccount();
+      try { sessionStorage.removeItem('ccr-signup-step'); } catch (_) {}
+      currentStep = 'email';
       try { sessionStorage.removeItem('ccr-verify-token'); } catch (_) {}
       pwInput.value = '';
       confirmInput.value = '';
@@ -363,11 +400,34 @@
         if (res && res.success && res.email) {
           try { sessionStorage.setItem('ccr-verify-token', token); } catch (_) {}
           document.getElementById('overlayEmailDisplay').textContent = res.email;
+          showStep('create');
           openOverlay('create');
         } else {
+          showStep('email');
           openOverlay('email');
           els.statusText.textContent = 'That verify link did not check out — it may have expired. Send a fresh one.';
         }
+        return;
+      }
+      var savedStep = '';
+      var savedToken = '';
+      try {
+        savedStep = sessionStorage.getItem('ccr-signup-step') || '';
+        savedToken = sessionStorage.getItem('ccr-verify-token') || '';
+        els.emailInput.value = sessionStorage.getItem('cybercrowd_entry_email') || '';
+      } catch (_) {}
+      if (!hasSession() && savedToken) {
+        var checked = await window.CCAuthority.ask('/api/verify-email', { token: savedToken });
+        if (checked && checked.success && checked.email) {
+          document.getElementById('overlayEmailDisplay').textContent = checked.email;
+          showStep('create');
+          openOverlay('create');
+          return;
+        }
+      }
+      if (!hasSession() && savedStep === 'check') {
+        showStep('check');
+        openOverlay('check');
         return;
       }
       if (params && params.get('signup') === '1' && entered) {
