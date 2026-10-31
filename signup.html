@@ -309,7 +309,7 @@
         />
 
         <div id="turnstileWrap" style="display:none;margin-top:20px;">
-          <div class="cf-turnstile" data-sitekey="0x4AAAAAAFT4WC4u5rb2Gr56" data-callback="onTurnstileSuccess"></div>
+          <div class="cf-turnstile" data-sitekey="0x4AAAAAAFT4WC4u5rb2Gr56" data-callback="onTurnstileSuccess" data-expired-callback="onTurnstileExpired" data-error-callback="onTurnstileError"></div>
         </div>
 
         <button class="send-button" id="sendButton" type="submit" disabled>Send</button>
@@ -331,6 +331,7 @@
     </div>
   </div>
 
+  <script src="cc-authority.js"></script>
   <script>
     const form = document.getElementById("createAccountForm");
     const emailInput = document.getElementById("email");
@@ -338,32 +339,40 @@
     const statusText = document.getElementById("status");
     const turnstileWrap = document.getElementById("turnstileWrap");
     const emailPopup = document.getElementById("emailPopup");
-    let turnstilePassed = false;
+    let turnstileToken = '';
+    let sending = false;
 
     function isValidEmail(value) {
       return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
     }
 
-    // Called by Turnstile when human completes it
-    window.onTurnstileSuccess = function() {
-      turnstilePassed = true;
-      sendButton.disabled = false;
+    function resetSecurityCheck() {
+      turnstileToken = '';
+      sendButton.disabled = true;
+      if (window.turnstile) window.turnstile.reset();
+    }
+
+    window.onTurnstileSuccess = function(token) {
+      turnstileToken = token || '';
+      sendButton.disabled = sending || !turnstileToken || !isValidEmail(emailInput.value.trim());
+    };
+    window.onTurnstileExpired = resetSecurityCheck;
+    window.onTurnstileError = function() {
+      resetSecurityCheck();
+      statusText.textContent = 'The security check could not finish. Please try again.';
     };
 
-    // Show Turnstile when a valid email is typed (human must still touch it)
     emailInput.addEventListener("input", function () {
-      if (isValidEmail(emailInput.value.trim())) {
-        turnstileWrap.style.display = "block";
-      } else {
-        turnstileWrap.style.display = "none";
-        turnstilePassed = false;
-        sendButton.disabled = true;
-      }
+      if (turnstileToken) resetSecurityCheck();
+      const valid = isValidEmail(emailInput.value.trim());
+      turnstileWrap.style.display = valid ? "block" : "none";
+      sendButton.disabled = sending || !valid || !turnstileToken;
     });
 
     form.addEventListener("submit", async function (event) {
       event.preventDefault();
 
+      if (sending) return;
       const email = emailInput.value.trim();
 
       if (!isValidEmail(email)) {
@@ -372,38 +381,41 @@
         return;
       }
 
-      if (!turnstilePassed) {
+      if (!turnstileToken) {
         statusText.textContent = "Please complete the security check.";
         return;
       }
 
+      sending = true;
       sendButton.disabled = true;
+      emailInput.disabled = true;
       sendButton.textContent = "Sending";
-      statusText.textContent = "Preparing your CyberCrowd entry.";
+      statusText.textContent = "Sending your verification email.";
 
       try {
-        await fetch("/api/auth/send-verification", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({ email })
-        }).catch(function () {
-          return null;
+        const result = await window.CCAuthority.ask("/api/signup", {
+          email: email,
+          turnstileToken: turnstileToken
         });
-
-        sessionStorage.setItem("cybercrowd_entry_email", email);
-        // Show popup instead of redirect
+        if (!result || result.success !== true) {
+          const error = result && result.error;
+          statusText.textContent = error === "not human"
+            ? "The security check did not pass. Please complete it again."
+            : (error === "email failed"
+              ? "The email service did not accept the message. Please try again."
+              : "Your verification email could not be sent. Please try again.");
+          return;
+        }
+        try { sessionStorage.setItem("cybercrowd_entry_email", email); } catch (_) {}
         emailPopup.style.display = "grid";
-        sendButton.disabled = false;
-        sendButton.textContent = "Send";
-        statusText.textContent = "";
+        statusText.textContent = "Verification email accepted. Check your inbox and spam folder.";
       } catch (error) {
-        sessionStorage.setItem("cybercrowd_entry_email", email);
-        emailPopup.style.display = "grid";
-        sendButton.disabled = false;
+        statusText.textContent = "Your verification email could not be sent. Please try again.";
+      } finally {
+        sending = false;
+        emailInput.disabled = false;
         sendButton.textContent = "Send";
-        statusText.textContent = "";
+        resetSecurityCheck();
       }
     });
   </script>
