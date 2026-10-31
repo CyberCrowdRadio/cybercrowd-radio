@@ -1,45 +1,9 @@
-/* CCPlayLive — play without a signup gate, and a true LIVE label.
- * One job: let the play button start the live stream, and show LIVE
- * while the stream actually plays.
- *
- * WHY THIS FILE EXISTS:
- * - cc-signup-overlay.js opens its email overlay on load when there is
- *   no ccr-session. The overlay covers the whole page, so a tap meant
- *   for the play button never reaches it. Listening must not need a
- *   signup, an email check, or a trial first.
- * - app.js setLive() reads $("iconPause"), but station.html has no
- *   iconPause element. setLive() throws before it updates onairText
- *   and streamState, so the face stays on STANDBY / SIGNAL OFFLINE
- *   even while the stream audio plays.
- *
- * DOES: close only the overlay that opened by itself on page load,
- * using the signup overlay's own close, and set the ON AIR / SIGNAL
- * LIVE labels from the stream audio element's own playing, pause,
- * and error events. It does not change the stream URL, the volume,
- * or the audio element, and it does not start, stop, or mute audio.
- * The signup overlay still opens when Sign up or Sign in is tapped,
- * because those links call CCSignup.open() themselves.
- * DOES NOT: touch the signup overlay file, app.js, or any trial file.
- * The equalizer trial still governs only the equalizer seat.
- */
+/* CCPlayLive — reflect actual playback in the station labels.
+   Signup owns the blocker and releases it only after verified sign-in.
+   This file never opens or dismisses signup. */
 
 (function () {
   "use strict";
-
-  var closedOnce = false;
-
-  function closeAutoOverlay() {
-    if (closedOnce) return;
-    closedOnce = true;
-    try {
-      if (window.CCSignup && window.CCSignup.close) {
-        window.CCSignup.close();
-        return;
-      }
-      var overlay = document.getElementById("signupOverlay");
-      if (overlay) overlay.style.display = "none";
-    } catch (_) {}
-  }
 
   function setLiveLabel(on) {
     var playBtn = document.getElementById("playBtn");
@@ -90,7 +54,6 @@
   }
 
   function init() {
-    if (localStorage.getItem("ccr-session")) closeAutoOverlay();
     var playBtn = document.getElementById("playBtn");
     if (playBtn) {
       playBtn.addEventListener("click", function () {

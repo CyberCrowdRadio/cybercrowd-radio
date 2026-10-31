@@ -1,6 +1,7 @@
 /* cc-signup-overlay.js — Listener signup sequence.
    Email → confirm email → finish account → automatic sign-in.
-   Numbered steps resume after refresh or dismissal. Validation stays
+   The translucent blocker stays up until the authority confirms sign-in.
+   Numbered steps resume after refresh. Validation stays
    beside the form. Radio-authority verifies and creates accounts.
    This face never pauses audio or creates an account locally. */
 (function() {
@@ -9,6 +10,7 @@
   var currentStep = 'email';
   var sending = false;
   var creating = false;
+  var sessionVerified = false;
 
   function isValidEmail(v) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -44,7 +46,7 @@
   };
 
   function hasSession() {
-    try { return !!localStorage.getItem('ccr-session'); } catch (_) { return false; }
+    return sessionVerified;
   }
 
   function init() {
@@ -62,6 +64,40 @@
     els.signinBtn = document.getElementById('plaqueSigninBtn');
     els.signinStatus = document.getElementById('plaqueSigninStatus');
     if (!els.overlay || !els.emailInput || !els.sendBtn) return;
+
+    var background = [];
+    var previousOverflow = document.body.style.overflow;
+    Array.prototype.forEach.call(document.body.children, function(el) {
+      if (el !== els.overlay && el.tagName !== 'SCRIPT' && el.tagName !== 'STYLE') {
+        background.push({ element: el, inert: el.inert });
+      }
+    });
+    function lockPage() {
+      background.forEach(function(item) { item.element.inert = true; });
+      document.body.style.overflow = 'hidden';
+    }
+    function unlockPage() {
+      background.forEach(function(item) { item.element.inert = item.inert; });
+      document.body.style.overflow = previousOverflow;
+    }
+    lockPage();
+    els.overlay.style.display = 'grid';
+    document.addEventListener('keydown', function(e) {
+      if (els.overlay.style.display === 'none') return;
+      if (e.key === 'Escape') { e.preventDefault(); return; }
+      if (e.key !== 'Tab') return;
+      var controls = Array.prototype.filter.call(
+        els.overlay.querySelectorAll('button, input, a[href], [tabindex="0"]'),
+        function(el) { return !el.disabled && el.getClientRects().length > 0; }
+      );
+      if (!controls.length) { e.preventDefault(); return; }
+      var first = controls[0], last = controls[controls.length - 1];
+      if (e.shiftKey && (document.activeElement === first || !els.overlay.contains(document.activeElement))) {
+        e.preventDefault(); last.focus();
+      } else if (!e.shiftKey && (document.activeElement === last || !els.overlay.contains(document.activeElement))) {
+        e.preventDefault(); first.focus();
+      }
+    });
 
     // The widget may have passed before init ran — honor the token.
     if (turnstileToken) {
@@ -85,14 +121,35 @@
 
     function openOverlay(step) {
       showStep(step === 'signin' ? 'signin' : (currentStep === 'signin' ? 'email' : currentStep));
-      els.overlay.style.display = 'block';
+      lockPage();
+      els.overlay.style.display = 'grid';
       els.overlay.scrollTop = 0;
 
     }
 
     function closeOverlay() {
+      if (!hasSession()) return false;
       els.overlay.style.display = 'none';
-       try{document.body.style.pointerEvents='';var v=document.getElementById('volSlider');if(v)v.style.pointerEvents='';var q=document.getElementById('eqSeat');if(q)q.style.pointerEvents='';}catch(_){}
+      unlockPage();
+      return true;
+    }
+
+    async function verifyStoredSession() {
+      var stored = '';
+      try { stored = localStorage.getItem('ccr-session') || ''; } catch (_) {}
+      sessionVerified = false;
+      if (!stored) return false;
+      var result = null;
+      try { result = await window.CCAuthority.ask('/api/session', { session: stored }); } catch (_) {}
+      var latest = '';
+      try { latest = localStorage.getItem('ccr-session') || ''; } catch (_) {}
+      if (stored !== latest) return false;
+      if (!result || result.success !== true || !result.stageName) return false;
+      sessionVerified = true;
+      try { localStorage.setItem('ccr-handle', result.stageName); } catch (_) {}
+      closeOverlay();
+      publishAccount();
+      return true;
     }
 
     // Email edits and the human check are one machine: any edit after
@@ -283,7 +340,7 @@
       } catch (_) {}
       els.signinBtn.disabled = false;
       els.signinBtn.textContent = label;
-      if (!res || !res.success) {
+      if (!res || !res.success || !res.session || !res.stageName) {
         var why = (res && res.error) ? String(res.error) : '';
         els.signinStatus.textContent = (why === 'no account for that email')
           ? 'No account for that email. Sign up first.'
@@ -300,6 +357,7 @@
         localStorage.setItem('ccr-email', email);
         if (res.projectName) localStorage.setItem('ccr-project', res.projectName);
       } catch (_) {}
+      sessionVerified = true;
       closeOverlay();
       publishAccount();
       try { sessionStorage.removeItem('ccr-signup-step'); } catch (_) {}
@@ -314,9 +372,7 @@
       if (e.key === 'Enter') { e.preventDefault(); doSignin(); }
     });
 
-    // Signup can be put aside while the station keeps playing.
-    var closeBtn = document.getElementById('closeSignup');
-    if (closeBtn) closeBtn.addEventListener('click', closeOverlay);
+    // No dismissal: only a verified sign-in releases the blocker.
 
     // Music: ENTER's tap set the autostart flag. If the browser still
     // held the sound, the visitor's first touch anywhere is the
@@ -344,11 +400,11 @@
       if (window.CCPresence) window.CCPresence.init();
       if (window.CCWelcomeWindow) window.CCWelcomeWindow.refresh();
     }
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'ccr-email' && hasSession()) {
-        closeOverlay();
-        publishAccount();
-      }
+    window.addEventListener('storage', async function(e) {
+      if (e.key !== 'ccr-session' && e.key !== 'ccr-email') return;
+      sessionVerified = false;
+      openOverlay('signin');
+      await verifyStoredSession();
     });
 
     // Fifteen minutes to settle in. Expiry is a reminder, never an audio stop.
@@ -363,7 +419,7 @@
       var remaining = Math.max(0, Math.ceil((started + 15 * 60000 - Date.now()) / 60000));
       reminder.textContent = hasSession() ? 'Welcome. Enjoy the radio.'
         : (remaining ? 'The radio keeps playing. You have ' + remaining + ' minutes to finish signup.'
-          : 'Finish signup when you are ready. The radio keeps playing.');
+          : 'Finish signing up to enter the room. The radio keeps playing.');
     }
     updateTimeNote();
     setInterval(updateTimeNote, 30000);
@@ -409,6 +465,7 @@
         }
         return;
       }
+      if (await verifyStoredSession()) return;
       var savedStep = '';
       var savedToken = '';
       try {
@@ -437,7 +494,7 @@
 
         return;
       }
-      if(!hasSession()&&entered) openOverlay('email');
+      if (!hasSession()) openOverlay('email');
     })();
   }
 
