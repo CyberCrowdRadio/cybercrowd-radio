@@ -1,30 +1,13 @@
-/* CYBERCROWD RADIO — chat dock only.
-   One job: the chat dock.
-   What it is: the chat dock that opens, closes, undocks and
-   drags by its header, with a local echo until the live
-   backend lands, never faked as live.
-   Authority: chat dock only. Owns chat dock state, messages
-   and drag, nothing else.
-   Uses $ from cc-base.js, stone 1. Calls say() from
-   cc-toast.js, stone 5, loaded before this file, only when
-   the dock is undocked.
-   Source: app.js lines 738-839, cut out whole, IIFE indent removed.
-   Local file is 995 lines; the plan lists 1001 lines, so local line
-   numbers run about 6 lines lower than the plan after the early
-   sections. The cut follows section content, not the plan numbers
-   blindly, and no line is used in two stones.
-   Guard added for the cut: chatSay returns early if the message
-   list is missing, setChatState returns early if the dock is
-   missing, and every chat listener is wired only if its button
-   or dock piece exists. Original lines assumed all chat pieces
-   exist. When they exist, effect is identical.
-   This file alone does nothing visible until the loader switch after stone 29.
-   Stone 23 of 29. Station still runs on app.js until that switch.
-*/
+/* CYBERCROWD RADIO — shared World chat dock.
+   Reads booth-chat from Firebase. Account authority supplies the stage
+   name and explicit canChat permission. No email, ZIP, or session is
+   written to messages. Existing dock controls stay in this file. */
 "use strict";
 /* ============================================================
    CHAT DOCK — open / closed / undocked-and-draggable
    ============================================================ */
+(function () {
+const $ = (id) => document.getElementById(id);
 const chatDock = $("chatDock");
 const chatHead = $("chatHead");
 const chatTab = $("chatTab");
@@ -39,12 +22,18 @@ let dockedPos = null; // remembered {left, top} when undocked
 function chatSay(who, text, sys) {
   if (!chatMsgs) return;
   const li = document.createElement("li");
-  if (sys) li.innerHTML = `<span class="sys">${text}</span>`;
-  else li.innerHTML = `<span class="who">${who}</span>${text}`;
+  if (sys) li.textContent = text;
+  else {
+    const name = document.createElement("span");
+    name.className = "who";
+    name.textContent = who + ": ";
+    li.appendChild(name);
+    li.appendChild(document.createTextNode(text));
+  }
   chatMsgs.appendChild(li);
   chatMsgs.scrollTop = chatMsgs.scrollHeight;
 }
-if (chatMsgs) chatSay(null, "The booth is quiet until we go live. Leave a message — the station answers back.", true);
+
 
 // Mobile starts with chat closed behind the ">" tab (full-screen when opened).
 // Desktop starts docked open.
@@ -82,7 +71,7 @@ if (chatUndockBtn) chatUndockBtn.addEventListener("click", () => {
     chatDock.style.left = r.left + "px";
     chatDock.style.top = Math.min(r.top, window.innerHeight - 200) + "px";
     setChatState("undocked");
-    say("Chat undocked — drag the header anywhere.");
+    if (typeof window.say === "function") window.say("Chat undocked — drag the header anywhere.");
   }
 });
 
@@ -117,13 +106,64 @@ if (chatHead) chatHead.addEventListener("pointermove", (e) => {
   });
 });
 
-if (chatForm) chatForm.addEventListener("submit", (e) => {
+
+let room = null;
+let connected = false;
+let sending = false;
+const note = chatDock && chatDock.querySelector(".chat-note");
+function status(text) { if (note) note.textContent = text; }
+
+function connect() {
+  try {
+    const cfg = window.STATION_CONFIG && window.STATION_CONFIG.firebaseConfig;
+    if (!window.firebase || !cfg) { status("Chat connection is unavailable. Reload to try again."); return; }
+    if (!window.firebase.apps.length) window.firebase.initializeApp(cfg);
+    room = window.firebase.database().ref("booth-chat");
+    room.limitToLast(100).on("value", function(snapshot) {
+      if (!chatMsgs) return;
+      chatMsgs.textContent = "";
+      snapshot.forEach(function(child) {
+        const message = child.val();
+        if (!message || typeof message.stageName !== "string" || typeof message.text !== "string") return;
+        chatSay(message.stageName.slice(0, 60), message.text.slice(0, 240));
+      });
+    }, function() { status("Chat could not load. Your radio keeps playing."); });
+    window.firebase.database().ref(".info/connected").on("value", function(snapshot) {
+      connected = snapshot.val() === true;
+      status(connected ? "World chat. Read along; paid chat access is checked when you post." : "Chat is offline. Your radio keeps playing.");
+    });
+  } catch (_) { status("Chat could not connect. Reload to try again."); }
+}
+
+if (chatForm) chatForm.addEventListener("submit", async function(e) {
   e.preventDefault();
   const text = (chatInput ? chatInput.value : "").trim();
-  if (!text) return;
-  chatSay("You", text.replace(/</g, "&lt;"));
-  if (chatInput) chatInput.value = "";
-  // Local echo until the live backend lands — honest, never faked as live.
-  setTimeout(() => chatSay(null, "Noted — the booth answers back when we're live.", true), 900);
+  if (!text || sending) return;
+  if (text.length > 240) { status("Keep your message within 240 characters."); return; }
+  if (!room || !connected) { status("Chat is offline. Your message is still here."); return; }
+  let session = "";
+  try { session = localStorage.getItem("ccr-session") || ""; } catch (_) {}
+  if (!session || !window.CCAuthority) { status("Sign in to use your stage name in chat."); return; }
+  sending = true;
+  try {
+    const account = await window.CCAuthority.ask("/api/session", { session: session });
+    if (!account || !account.success || !account.stageName) {
+      status("Please sign in again. Your message is still here."); return;
+    }
+    if (account.canChat !== true) {
+      status("You can read World chat. Paid writing access is not confirmed for this account."); return;
+    }
+    await room.push({
+      stageName: account.stageName,
+      text: text,
+      createdAt: window.firebase.database.ServerValue.TIMESTAMP
+    });
+    if (chatInput.value.trim() === text) chatInput.value = "";
+    status("World chat");
+  } catch (_) {
+    status("Your message could not be posted. It is still here; try again.");
+  } finally { sending = false; }
 });
+connect();
 window.CC_CHAT_LOADED = true;
+})();
