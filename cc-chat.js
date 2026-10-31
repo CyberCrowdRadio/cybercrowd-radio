@@ -41,7 +41,7 @@ function chatSay(who, text, sys) {
 
 function setChatState(state) {
   if (typeof viewReady !== "undefined" && viewReady) {
-    clearView();
+    if (state === "closed" || (chatDock && chatDock.dataset.state === "closed")) clearView();
     liveView = state !== "closed";
     if (liveView) refreshIdentity();
   }
@@ -248,7 +248,7 @@ if (isMobile()) setChatState("closed");
 window.addEventListener("storage", function(e) {
   if (e.key === "ccr-session") { clearView(); refreshIdentity(); }
 });
-window.addEventListener("pagehide", clearView);
+window.addEventListener("pagehide", function() { clearView(); firstSnapshot = true; });
 setInterval(refreshIdentity,30000);
 connect();
 window.CC_CHAT_LOADED = true;
