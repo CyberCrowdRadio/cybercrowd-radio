@@ -11,6 +11,7 @@
   var sending = false;
   var creating = false;
   var sessionVerified = false;
+  var chatVerification = false;
 
   function isValidEmail(v) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -135,9 +136,9 @@
       if (els.stepSignin) els.stepSignin.style.display = name === 'signin' ? 'block' : 'none';
     }
 
-    function openOverlay(step) {
-      if (hasSession()) return;
-      showStep(step === 'signin' ? 'signin' : (currentStep === 'signin' ? 'email' : currentStep));
+    function openOverlay(step, verificationOnly) {
+      if (hasSession() && !verificationOnly) return;
+      showStep(step || currentStep);
       lockPage();
       els.overlay.style.display = 'grid';
       els.overlay.scrollTop = 0;
@@ -146,12 +147,13 @@
 
     function closeOverlay() {
       if (!hasSession()) return false;
+      chatVerification = false;
       els.overlay.style.display = 'none';
       unlockPage();
       return true;
     }
 
-    async function verifyStoredSession() {
+    async function verifyStoredSession(expectedEmail) {
       var stored = '';
       try { stored = localStorage.getItem('ccr-session') || ''; } catch (_) {}
       sessionVerified = false;
@@ -163,6 +165,7 @@
       try { latest = localStorage.getItem('ccr-session') || ''; } catch (_) {}
       if (stored !== latest) return false;
       if (!result || result.success !== true || !result.stageName) return false;
+      if (expectedEmail && result.email !== expectedEmail) return false;
       sessionVerified = true;
       updateEntryLinks();
       try { localStorage.setItem('ccr-handle', result.stageName); } catch (_) {}
@@ -419,6 +422,7 @@
       if (label) label.textContent = name || 'guest';
       if (window.CCPresence) window.CCPresence.init();
       if (window.CCWelcomeWindow) window.CCWelcomeWindow.refresh();
+      window.dispatchEvent(new Event('cc-account-verified'));
     }
     window.addEventListener('storage', async function(e) {
       if (e.key !== 'ccr-session' && e.key !== 'ccr-email') return;
@@ -448,7 +452,18 @@
     // Public API
     window.CCSignup = {
       open: openOverlay,
-      close: closeOverlay
+      close: closeOverlay,
+      verifyChat: function() {
+        chatVerification = true;
+        try { els.emailInput.value = localStorage.getItem('ccr-email') || ''; } catch (_) {}
+        resetTurnstile();
+        els.turnstileDiv.style.display = isValidEmail(els.emailInput.value.trim()) ? 'block' : 'none';
+        els.statusText.textContent = 'Confirm the email of your existing account for chat. Complete the human check, then send the link. You will not create another account.';
+        openOverlay('email', true);
+      },
+      chatReady: function() {
+        if (chatVerification && hasSession() && currentStep === 'check') closeOverlay();
+      }
     };
 
     // Arrival: the blue link (?token=), the old road (?verified=1),
@@ -471,11 +486,22 @@
       };
       if (params && params.get('token')) {
         var token = params.get('token');
-        cleanUrl();
+        // Preserve the link through transient errors; store before removing it.
+        try { sessionStorage.setItem('ccr-verify-token', token); } catch (_) {}
         var res = null;
         try { res = await window.CCAuthority.ask('/api/verify-email', { token: token }); } catch (_) {}
         if (res && res.success && res.email) {
-          try { sessionStorage.setItem('ccr-verify-token', token); } catch (_) {}
+          cleanUrl();
+          if (res.accountExists) {
+            if (await verifyStoredSession(res.email)) {
+              try { sessionStorage.removeItem('ccr-verify-token'); } catch (_) {}
+              return;
+            }
+            if (els.signinEmail) els.signinEmail.value = res.email;
+            showStep('signin'); openOverlay('signin');
+            els.signinStatus.textContent = 'Email confirmed. Sign in to your existing account to return.';
+            return;
+          }
           document.getElementById('overlayEmailDisplay').textContent = res.email;
           showStep('create');
           openOverlay('create');
@@ -495,8 +521,15 @@
         els.emailInput.value = sessionStorage.getItem('cybercrowd_entry_email') || '';
       } catch (_) {}
       if (!hasSession() && savedToken) {
-        var checked = await window.CCAuthority.ask('/api/verify-email', { token: savedToken });
+        var checked = null;
+        try { checked = await window.CCAuthority.ask('/api/verify-email', { token: savedToken }); } catch (_) {}
         if (checked && checked.success && checked.email) {
+          if (checked.accountExists) {
+            if (els.signinEmail) els.signinEmail.value = checked.email;
+            showStep('signin'); openOverlay('signin');
+            els.signinStatus.textContent = 'Email confirmed. Sign in to your existing account.';
+            return;
+          }
           document.getElementById('overlayEmailDisplay').textContent = checked.email;
           showStep('create');
           openOverlay('create');

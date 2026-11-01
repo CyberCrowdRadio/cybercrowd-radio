@@ -1,6 +1,6 @@
-/* CYBERCROWD RADIO — shared World chat dock.
-   Reads booth-chat from Firebase. Account authority supplies the stage
-   name. Free posts go through the account authority. No email, ZIP, or session is
+/* CYBERCROWD RADIO — World conversation and separate Booth inbox.
+   Reads and posts go through account authority after entry eligibility checks.
+   Authority supplies the stage name. No email, ZIP, or session is
    written to messages. Existing dock controls stay in this file. */
 "use strict";
 /* ============================================================
@@ -188,6 +188,7 @@ window.addEventListener("resize", () => {
 
 
 let room = null, connected = false, sending = false;
+let destination = "world", destinationChosen = false, reading = false, lastSession = "";
 let snapshotValue = null, currentRound = null, baseline = new Set();
 let ownSender = "", host = false, moderator = false, identityRound = "", firstSnapshot = true;
 let liveView = !isMobile(), viewReady = false;
@@ -196,7 +197,7 @@ function status(text) { if (note) note.textContent = text; }
 function session() { try { return localStorage.getItem("ccr-session") || ""; } catch (_) { return ""; } }
 async function ask(action, more) {
   if (!window.CCAuthority || !session()) return { success: false, error: "sign in required" };
-  return window.CCAuthority.ask("/api/chat", Object.assign({ session: session(), action, round: currentRound || "initial" }, more || {}));
+  return window.CCAuthority.ask("/api/chat", Object.assign({ session: session(), action, destination, round: currentRound || "initial" }, more || {}));
 }
 const actions = document.createElement("div");
 actions.style.cssText = "display:flex;flex-wrap:wrap;gap:8px;padding:10px";
@@ -208,7 +209,26 @@ function button(label, fn) {
 const roundLabel = document.createElement("p");
 roundLabel.style.cssText = "padding:0 12px;color:#e9c979";
 const clearButton = button("Clear my view", clearView);
+button("World — talk with listeners", () => selectDestination("world"));
+button("To the Booth — message the station", () => selectDestination("booth"));
 button("Roles & reports", () => window.open("administration.html", "_blank", "noopener"));
+const protectButton = button("Protect chat access — owner setup", async () => {
+  if (!window.confirm("Require Authority-approved access to World and Booth messages? This backs up the Firebase rules, closes direct client access to these two chat branches, and preserves messages and other database branches.")) return;
+  protectButton.disabled = true;
+  try {
+    const result = await ask("secure-access");
+    status(result && result.success ? "Chat database access protected." : (result && result.error || "Chat protection could not be applied."));
+  } catch (_) { status("Chat protection could not be applied."); }
+  finally { protectButton.disabled = false; }
+});
+protectButton.hidden = true;
+const verifyButton = document.createElement("button");
+verifyButton.type = "button"; verifyButton.textContent = "Confirm my email for chat"; verifyButton.hidden = true;
+verifyButton.style.cssText = "min-height:48px;padding:10px;font-size:18px;color:#fff;background:#101719;border:1px solid #c9a227;border-radius:8px";
+verifyButton.addEventListener("click", () => {
+  if (window.CCSignup && window.CCSignup.verifyChat) window.CCSignup.verifyChat();
+});
+if (chatForm) chatForm.after(verifyButton);
 const resetButton = button("Start new round", () => hostAction("reset"));
 const roundCount = document.createElement("input");
 roundCount.type = "number"; roundCount.min = "1"; roundCount.step = "1";
@@ -234,6 +254,28 @@ function clearView() {
   baseline = new Set(Object.keys(messages()));
   if (chatMsgs) chatMsgs.textContent = "";
 }
+function discardRoom() {
+  snapshotValue = null; currentRound = null; baseline = new Set(); firstSnapshot = true;
+  ownSender = ""; identityRound = ""; connected = false; room = null;
+  host = false; moderator = false;
+  resetButton.hidden = true; tenButton.hidden = true; roundCount.hidden = true;
+  if (chatMsgs) chatMsgs.textContent = "";
+}
+function selectDestination(next) {
+  if (sending) { status("Wait for your current message to finish before changing destinations."); return; }
+  if (chatInput && chatInput.value.trim()) {
+    status("Send or erase your draft before changing destinations. It stays addressed to " + (destination === "world" ? "World." : "the booth.")); return;
+  }
+  destinationChosen = true;
+  if (destination !== next) { destination = next; discardRoom(); }
+  updateDestination(); refreshIdentity();
+}
+function updateDestination() {
+  const title = chatDock && chatDock.querySelector(".chat-title");
+  if (title) title.textContent = destination === "world" ? "World — talk with listeners" : "To the Booth";
+  const label = chatForm && chatForm.querySelector("label");
+  if (label) label.textContent = destination === "world" ? "Your message to World" : "Your message to the booth";
+}
 function render() {
   if (!chatMsgs) return;
   chatMsgs.textContent = "";
@@ -255,6 +297,7 @@ function render() {
         try {
           const answer = await ask(m.sender === ownSender ? "retract" : "remove", {messageId:key});
           if (!answer || !answer.success) { status("Could not retract that message. Try again."); retract.disabled = false; }
+          else refreshIdentity();
         } catch (_) { status("Could not retract that message. Try again."); retract.disabled = false; }
       });
       li.appendChild(retract);
@@ -262,15 +305,48 @@ function render() {
   });
 }
 async function refreshIdentity() {
+  if (reading || !liveView || document.hidden) return;
+  const token = session(), target = destination;
+  if (token !== lastSession) { discardRoom(); protectButton.hidden = true; lastSession = token; }
+  if (!token) { discardRoom(); verifyButton.hidden = true; status("Sign in with your verified account to enter chat."); return; }
+  reading = true;
   try {
-    const result = await ask("status");
+    const result = await ask("read");
+    if (token !== session() || target !== destination || !liveView) return;
+    protectButton.hidden = !(result && (result.role === "owner" || result.owner === true));
+    verifyButton.hidden = !(result && result.error === "verification required");
+    if (!result || !result.success || !result.room) {
+      discardRoom();
+      status(result && result.error === "verification required"
+        ? "Confirm your email and human check once to enter chat. Your existing account stays the same."
+        : "Chat is unavailable. Your radio keeps playing.");
+      return;
+    }
+    // Station operators begin at their booth, without World comments flooding it.
+    if (!destinationChosen && result.host && destination === "world") {
+      destination = "booth"; destinationChosen = true; discardRoom(); updateDestination(); return;
+    }
+    destinationChosen = true;
     host = !!(result && result.success && result.host);
     moderator = !!(result && result.success && result.moderator);
     ownSender = result && result.success ? result.sender || "" : "";
     identityRound = result && result.success ? result.round || "" : "";
+    snapshotValue = result.room;
+    const changed = currentRound !== snapshotValue.meta.id;
+    currentRound = snapshotValue.meta.id;
+    if (firstSnapshot) { clearView(); firstSnapshot = false; }
+    else if (changed) baseline = new Set();
+    connected = true; room = target;
+    if (window.CCSignup && window.CCSignup.chatReady) window.CCSignup.chatReady();
+    const limit = snapshotValue.meta.mode === "next10" ? 10 : snapshotValue.meta.limit;
+    roundLabel.textContent = limit ? "Numbered round: " + Math.min(snapshotValue.meta.count,limit) + " of " + limit
+      : (target === "world" ? "World conversation" : (moderator ? "Messages addressed to the booth" : "Your messages to the booth"));
+    updateDestination();
     resetButton.hidden = !host; tenButton.hidden = !host; roundCount.hidden = !host;
     render();
-  } catch (_) { resetButton.hidden = true; tenButton.hidden = true; roundCount.hidden = true; }
+    status(target === "world" ? "Live World conversation" : "To the Booth — separate from World conversation");
+  } catch (_) { discardRoom(); status("Chat is unavailable. Your radio keeps playing."); }
+  finally { reading = false; }
 }
 async function hostAction(action) {
   if (!host || sending) return;
@@ -286,34 +362,9 @@ async function hostAction(action) {
   try {
     const result = await ask(action, limit === undefined ? {} : {limit});
     status(result && result.success ? "New round started." : "The room could not be reset. Try again.");
+    if (result && result.success) refreshIdentity();
   } catch (_) { status("The room could not be reset. Try again."); }
   finally { sending = false; resetButton.disabled = false; tenButton.disabled = false; }
-}
-function connect() {
-  try {
-    const cfg = window.STATION_CONFIG && window.STATION_CONFIG.firebaseConfig;
-    if (!window.firebase || !cfg) { status("Chat connection is unavailable. Reload to try again."); return; }
-    if (!window.firebase.apps.length) window.firebase.initializeApp(cfg);
-    room = window.firebase.database().ref("booth-chat");
-    room.on("value", function(snapshot) {
-      const value = snapshot.val();
-      snapshotValue = value && value.meta ? value : {meta:{id:"initial",mode:"open",count:0},messages:value || {}};
-      const changed = currentRound !== snapshotValue.meta.id;
-      currentRound = snapshotValue.meta.id;
-      if (firstSnapshot) { clearView(); firstSnapshot = false; }
-      else if (changed) { baseline = new Set(); refreshIdentity(); }
-      const limit = snapshotValue.meta.mode === "next10" ? 10 : snapshotValue.meta.limit;
-      roundLabel.textContent = limit
-        ? "Numbered round: " + Math.min(snapshotValue.meta.count,limit) + " of " + limit + " received"
-        : "Live World chat";
-      render();
-    }, function() { status("Chat could not load. Your radio keeps playing."); });
-    window.firebase.database().ref(".info/connected").on("value", function(snapshot) {
-      connected = snapshot.val() === true;
-      status(connected ? "Live room — earlier messages do not replay when you return." : "Chat is offline. Your radio keeps playing.");
-      if (connected) refreshIdentity();
-    });
-  } catch (_) { status("Chat could not connect. Reload to try again."); }
 }
 if (chatForm) chatForm.addEventListener("submit", async function(e) {
   e.preventDefault();
@@ -333,17 +384,20 @@ if (chatForm) chatForm.addEventListener("submit", async function(e) {
       return;
     }
     if (chatInput.value.trim() === text) chatInput.value = "";
-    status("World chat");
+    status(destination === "world" ? "World conversation" : "To the Booth");
+    refreshIdentity();
   } catch (_) { status("Your message could not be posted. It is still here; try again."); }
   finally { sending = false; }
 });
 viewReady = true;
 setChatState(isMobile() ? "closed" : placement);
 window.addEventListener("storage", function(e) {
-  if (e.key === "ccr-session") { clearView(); refreshIdentity(); }
+  if (e.key === "ccr-session") { discardRoom(); refreshIdentity(); }
 });
-window.addEventListener("pagehide", function() { clearView(); firstSnapshot = true; });
-setInterval(refreshIdentity,30000);
-connect();
+window.addEventListener("cc-account-verified", function() { discardRoom(); refreshIdentity(); });
+window.addEventListener("pagehide", function() { discardRoom(); });
+document.addEventListener("visibilitychange", function() { if (!document.hidden) refreshIdentity(); });
+setInterval(refreshIdentity,3000);
+updateDestination(); refreshIdentity();
 window.CC_CHAT_LOADED = true;
 })();
