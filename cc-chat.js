@@ -46,6 +46,57 @@ try {
 const layoutStyle = document.createElement("style");
 layoutStyle.textContent = '.chat-controls button{width:auto;min-width:44px;min-height:44px;padding:6px 10px}.chat-tab:not([hidden]){display:block}.chat-dock[data-state="closed"]{visibility:hidden}.chat-dock[data-state="undocked"]{right:auto;bottom:auto;width:320px;max-width:calc(100vw - 16px)}';
 document.head.appendChild(layoutStyle);
+layoutStyle.textContent += `
+.chat-dock{width:400px;color:#fff}
+.chat-dock[data-state="open"],.chat-dock[data-state="undocked"]{height:600px;max-height:85dvh}
+.chat-dock[data-state="undocked"]{width:400px}
+.chat-title{font-family:Inter,sans-serif;font-size:20px;letter-spacing:0;line-height:1.3;color:#fff}
+.chat-head{gap:12px}
+.chat-dock .chat-msgs li,.chat-dock[data-state="undocked"] .chat-msgs li{font-size:20px;line-height:1.5}
+.chat-dock .chat-msgs .who,.chat-dock[data-state="undocked"] .chat-msgs .who{font-size:18px;letter-spacing:0;color:#ffe39a}
+.chat-form{flex-wrap:wrap;flex-shrink:0}
+.chat-form label{width:100%;font-size:20px;font-weight:700}
+.chat-form input{min-width:0;width:100%;flex:1 1 100%;min-height:52px;font-size:20px}
+.chat-form button{width:100%;min-height:56px;font-size:22px;font-weight:700}
+.chat-help{padding:10px 14px;margin:0;font-size:18px;line-height:1.4;color:#fff}
+.chat-note{font-size:16px;color:#f5e6bf}
+.chat-tools{padding:8px 12px;flex-shrink:0;font-size:16px}
+.chat-tools summary{cursor:pointer;min-height:44px;display:list-item;padding:10px 0;touch-action:manipulation}
+.chat-tools button{min-height:44px;padding:8px 12px;font-size:18px}
+.chat-tab:not([hidden]){width:auto;height:auto;min-height:56px;max-width:90vw;padding:14px;font-size:18px;font-weight:700}
+.chat-dock button:focus-visible,.chat-dock summary:focus-visible,.chat-tab:focus-visible{outline:3px solid #fff;outline-offset:2px}
+@media(max-width:860px){.chat-dock[data-state="open"]{height:100dvh;max-height:100dvh}}
+`;
+if (chatDock) {
+  const title = chatDock.querySelector(".chat-title");
+  if (title) title.textContent = "Talk to everyone listening";
+  chatDock.setAttribute("aria-label", "Talk to everyone listening");
+  const body = chatDock.querySelector(".chat-body");
+  if (body) {
+    const help = document.createElement("p");
+    help.className = "chat-help"; help.id = "chatInstructions";
+    help.textContent = "Type your message below, then press SEND.";
+    body.insertBefore(help, body.firstChild);
+    if (chatUndockBtn) {
+      const movement = document.createElement("details"); movement.className = "chat-tools";
+      const summary = document.createElement("summary"); summary.textContent = "Move this window";
+      movement.appendChild(summary); movement.appendChild(chatUndockBtn);
+      const hint = document.createElement("p");
+      hint.textContent = "Press Undock, drag the title, and leave it where you want. Press Dock to return it to the corner.";
+      movement.appendChild(hint); body.appendChild(movement);
+    }
+  }
+}
+if (chatForm && chatInput) {
+  let label = chatForm.querySelector("label");
+  if (!label) { label = document.createElement("label"); chatForm.insertBefore(label,chatInput); }
+  label.className = ""; label.htmlFor = "chatInput"; label.textContent = "Your message";
+  chatInput.placeholder = "Type here…";
+  chatInput.setAttribute("aria-describedby", "chatInstructions");
+  const send = chatForm.querySelector('button[type="submit"]');
+  if (send) { send.textContent = "SEND"; send.setAttribute("aria-label", "Send your message"); }
+}
+
 function savePlacement() {
   try { localStorage.setItem("cc-chat-layout", JSON.stringify({
     mode:placement, left:dockedPos ? dockedPos.left : 0, top:dockedPos ? dockedPos.top : 0
@@ -71,8 +122,8 @@ function setChatState(state) {
   chatDock.classList.remove("fullscreen");
   if (chatTab) {
     chatTab.hidden = state !== "closed";
-    chatTab.textContent = "Chat";
-    chatTab.setAttribute("aria-label", "Open chat");
+    chatTab.textContent = "TALK TO PEOPLE";
+    chatTab.setAttribute("aria-label", "Talk to everyone listening");
   }
   if (state !== "closed") {
     placement = state;
@@ -92,7 +143,7 @@ function setChatState(state) {
   }
 }
 if (chatMinBtn) {
-  chatMinBtn.textContent = "–";
+  chatMinBtn.textContent = "Hide";
   chatMinBtn.setAttribute("aria-label", "Minimize chat");
   chatMinBtn.addEventListener("click", () => setChatState("closed"));
 }
@@ -108,7 +159,7 @@ if (chatUndockBtn) chatUndockBtn.addEventListener("click", () => {
 // Drag only the header; release leaves the box in place.
 let cDrag = null;
 if (chatHead) chatHead.addEventListener("pointerdown", e => {
-  if (e.target.closest("button") || (e.button !== undefined && e.button !== 0)) return;
+  if (e.target.closest("button, details, summary") || (e.button !== undefined && e.button !== 0)) return;
   if (chatDock.dataset.state !== "undocked") {
     const r = chatDock.getBoundingClientRect();
     dockedPos = {left:r.left, top:r.top};
@@ -168,7 +219,10 @@ roundCount.hidden = true; actions.appendChild(roundCount);
 const tenButton = button("Start numbered round", () => hostAction("numbered"));
 resetButton.hidden = true; tenButton.hidden = true;
 if (chatMsgs && chatMsgs.parentNode) {
-  chatMsgs.parentNode.insertBefore(actions, chatMsgs);
+  const options = document.createElement("details"); options.className = "chat-tools";
+  const summary = document.createElement("summary"); summary.textContent = "More options";
+  options.appendChild(summary); options.appendChild(actions);
+  chatMsgs.parentNode.appendChild(options);
   chatMsgs.parentNode.insertBefore(roundLabel, chatMsgs);
 }
 function messages() { return snapshotValue && snapshotValue.messages || {}; }
