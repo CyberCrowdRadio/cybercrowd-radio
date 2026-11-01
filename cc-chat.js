@@ -51,7 +51,13 @@ layoutStyle.textContent += `
 .chat-dock[data-state="open"],.chat-dock[data-state="undocked"]{height:600px;max-height:85dvh}
 .chat-dock[data-state="undocked"]{width:400px}
 .chat-title{font-family:Inter,sans-serif;font-size:20px;letter-spacing:0;line-height:1.3;color:#fff}
-.chat-head{gap:12px}
+.chat-head{gap:12px;flex-shrink:0}
+.chat-menu{font-size:16px;margin-left:auto}
+.chat-menu summary{cursor:pointer;min-height:44px;padding:10px 4px;touch-action:manipulation;white-space:nowrap}
+.chat-menu>div{position:absolute;z-index:3;top:70px;right:8px;left:8px;max-height:65dvh;overflow:auto;background:#101719;border:1px solid #c9a227;border-radius:10px;box-shadow:0 8px 20px #000}
+.chat-menu>div button{width:100%;text-align:left;min-height:44px}
+.chat-menu summary:focus-visible{outline:3px solid white}
+.chat-title{font-size:18px}
 .chat-dock .chat-msgs li,.chat-dock[data-state="undocked"] .chat-msgs li{font-size:20px;line-height:1.5}
 .chat-dock .chat-msgs .who,.chat-dock[data-state="undocked"] .chat-msgs .who{font-size:18px;letter-spacing:0;color:#ffe39a}
 .chat-form{flex-wrap:wrap;flex-shrink:0}
@@ -77,14 +83,7 @@ if (chatDock) {
     help.className = "chat-help"; help.id = "chatInstructions";
     help.textContent = "Type your message below, then press SEND.";
     body.insertBefore(help, body.firstChild);
-    if (chatUndockBtn) {
-      const movement = document.createElement("details"); movement.className = "chat-tools";
-      const summary = document.createElement("summary"); summary.textContent = "Move this window";
-      movement.appendChild(summary); movement.appendChild(chatUndockBtn);
-      const hint = document.createElement("p");
-      hint.textContent = "Press Undock, drag the title, and leave it where you want. Press Dock to return it to the corner.";
-      movement.appendChild(hint); body.appendChild(movement);
-    }
+
   }
 }
 if (chatForm && chatInput) {
@@ -219,10 +218,15 @@ roundCount.hidden = true; actions.appendChild(roundCount);
 const tenButton = button("Start numbered round", () => hostAction("numbered"));
 resetButton.hidden = true; tenButton.hidden = true;
 if (chatMsgs && chatMsgs.parentNode) {
-  const options = document.createElement("details"); options.className = "chat-tools";
-  const summary = document.createElement("summary"); summary.textContent = "More options";
+  const options = document.createElement("details"); options.className = "chat-menu";
+  const summary = document.createElement("summary"); summary.textContent = "Chat menu";
   options.appendChild(summary); options.appendChild(actions);
-  chatMsgs.parentNode.appendChild(options);
+  if (chatUndockBtn) actions.appendChild(chatUndockBtn);
+  const moveHint = document.createElement("p");
+  moveHint.textContent = "Undock, drag the title, and leave it where you want. Dock returns it to the corner.";
+  actions.appendChild(moveHint);
+  if (chatHead) chatHead.appendChild(options);
+  else chatMsgs.parentNode.insertBefore(options,chatMsgs);
   chatMsgs.parentNode.insertBefore(roundLabel, chatMsgs);
 }
 function messages() { return snapshotValue && snapshotValue.messages || {}; }

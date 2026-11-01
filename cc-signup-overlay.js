@@ -65,6 +65,22 @@
     els.signinStatus = document.getElementById('plaqueSigninStatus');
     if (!els.overlay || !els.emailInput || !els.sendBtn) return;
 
+    // Entry links reflect server-confirmed account state, including cross-tab sign-out.
+    var entryLinks = Array.prototype.map.call(
+      document.querySelectorAll('.signupDoor, .signinDoor, a[href="join.html"]'),
+      function(el) { return {element:el, hidden:el.hidden}; }
+    );
+    var entryStyle = document.createElement('style');
+    entryStyle.textContent = '[data-account-entry-hidden="true"]{display:none!important}';
+    document.head.appendChild(entryStyle);
+    function updateEntryLinks() {
+      entryLinks.forEach(function(item) {
+        item.element.hidden = sessionVerified || item.hidden;
+        if (sessionVerified) item.element.setAttribute('data-account-entry-hidden','true');
+        else item.element.removeAttribute('data-account-entry-hidden');
+      });
+    }
+
     var background = [];
     var previousOverflow = document.body.style.overflow;
     Array.prototype.forEach.call(document.body.children, function(el) {
@@ -120,6 +136,7 @@
     }
 
     function openOverlay(step) {
+      if (hasSession()) return;
       showStep(step === 'signin' ? 'signin' : (currentStep === 'signin' ? 'email' : currentStep));
       lockPage();
       els.overlay.style.display = 'grid';
@@ -138,6 +155,7 @@
       var stored = '';
       try { stored = localStorage.getItem('ccr-session') || ''; } catch (_) {}
       sessionVerified = false;
+      updateEntryLinks();
       if (!stored) return false;
       var result = null;
       try { result = await window.CCAuthority.ask('/api/session', { session: stored }); } catch (_) {}
@@ -146,6 +164,7 @@
       if (stored !== latest) return false;
       if (!result || result.success !== true || !result.stageName) return false;
       sessionVerified = true;
+      updateEntryLinks();
       try { localStorage.setItem('ccr-handle', result.stageName); } catch (_) {}
       closeOverlay();
       publishAccount();
@@ -358,6 +377,7 @@
         if (res.projectName) localStorage.setItem('ccr-project', res.projectName);
       } catch (_) {}
       sessionVerified = true;
+      updateEntryLinks();
       closeOverlay();
       publishAccount();
       try { sessionStorage.removeItem('ccr-signup-step'); } catch (_) {}
@@ -403,6 +423,7 @@
     window.addEventListener('storage', async function(e) {
       if (e.key !== 'ccr-session' && e.key !== 'ccr-email') return;
       sessionVerified = false;
+      updateEntryLinks();
       openOverlay('signin');
       await verifyStoredSession();
     });
