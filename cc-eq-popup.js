@@ -46,7 +46,7 @@
    Gate / trial: popup mounts inside the EQ seat, so a mounted gate
    blocks it for visitors exactly as it blocks the row, and owner
    bypass, no gate mounted, leaves it free for owner. No gate change here.
-   Mount: buttons row and popup panel insert into the EQ seat,
+   Mount: buttons row and top-layer popup dialog insert into the EQ seat,
    before the faders row, so you can test popup without removing the
    working row. If no EQ seat is found, this file builds nothing.
    This file alone does nothing visible until station.html loads it
@@ -107,10 +107,12 @@ window.CCEQPopup = (function () {
       buttons[i].className = "cc-eq-popup-btn" + (i === index && open ? " cc-eq-popup-btn-on" : "");
     }
     if (!open || index < 0) {
+      if (popup.open) popup.close();
       popup.style.display = "none";
       return;
     }
     popup.style.display = "block";
+    if (!popup.open) popup.showModal();
     val = getValue(index);
     labelEl.textContent = LABELS[index];
     valueEl.textContent = fmt(val);
@@ -175,7 +177,8 @@ window.CCEQPopup = (function () {
       ".cc-eq-popup-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}" +
       ".cc-eq-popup-btn{font:inherit;color:#aebbb2;background:#ffffff04;border:1px solid #ffffff16;padding:11px 15px;cursor:pointer}" +
       ".cc-eq-popup-btn-on{color:#a6ff35;border-color:#a6ff3540;background:#a6ff3509}" +
-      ".cc-eq-popup-panel{display:none;background:linear-gradient(135deg,#151d17b0,#0a100dc9 55%,#0c120fe6);border:1px solid #ffffff12;padding:19px 21px;color:#e4ece6;font-family:'IBM Plex Mono',monospace;width:100%;max-width:420px;touch-action:pan-y}" +
+      ".cc-eq-popup-panel{display:none;background:linear-gradient(135deg,#151d17b0,#0a100dc9 55%,#0c120fe6);border:1px solid #ffffff12;padding:19px 21px;color:#e4ece6;font-family:'IBM Plex Mono',monospace;width:100%;max-width:min(420px,calc(100vw - 24px));max-height:calc(100dvh - 24px);overflow:auto;margin:auto;touch-action:pan-y;box-shadow:0 16px 60px #000b}" +
+      ".cc-eq-popup-panel::backdrop{background:#0008}" +
       ".cc-eq-popup-head{display:flex;justify-content:space-between;align-items:center}" +
       ".cc-eq-popup-label{font:600 28px 'Barlow Condensed',sans-serif;letter-spacing:2px;color:#a6ff35}" +
       ".cc-eq-popup-value{font:600 28px 'Barlow Condensed',sans-serif}" +
@@ -203,8 +206,10 @@ window.CCEQPopup = (function () {
       buttons.push(btn);
       row.appendChild(btn);
     }
-    popup = document.createElement("div");
+    popup = document.createElement("dialog");
     popup.className = "cc-eq-popup-panel";
+    popup.setAttribute("aria-labelledby", "ccEqPopupLabel");
+    popup.addEventListener("cancel", function (ev) { ev.preventDefault(); closePopup(); });
     popup.innerHTML =
       '<div class="cc-eq-popup-head"><span class="cc-eq-popup-label" id="ccEqPopupLabel">Voice</span><span class="cc-eq-popup-value" id="ccEqPopupValue">0</span><button type="button" class="cc-eq-popup-close" id="ccEqPopupClose">X</button></div>' +
       '<div class="cc-eq-popup-body"><button type="button" class="cc-eq-popup-arrow" id="ccEqPopupLeft">&lt;</button><input type="range" min="-12" max="12" step="1" value="0" class="cc-eq-popup-slider" id="ccEqPopupSlider" orient="vertical"><button type="button" class="cc-eq-popup-arrow" id="ccEqPopupRight">&gt;</button></div>' +

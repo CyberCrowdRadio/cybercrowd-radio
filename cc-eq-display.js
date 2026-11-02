@@ -1,5 +1,5 @@
 /* CYBERCROWD RADIO — golden equalizer in the tuner.
-   OPEN EQ reveals all five existing faders together; RESET keeps its own job.
+   OPEN EQ opens all five existing faders in a separate dialog; RESET keeps its own job.
    One job, one spot: the little area that says CYBERCROWD RADIO.
    That little spot used to be a red needle going left and right.
    Now it is a golden thing doing its thing, with parameters
@@ -240,7 +240,12 @@ window.CCEQDisplay = (function () {
       ".cc-eq-popup-root{order:3}" +
       ".cc-eq-popup-row{display:none !important}" +
       ".cc-eq-seat-faders{order:4;display:none !important}" +
-      ".cc-eq-seat.cc-eq-all-open .cc-eq-seat-faders{display:flex !important;max-width:100%;overflow-x:auto}" +
+      ".cc-eq-all-dialog{box-sizing:border-box;width:min(680px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto;margin:auto;padding:16px;background:#181a1c;color:#f2eee3;border:2px solid #c9a227;border-radius:10px;box-shadow:0 16px 60px #000b}" +
+      ".cc-eq-all-dialog::backdrop{background:#0008}" +
+      ".cc-eq-all-dialog-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:12px;font:600 20px monospace}" +
+      ".cc-eq-all-dialog-close{min-width:48px;min-height:48px;border:1px solid #c9a227;border-radius:6px;background:#080a0b;color:#f2eee3;font:inherit;cursor:pointer}" +
+      ".cc-eq-all-dialog .cc-eq-seat-faders{display:flex !important;max-width:100%;overflow-x:auto;justify-content:flex-start}" +
+      ".cc-eq-all-dialog .cc-eq-faders{flex-shrink:0;margin:auto}" +
       ".cc-eq-seat-reset{order:5;gap:12px;flex-wrap:wrap;align-items:center}" +
       ".cc-eq-open-button{background:#000;color:#ffd700;border:2px solid #c9a227;border-radius:8px;padding:16px 24px;min-height:56px;font-size:18px;font-weight:700;letter-spacing:1px;cursor:pointer}" +
       ".cc-eq-open-button:focus-visible{outline:3px solid #ffd700;outline-offset:3px}" +
@@ -275,19 +280,41 @@ window.CCEQDisplay = (function () {
     var eqSeat = seat.parentNode;
     var actions = eqSeat.querySelector(".cc-eq-seat-reset");
     if (actions) {
-      seat.id = "ccEqAllAdjustments";
+      var dialog = document.createElement("dialog");
+      dialog.className = "cc-eq-all-dialog";
+      dialog.id = "ccEqAllAdjustments";
+      dialog.setAttribute("aria-labelledby", "ccEqAllTitle");
+      var heading = document.createElement("div");
+      heading.className = "cc-eq-all-dialog-head";
+      var title = document.createElement("span");
+      title.id = "ccEqAllTitle";
+      title.textContent = "EQUALIZER";
+      var closeButton = document.createElement("button");
+      closeButton.type = "button";
+      closeButton.className = "cc-eq-all-dialog-close";
+      closeButton.textContent = "X";
+      closeButton.setAttribute("aria-label", "Close equalizer");
+      heading.appendChild(title);
+      heading.appendChild(closeButton);
+      dialog.appendChild(heading);
+      eqSeat.appendChild(dialog);
+      dialog.appendChild(seat);
       var openButton = document.createElement("button");
       openButton.type = "button";
       openButton.className = "cc-eq-open-button";
       openButton.textContent = "OPEN EQ";
-      openButton.setAttribute("aria-controls", seat.id);
+      openButton.setAttribute("aria-controls", dialog.id);
+      openButton.setAttribute("aria-haspopup", "dialog");
       openButton.setAttribute("aria-expanded", "false");
-      openButton.title = "Open all five sound adjustments. Make it yours.";
+      openButton.title = "Open all five sound adjustments";
       openButton.addEventListener("click", function () {
-        var expanded = eqSeat.classList.toggle("cc-eq-all-open");
-        openButton.setAttribute("aria-expanded", String(expanded));
-        openButton.textContent = expanded ? "CLOSE EQ" : "OPEN EQ";
-        if (expanded && window.CCEQPopup && window.CCEQPopup.close) window.CCEQPopup.close();
+        if (window.CCEQPopup && window.CCEQPopup.close) window.CCEQPopup.close();
+        if (!dialog.open) dialog.showModal();
+        openButton.setAttribute("aria-expanded", "true");
+      });
+      closeButton.addEventListener("click", function () { dialog.close(); });
+      dialog.addEventListener("close", function () {
+        openButton.setAttribute("aria-expanded", "false");
       });
       actions.insertBefore(openButton, actions.firstChild);
     }
