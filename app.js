@@ -316,7 +316,6 @@
         audio.setAttribute("data-cc-player", "1");
         window.CCPlayerAudio = audio;
         if (window.CCEQRail) window.CCEQRail.attachTo(audio);
-        if (window.CCWeatherRadio) await window.CCWeatherRadio.attach(audio, url);
         audio.preload = "none";
         audio.volume = vol.value / 100;
         vol.addEventListener("input", () => (audio.volume = vol.value / 100));
@@ -353,7 +352,7 @@
     if (window.CCRadioDJ && !window.CCRadioDJ.isStopped()) window.CCRadioDJ.stop();
     if (straightAudio) { try { straightAudio.pause(); } catch (e) {} straightAudio = null; }
     if (liveAudio) { try { liveAudio.pause(); } catch (e) {} liveAudio = null; }
-    if (audio) { try { audio.pause(); } catch (e) {} if (window.CCWeatherRadio) window.CCWeatherRadio.destroy(); audio = null; }
+    if (audio) { try { audio.pause(); } catch (e) {} audio = null; }
   }
   function setModeButtons(mode) {
     bcastMode = mode;
@@ -900,4 +899,3 @@
     });
   }
 })();
-
