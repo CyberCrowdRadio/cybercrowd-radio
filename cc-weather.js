@@ -5,7 +5,8 @@
  * - zippopotam.us: zip → lat/lon (US)
  * - open-meteo.com: lat/lon → current weather
  *
- * DOES: real weather for the user's zip.
+ * DOES: real weather for the signed-in account ZIP or a manually entered ZIP.
+ * Account ZIP is retrieved through Authority and kept in memory only.
  * DOES NOT: fake generic text.
  */
 
@@ -13,17 +14,61 @@
   "use strict";
 
   var ZIP_KEY = 'cc-zip';
+  var selectedZip = '';
+  var accountRequest = 0;
+  var weatherRequest = 0;
+
+  function session() {
+    try { return localStorage.getItem('ccr-session') || ''; }
+    catch (_) { return ''; }
+  }
 
   function getZip() {
-    try { return localStorage.getItem(ZIP_KEY) || ''; }
+    if (selectedZip) return selectedZip;
+    try {
+      var zip = localStorage.getItem(ZIP_KEY) || '';
+      return /^\d{5}$/.test(zip) ? zip : '';
+    }
     catch (_) { return ''; }
   }
 
   function setZip(zip) {
+    selectedZip = zip;
     try { localStorage.setItem(ZIP_KEY, zip); } catch (_) {}
   }
 
+  // Retrieve only this signed-in listener's account ZIP; keep it in memory.
+  // It is never added to presence, chat, or the broadcast.
+  async function loadAccountWeather() {
+    if (!document.getElementById('weather')) return;
+    var id = ++accountRequest;
+    var token = session();
+    selectedZip = '';
+    var input = document.getElementById('zipInput');
+    var status = document.getElementById('weatherStatus');
+    if (!token) return;
+    if (!window.CCAuthority) {
+      if (status) status.textContent = 'Sign in to load your account ZIP, or enter a ZIP below.';
+      return;
+    }
+    if (status) status.textContent = 'Loading your account weather…';
+    var result;
+    try { result = await window.CCAuthority.ask('/api/session', { session: token }); }
+    catch (_) { result = null; }
+    if (id !== accountRequest || token !== session()) return;
+    var zip = result && typeof result.zip === 'string' ? result.zip.trim() : '';
+    if (!result || result.success !== true || !result.stageName || !/^\d{5}$/.test(zip)) {
+      if (status) status.textContent = 'Account ZIP unavailable. Enter a five-digit ZIP below.';
+      return;
+    }
+    selectedZip = zip;
+    if (input) input.value = zip;
+    fetchWeather(zip);
+  }
+
   function fetchWeather(zip) {
+    var id = ++weatherRequest;
+    var token = session();
     var statusEl = document.getElementById('weatherStatus');
     var tempEl = document.getElementById('weatherTemp');
     var descEl = document.getElementById('weatherDesc');
@@ -55,6 +100,7 @@
           '&temperature_unit=fahrenheit&wind_speed_unit=mph&timezone=auto')
           .then(function (r) { return r.json(); })
           .then(function (wx) {
+            if (id !== weatherRequest || token !== session()) return;
             var c = wx.current;
             var temp = Math.round(c.temperature_2m);
             var desc = weatherCodeToText(c.weather_code);
@@ -69,6 +115,7 @@
           });
       })
       .catch(function () {
+        if (id !== weatherRequest || token !== session()) return;
         setStatus('Could not get weather for ' + zip + '. Check the zip code.');
         if (tempEl) tempEl.textContent = '--';
         if (descEl) descEl.textContent = '';
@@ -133,6 +180,7 @@
     function go() {
       var zip = zipInput.value.trim();
       if (/^\d{5}$/.test(zip)) {
+        accountRequest++;
         setZip(zip);
         fetchWeather(zip);
       }
@@ -144,8 +192,24 @@
     });
 
     // Load saved zip weather on start
-    if (savedZip) fetchWeather(savedZip);
+    if (session()) loadAccountWeather();
+    else if (savedZip) fetchWeather(savedZip);
   }
+
+  window.addEventListener('cc-account-verified', loadAccountWeather);
+  window.addEventListener('storage', function (ev) {
+    if (ev.key !== 'ccr-session' && ev.key !== null) return;
+    accountRequest++;
+    weatherRequest++;
+    selectedZip = '';
+    ['weatherTemp', 'weatherDesc', 'weatherStatus'].forEach(function (id) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = id === 'weatherTemp' ? '--' : '';
+    });
+    var input = document.getElementById('zipInput');
+    if (input) input.value = '';
+    loadAccountWeather();
+  });
 
   // Tip-triggered personal weather shoutout — James 2026-10-17
   // "Cold morning for Julie in NYC, your temp is 42 with 20% chance of precipitation"
@@ -202,3 +266,4 @@
     buildUI();
   }
 })();
+
