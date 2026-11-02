@@ -121,7 +121,7 @@ function setChatState(state) {
   chatDock.classList.remove("fullscreen");
   if (chatTab) {
     chatTab.hidden = state !== "closed";
-    chatTab.textContent = "TALK TO PEOPLE";
+    chatTab.textContent = "CHAT";
     chatTab.setAttribute("aria-label", "Talk to everyone listening");
   }
   if (state !== "closed") {
