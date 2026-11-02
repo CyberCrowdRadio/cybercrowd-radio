@@ -1,7 +1,8 @@
 /* CC Weather — real zip-code weather. 2026-10-17.
  * James: "People want to enter their zip code"
  *
- * Uses free APIs, no keys needed:
+ * Account forecasts: Authority -> National Weather Service hourly forecast.
+ * Manual lookup retains the existing providers:
  * - zippopotam.us: zip → lat/lon (US)
  * - open-meteo.com: lat/lon → current weather
  *
@@ -17,6 +18,9 @@
   var selectedZip = '';
   var accountRequest = 0;
   var weatherRequest = 0;
+  var accountReport = null;
+  var accountReportToken = '';
+  var accountWeatherActive = false;
 
   function session() {
     try { return localStorage.getItem('ccr-session') || ''; }
@@ -41,11 +45,18 @@
   // It is never added to presence, chat, or the broadcast.
   async function loadAccountWeather() {
     if (!document.getElementById('weather')) return;
+    accountWeatherActive = true;
     var id = ++accountRequest;
     var token = session();
     selectedZip = '';
+    accountReport = null;
+    weatherRequest++;
     var input = document.getElementById('zipInput');
     var status = document.getElementById('weatherStatus');
+    ['weatherTemp', 'weatherDesc', 'weatherReport', 'weatherSource'].forEach(function (name) {
+      var el = document.getElementById(name);
+      if (el) el.textContent = name === 'weatherTemp' ? '--' : '';
+    });
     if (!token) return;
     if (!window.CCAuthority) {
       if (status) status.textContent = 'Sign in to load your account ZIP, or enter a ZIP below.';
@@ -63,10 +74,39 @@
     }
     selectedZip = zip;
     if (input) input.value = zip;
-    fetchWeather(zip);
+    var reportResult;
+    try { reportResult = await window.CCAuthority.ask('/api/weather', { session: token }); }
+    catch (_) { reportResult = null; }
+    if (id !== accountRequest || token !== session()) return;
+    var report = reportResult && reportResult.report;
+    if (!reportResult || reportResult.success !== true || !report || report.kind !== 'hourly-forecast' ||
+        !Number.isFinite(report.temperature) || report.temperatureUnit !== 'F' ||
+        !(Date.parse(report.validFrom) <= Date.now() && Date.now() < Date.parse(report.validUntil))) {
+      if (status) status.textContent = 'Your local forecast is temporarily unavailable. Try again shortly.';
+      return;
+    }
+    accountReport = report;
+    accountReportToken = token;
+    var temp = document.getElementById('weatherTemp');
+    var desc = document.getElementById('weatherDesc');
+    var script = document.getElementById('weatherReport');
+    var source = document.getElementById('weatherSource');
+    if (temp) temp.textContent = report.temperature + '°F';
+    if (desc) desc.textContent = report.shortForecast + ' near ' + report.location;
+    if (script) script.textContent = report.script;
+    if (source) source.textContent = 'National Weather Service hourly forecast · Issued ' +
+      new Date(report.issuedAt).toLocaleString() + ' · Valid ' +
+      new Date(report.validFrom).toLocaleTimeString() + '–' + new Date(report.validUntil).toLocaleTimeString();
+    if (status) status.textContent = '';
   }
 
   function fetchWeather(zip) {
+    accountWeatherActive = false;
+    accountReport = null;
+    ['weatherReport', 'weatherSource'].forEach(function (name) {
+      var el = document.getElementById(name);
+      if (el) el.textContent = '';
+    });
     var id = ++weatherRequest;
     var token = session();
     var statusEl = document.getElementById('weatherStatus');
@@ -145,7 +185,7 @@
       head.innerHTML =
         '<p class="eyebrow">Your sky</p>' +
         '<h2>What\'s your weather?</h2>' +
-        '<p class="section-sub">Enter your zip.</p>';
+        '<p class="section-sub">Your account ZIP loads automatically. You can also look up another ZIP.</p>';
     }
 
     // Find or create the weather display
@@ -167,6 +207,8 @@
     display.innerHTML =
       '<div style="font-size:48px;font-weight:bold;" id="weatherTemp">--</div>' +
       '<div style="font-size:18px;margin:8px 0;" id="weatherDesc"></div>' +
+      '<p id="weatherReport" style="max-width:44rem;margin:16px auto;text-align:left;"></p>' +
+      '<p id="weatherSource" style="font-size:14px;"></p>' +
       '<div style="margin-top:16px;">' +
       '<input type="text" id="zipInput" placeholder="Zip code" value="' + savedZip + '" ' +
       'style="padding:10px;font-size:16px;width:120px;text-align:center;" maxlength="5" inputmode="numeric">' +
@@ -194,6 +236,9 @@
     // Load saved zip weather on start
     if (session()) loadAccountWeather();
     else if (savedZip) fetchWeather(savedZip);
+    window.setInterval(function () {
+      if (accountWeatherActive && session() && !document.hidden) loadAccountWeather();
+    }, 15 * 60 * 1000);
   }
 
   window.addEventListener('cc-account-verified', loadAccountWeather);
@@ -202,7 +247,8 @@
     accountRequest++;
     weatherRequest++;
     selectedZip = '';
-    ['weatherTemp', 'weatherDesc', 'weatherStatus'].forEach(function (id) {
+    accountReport = null;
+    ['weatherTemp', 'weatherDesc', 'weatherStatus', 'weatherReport', 'weatherSource'].forEach(function (id) {
       var el = document.getElementById(id);
       if (el) el.textContent = id === 'weatherTemp' ? '--' : '';
     });
@@ -258,6 +304,10 @@
     fetchWeather: fetchWeather,
     getZip: getZip,
     tipWeatherShoutout: tipWeatherShoutout,
+    getAccountReport: function () {
+      if (!accountReport || accountReportToken !== session() || Date.now() >= Date.parse(accountReport.validUntil)) return null;
+      return accountReport;
+    },
   };
 
   if (document.readyState === 'loading') {
@@ -266,4 +316,5 @@
     buildUI();
   }
 })();
+
 
