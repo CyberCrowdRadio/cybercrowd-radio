@@ -175,7 +175,78 @@
     return map[code] || 'Unknown';
   }
 
+  // A direct audition on the signed-in receiver. Authority owns ZIP and NOAA.
+  function mountWeatherAudition() {
+    var receiver = document.querySelector('.receiver');
+    if (!receiver || document.getElementById('ccWeatherPreview')) return;
+    var panel = document.createElement('div');
+    var button = document.createElement('button');
+    var status = document.createElement('p');
+    button.id = 'ccWeatherPreview';
+    button.type = 'button';
+    button.className = 'btn btn-secondary';
+    button.textContent = 'Hear my weather';
+    status.setAttribute('role', 'status');
+    status.setAttribute('aria-live', 'polite');
+    panel.style.cssText = 'padding:12px 16px;';
+    status.style.cssText = 'margin:8px 0 0;line-height:1.5;';
+    panel.appendChild(button);
+    panel.appendChild(status);
+    receiver.appendChild(panel);
+    var watching = null;
+    var attempt = 0;
+    function finish(message) {
+      clearInterval(watching);
+      watching = null;
+      button.disabled = false;
+      status.textContent = message;
+    }
+    async function explainFailure(error, id) {
+      var message = 'Weather could not play: ' + (error || 'weather-unavailable') + '.';
+      // Ask the same Authority endpoint for its specific failure, never another ZIP source.
+      if (window.CCAuthority && session()) {
+        try {
+          var reply = await window.CCAuthority.ask('/api/weather', {session: session()});
+          if (id !== attempt) return;
+          if (!reply || !reply.success) message = 'Weather could not load: ' + ((reply && reply.error) || 'authority-unreachable') + '.';
+          else message = 'Your NOAA forecast is available. Speech could not play: ' + (error || 'weather-unavailable') + '.';
+        } catch (_) {}
+      }
+      if (id === attempt) finish(message);
+    }
+    button.addEventListener('click', function () {
+      var id = ++attempt;
+      if (!session()) return finish('Sign in with your existing account to hear its saved ZIP weather.');
+      var voice = window.CCWeather;
+      if (!voice || typeof voice.preview !== 'function' || typeof voice.status !== 'function') {
+        return finish('The weather audio receiver has not loaded. Tap Hear my weather again shortly.');
+      }
+      var audio = window.CCPlayerAudio;
+      if (!audio || audio.paused) return finish('Press the radio Play button, then Hear my weather.');
+      button.disabled = true;
+      status.textContent = 'Preparing Kinetic’s NOAA forecast for your account ZIP…';
+      voice.preview();
+      var started = Date.now();
+      clearInterval(watching);
+      watching = setInterval(function () {
+        var current = voice.status();
+        if (!current.signedIn) return finish('Sign in with your existing account to hear its saved ZIP weather.');
+        if (current.stage === 'unavailable' || current.stage === 'audio-unavailable') {
+          clearInterval(watching);
+          watching = null;
+          explainFailure(current.error || current.stage, id);
+          return;
+        }
+        if (current.stage === 'speaking') status.textContent = 'Kinetic is playing your local NOAA forecast.';
+        if (current.stage === 'finished') return finish('Weather playback finished.');
+        if (Date.now() - started > 420000) return finish('Weather preparation timed out. Tap Hear my weather to retry.');
+      }, 250);
+    });
+  }
+
+
   function buildUI() {
+    mountWeatherAudition();
     var section = document.getElementById('weather');
     if (!section) return;
 
