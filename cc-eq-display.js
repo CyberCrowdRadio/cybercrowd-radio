@@ -1,5 +1,6 @@
 /* CYBERCROWD RADIO — golden equalizer in the tuner.
    OPEN EQ opens all five existing faders in a separate dialog; RESET keeps its own job.
+   The full dialog scrolls between faders with its arrows and moves by its title bar.
    One job, one spot: the little area that says CYBERCROWD RADIO.
    That little spot used to be a red needle going left and right.
    Now it is a golden thing doing its thing, with parameters
@@ -240,12 +241,16 @@ window.CCEQDisplay = (function () {
       ".cc-eq-popup-root{order:3}" +
       ".cc-eq-popup-row{display:none !important}" +
       ".cc-eq-seat-faders{order:4;display:none !important}" +
-      ".cc-eq-all-dialog{box-sizing:border-box;width:min(680px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);overflow:auto;margin:auto;padding:16px;background:#181a1c;color:#f2eee3;border:2px solid #c9a227;border-radius:10px;box-shadow:0 16px 60px #000b}" +
+      ".cc-eq-all-dialog{box-sizing:border-box;width:min(680px,calc(100vw - 24px));max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);min-width:0;overflow:auto;margin:auto;padding:16px;background:#181a1c;color:#f2eee3;border:2px solid #c9a227;border-radius:10px;box-shadow:0 16px 60px #000b}" +
       ".cc-eq-all-dialog::backdrop{background:#0008}" +
-      ".cc-eq-all-dialog-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:12px;font:600 20px monospace}" +
+      ".cc-eq-all-dialog-head{display:flex;justify-content:space-between;align-items:center;gap:16px;margin-bottom:12px;font:600 20px monospace;cursor:move;touch-action:none}" +
       ".cc-eq-all-dialog-close{min-width:48px;min-height:48px;border:1px solid #c9a227;border-radius:6px;background:#080a0b;color:#f2eee3;font:inherit;cursor:pointer}" +
-      ".cc-eq-all-dialog .cc-eq-seat-faders{display:flex !important;max-width:100%;overflow-x:auto;justify-content:flex-start}" +
-      ".cc-eq-all-dialog .cc-eq-faders{flex-shrink:0;margin:auto}" +
+      ".cc-eq-all-dialog .cc-eq-seat-faders{display:flex !important;width:100%;min-width:0;max-width:100%;overflow-x:auto;justify-content:flex-start;overscroll-behavior-x:contain}" +
+      ".cc-eq-all-dialog .cc-eq-faders{flex-shrink:0;margin:0}" +
+      ".cc-eq-all-dialog-nav{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px;font:14px monospace}" +
+      ".cc-eq-all-dialog-nav[hidden]{display:none}" +
+      ".cc-eq-all-dialog-nav button{min-width:48px;min-height:44px;border:1px solid #c9a227;border-radius:6px;background:#080a0b;color:#f2eee3;font:24px monospace;cursor:pointer}" +
+      ".cc-eq-all-dialog-nav button:disabled{opacity:.3;cursor:default}" +
       ".cc-eq-seat-reset{order:5;gap:12px;flex-wrap:wrap;align-items:center}" +
       ".cc-eq-open-button{background:#000;color:#ffd700;border:2px solid #c9a227;border-radius:8px;padding:16px 24px;min-height:56px;font-size:18px;font-weight:700;letter-spacing:1px;cursor:pointer}" +
       ".cc-eq-open-button:focus-visible{outline:3px solid #ffd700;outline-offset:3px}" +
@@ -286,6 +291,7 @@ window.CCEQDisplay = (function () {
       dialog.setAttribute("aria-labelledby", "ccEqAllTitle");
       var heading = document.createElement("div");
       heading.className = "cc-eq-all-dialog-head";
+      heading.title = "Drag to move equalizer";
       var title = document.createElement("span");
       title.id = "ccEqAllTitle";
       title.textContent = "EQUALIZER";
@@ -297,6 +303,63 @@ window.CCEQDisplay = (function () {
       heading.appendChild(title);
       heading.appendChild(closeButton);
       dialog.appendChild(heading);
+      var navigation = document.createElement("div");
+      navigation.className = "cc-eq-all-dialog-nav";
+      navigation.hidden = true;
+      navigation.innerHTML = '<button type="button" aria-label="Previous faders">&#9664;</button><span>Scroll faders</span><button type="button" aria-label="Next faders">&#9654;</button>';
+      var previousFaders = navigation.firstElementChild;
+      var nextFaders = navigation.lastElementChild;
+      function updateFaderNavigation() {
+        var limit = seat.scrollWidth - seat.clientWidth;
+        navigation.hidden = limit <= 1;
+        previousFaders.disabled = seat.scrollLeft <= 1;
+        nextFaders.disabled = seat.scrollLeft >= limit - 1;
+      }
+      function scrollFaders(direction) {
+        seat.scrollBy({ left: direction * Math.max(120, seat.clientWidth * 0.5), behavior: "smooth" });
+      }
+      previousFaders.addEventListener("click", function () { scrollFaders(-1); });
+      nextFaders.addEventListener("click", function () { scrollFaders(1); });
+      seat.addEventListener("scroll", updateFaderNavigation, { passive: true });
+      var drag = null;
+      function placePopup(left, top) {
+        var rect = dialog.getBoundingClientRect();
+        var view = window.visualViewport;
+        var x = view ? view.offsetLeft : 0;
+        var y = view ? view.offsetTop : 0;
+        var width = view ? view.width : window.innerWidth;
+        var height = view ? view.height : window.innerHeight;
+        dialog.style.position = "fixed";
+        dialog.style.margin = "0";
+        dialog.style.inset = "auto";
+        dialog.style.left = Math.max(x + 8, Math.min(left, x + width - rect.width - 8)) + "px";
+        dialog.style.top = Math.max(y + 8, Math.min(top, y + height - rect.height - 8)) + "px";
+      }
+      function keepPopupVisible() {
+        if (dialog.open && dialog.style.left) {
+          var rect = dialog.getBoundingClientRect();
+          placePopup(rect.left, rect.top);
+        }
+        updateFaderNavigation();
+      }
+      heading.addEventListener("pointerdown", function (ev) {
+        if (ev.button !== 0 || ev.target.closest("button")) return;
+        var rect = dialog.getBoundingClientRect();
+        drag = { id: ev.pointerId, x: ev.clientX, y: ev.clientY, left: rect.left, top: rect.top };
+        heading.setPointerCapture(ev.pointerId);
+        ev.preventDefault();
+      });
+      heading.addEventListener("pointermove", function (ev) {
+        if (!drag || drag.id !== ev.pointerId) return;
+        placePopup(drag.left + ev.clientX - drag.x, drag.top + ev.clientY - drag.y);
+      });
+      function finishDrag(ev) { if (drag && drag.id === ev.pointerId) drag = null; }
+      heading.addEventListener("pointerup", finishDrag);
+      heading.addEventListener("pointercancel", finishDrag);
+      heading.addEventListener("lostpointercapture", finishDrag);
+      window.addEventListener("resize", keepPopupVisible);
+      if (window.visualViewport) window.visualViewport.addEventListener("resize", keepPopupVisible);
+      dialog.appendChild(navigation);
       eqSeat.appendChild(dialog);
       dialog.appendChild(seat);
       var openButton = document.createElement("button");
@@ -310,10 +373,12 @@ window.CCEQDisplay = (function () {
       openButton.addEventListener("click", function () {
         if (window.CCEQPopup && window.CCEQPopup.close) window.CCEQPopup.close();
         if (!dialog.open) dialog.showModal();
+        keepPopupVisible();
         openButton.setAttribute("aria-expanded", "true");
       });
       closeButton.addEventListener("click", function () { dialog.close(); });
       dialog.addEventListener("close", function () {
+        drag = null;
         openButton.setAttribute("aria-expanded", "false");
       });
       actions.insertBefore(openButton, actions.firstChild);
