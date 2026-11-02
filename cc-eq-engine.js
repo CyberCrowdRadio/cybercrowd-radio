@@ -42,6 +42,8 @@ window.CCEQEngine = (function () {
   var filters = [];
   var element = null;
   var masterGain = null;
+  var programGain = null;
+  var overlay = null;
   var lastVolume = 0.8;
 
   function buildChain() {
@@ -83,12 +85,58 @@ window.CCEQEngine = (function () {
       element = audioEl;
       buildChain();
       source.disconnect();
-      source.connect(filters[0]);
+      programGain = ctx.createGain();
+      source.connect(programGain);
+      programGain.connect(filters[0]);
       return true;
     } catch (e) {
       return false;
     }
   }
+
+  // Weather is mixed through the listener's existing EQ and volume path.
+  // Its stop is scheduled on the audio clock, not a throttled UI timer.
+  function playOverlay(buffer, offset, seconds) {
+    if (!ctx || !filters.length || !programGain || !element || ctx.state !== 'running') return null;
+    if (overlay) overlay.stop();
+    var node = ctx.createBufferSource();
+    var fade = ctx.createGain();
+    var level = ctx.createGain();
+    var now = ctx.currentTime;
+    var length = Math.min(seconds, buffer.duration - offset);
+    if (!(length > 0)) return null;
+    node.buffer = buffer;
+    node.connect(fade); fade.connect(level); level.connect(filters[0]);
+    var media = element;
+    function volume() { level.gain.value = media.volume; }
+    volume(); media.addEventListener('volumechange', volume);
+    fade.gain.setValueAtTime(0, now);
+    fade.gain.linearRampToValueAtTime(1, now + Math.min(0.18, length / 2));
+    fade.gain.setValueAtTime(1, now + Math.max(0, length - 0.25));
+    fade.gain.linearRampToValueAtTime(0, now + length);
+    programGain.gain.cancelScheduledValues(now);
+    programGain.gain.setTargetAtTime(0.22, now, 0.04);
+    programGain.gain.setTargetAtTime(1, now + length, 0.08);
+    var handle = { stop: function () {
+      try { node.stop(); } catch (_) {}
+      if (overlay === handle) {
+        overlay = null;
+        programGain.gain.cancelScheduledValues(ctx.currentTime);
+        programGain.gain.setTargetAtTime(1, ctx.currentTime, 0.015);
+      }
+    }};
+    overlay = handle;
+    node.onended = function () {
+      media.removeEventListener('volumechange', volume);
+      node.disconnect(); fade.disconnect(); level.disconnect();
+      if (overlay === handle) overlay = null;
+    };
+    node.start(now, offset, length);
+    node.stop(now + length);
+    return handle;
+  }
+
+  function audioContext() { return ctx; }
 
   function setBand(index, db) {
     if (!filters[index]) return false;
@@ -121,6 +169,8 @@ window.CCEQEngine = (function () {
   }
 
   function detach() {
+    if (overlay) overlay.stop();
+    if (programGain) { try { programGain.disconnect(); } catch (_) {} programGain = null; }
     if (source && ctx) {
       try {
         source.disconnect();
@@ -141,6 +191,8 @@ window.CCEQEngine = (function () {
 
   return {
     attach: attach,
+    playOverlay: playOverlay,
+    audioContext: audioContext,
     setBand: setBand,
     setVolume: setVolume,
     reset: reset,
@@ -148,3 +200,4 @@ window.CCEQEngine = (function () {
     bands: bands
   };
 })();
+
