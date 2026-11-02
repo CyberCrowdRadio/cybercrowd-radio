@@ -115,6 +115,8 @@ window.CCEQPopup = (function () {
     labelEl.textContent = LABELS[index];
     valueEl.textContent = fmt(val);
     sliderEl.value = val;
+    sliderEl.setAttribute("aria-label", LABELS[index] + " gain");
+    sliderEl.setAttribute("aria-valuetext", fmt(val) + " dB");
     leftBtn.disabled = index <= 0;
     rightBtn.disabled = index >= LABELS.length - 1;
   }
@@ -145,6 +147,8 @@ window.CCEQPopup = (function () {
 
   function onTouchStart(e) {
     if (!e.touches || !e.touches.length) return;
+    touchX = null;
+    if (e.target.closest('input,button')) return;
     touchX = e.touches[0].clientX;
   }
 
@@ -218,6 +222,7 @@ window.CCEQPopup = (function () {
       if (index >= 0) {
         setValue(index, v);
         valueEl.textContent = fmt(v);
+        sliderEl.setAttribute("aria-valuetext", fmt(v) + " dB");
       }
     });
     popup.addEventListener("touchstart", onTouchStart, { passive: true });
@@ -250,3 +255,4 @@ window.CCEQPopup = (function () {
     }
   };
 })();
+
