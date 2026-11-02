@@ -19,9 +19,9 @@ assert.equal(test.titles(id3(title))[0],title);assert.equal(test.titles(new Uint
 await context.window.CCWeatherRadio.attach(audio,'https://stream.cybercrowdradio.com/stream');
 const state=test.state();state.ready={id:String(mark),session:auth,buffer:{duration:20}};
 callbacks.metadata(null,{samples:[{pts:100,data:id3(title)}]});assert.equal(mix.length,0);
-audio.currentTime=101.1;test.tick(state);assert.equal(mix.length,1);assert(Math.abs(mix[0].offset-.1)<.001);assert(mix[0].seconds<20);
+audio.currentTime=101.1;test.tick(state);assert.equal(mix.length,1);assert.equal(mix[0].offset,0,'complete Kinetic introduction');assert.equal(mix[0].seconds,20);
 audio.paused=true;test.tick(state);assert.equal(stops.length,1);
-audio.paused=false;audio.currentTime=105;test.tick(state);assert.equal(mix[1].offset,4);
+audio.paused=false;audio.currentTime=105;test.tick(state);assert(Math.abs(mix[1].offset-3.9)<.001);
 events.waiting.forEach(fn=>fn());test.tick(state);assert.equal(state.voice,null);events.playing.forEach(fn=>fn());assert(state.voice);
 callbacks.metadata(null,{samples:[{pts:110,data:id3('THUNDER song')}]});assert.equal(state.cues[0].end,110);assert(mix.at(-1).seconds<=4);
 audio.currentTime=109;test.tick(state);assert.equal(state.voice,null,'stop before the next track');

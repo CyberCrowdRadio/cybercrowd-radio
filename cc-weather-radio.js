@@ -68,9 +68,11 @@
     if (!active || state.audio.paused || state.audio.seeking || state.waiting || state.audio.readyState<3 || state.audio.playbackRate!==1) { stop(state); return; }
     var ready=state.ready;
     if (!ready || ready.id!==active.id || ready.session!==state.session) return;
-    var offset=pos-(active.start+1);
-    // Never start a new report in the middle of its sentence after a late fetch/join.
-    if (!active.started && offset>1.25) { active.finished=true; return; }
+    var lateness=pos-(active.start+1);
+    // Begin with the complete introduction; only a paused report resumes at an offset.
+    if (!active.started && lateness>1.25) { active.finished=true; return; }
+    if (!active.started) active.voiceStart=pos;
+    var offset=pos-active.voiceStart;
     if (offset>=ready.buffer.duration) { active.finished=true; stop(state); return; }
     if (!state.voice && window.CCEQEngine) {
       state.voice=window.CCEQEngine.playOverlay(ready.buffer,offset,Math.min(ready.buffer.duration-offset,active.end-1-pos));
