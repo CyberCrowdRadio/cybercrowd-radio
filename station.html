@@ -301,7 +301,9 @@
     attached = audio;
     Promise.resolve(window.CCWeatherRadio.attach(
       audio, 'https://stream.cybercrowdradio.com/stream'
-    )).catch(function () { attached = null; });
+    )).then(function (ok) {
+      if (!ok && attached === audio) attached = null;
+    }).catch(function () { if (attached === audio) attached = null; });
   }
   document.addEventListener('click', connectWeather, true);
   window.addEventListener('cc-account-verified', connectWeather);
