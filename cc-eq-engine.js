@@ -139,12 +139,37 @@ window.CCEQEngine = (function () {
     return BAND_FREQS.slice();
   }
 
+  // Listener-local weather voice shares the existing station output gain.
+  function audioContext() {
+    return ctx;
+  }
+
+  function playOverlay(buffer, offset, seconds) {
+    if (!ctx || !masterGain || !buffer || !Number.isFinite(offset) ||
+        !Number.isFinite(seconds) || seconds <= 0) return null;
+    try {
+      if (ctx.state === 'suspended') ctx.resume();
+      var voice = ctx.createBufferSource();
+      voice.buffer = buffer;
+      voice.connect(masterGain);
+      voice.start(0, Math.max(0, offset), Math.min(seconds, buffer.duration - offset));
+      return {
+        stop: function () {
+          try { voice.stop(); } catch (_) {}
+          try { voice.disconnect(); } catch (_) {}
+        }
+      };
+    } catch (_) { return null; }
+  }
+
   return {
     attach: attach,
     setBand: setBand,
     setVolume: setVolume,
     reset: reset,
     detach: detach,
-    bands: bands
+    bands: bands,
+    audioContext: audioContext,
+    playOverlay: playOverlay
   };
 })();
