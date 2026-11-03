@@ -284,6 +284,31 @@
       </div>
     </div>
   </div>
+<script src="cc-weather-radio.js"></script>
+<script>
+/* Repo: CyberCrowdRadio/cybercrowd-radio
+ * File: station.html
+ * Movements: Connect existing weather receiver to the existing live audio.
+ * Purpose: Activate Kinetic's listener-specific weather overlay.
+ * Does NOT: create another player, alter signup, change the station stream.
+ */
+(function () {
+  'use strict';
+  var attached = null;
+  function connectWeather() {
+    var audio = window.CCPlayerAudio;
+    if (!audio || audio === attached || !window.CCWeatherRadio) return;
+    attached = audio;
+    Promise.resolve(window.CCWeatherRadio.attach(
+      audio, 'https://stream.cybercrowdradio.com/stream'
+    )).catch(function () { attached = null; });
+  }
+  document.addEventListener('click', connectWeather, true);
+  window.addEventListener('cc-account-verified', connectWeather);
+  setInterval(connectWeather, 1000);
+  connectWeather();
+})();
+</script>
 <script async src="https://weather.cybercrowdradio.com/client.js"></script>
 </body>
 </html>
