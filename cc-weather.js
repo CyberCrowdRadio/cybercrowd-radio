@@ -371,8 +371,46 @@
       .catch(function () {});
   }
 
+  // Account ZIP -> Authority's NOAA hourly forecast -> audible preview.
+  var previewState = {stage:'idle',error:'',signedIn:false};
+  var previewUtterance = null;
+  async function preview() {
+    var auth = session();
+    previewState = {stage:'preparing',error:'',signedIn:!!auth};
+    if (!auth || !window.CCAuthority) {
+      previewState.stage='unavailable'; previewState.error='account-unavailable'; return;
+    }
+    try {
+      var account = await window.CCAuthority.ask('/api/session',{session:auth});
+      if (session()!==auth) return;
+      var zip = account && typeof account.zip==='string' ? account.zip.trim() : '';
+      if (!account || account.success!==true || !/^\\d{5}$/.test(zip)) throw new Error('account-zip-unavailable');
+      var response = await window.CCAuthority.ask('/api/weather',{session:auth});
+      if (session()!==auth) return;
+      var report = response && response.report;
+      if (!response || response.success!==true || !report || report.kind!=='hourly-forecast' ||
+          !Number.isFinite(report.temperature) || report.temperatureUnit!=='F' ||
+          !report.script || !(Date.parse(report.validFrom)<=Date.now() && Date.now()<Date.parse(report.validUntil))) {
+        throw new Error('noaa-forecast-unavailable');
+      }
+      if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) throw new Error('speech-unavailable');
+      window.speechSynthesis.cancel();
+      var utterance = new SpeechSynthesisUtterance(report.script);
+      previewUtterance = utterance;
+      utterance.onstart=function () { if (previewUtterance===utterance) previewState.stage='speaking'; };
+      utterance.onend=function () { if (previewUtterance===utterance) { previewState.stage='finished'; previewUtterance=null; } };
+      utterance.onerror=function (e) { if (previewUtterance===utterance) { previewState.stage='audio-unavailable'; previewState.error=e.error||'speech-failed'; previewUtterance=null; } };
+      window.speechSynthesis.speak(utterance);
+    } catch (e) {
+      previewState.stage='unavailable'; previewState.error=e.message||'weather-unavailable';
+    }
+  }
+  function previewStatus() { return {stage:previewState.stage,error:previewState.error,signedIn:!!session()}; }
+
   window.CCWeather = {
     fetchWeather: fetchWeather,
+    preview: preview,
+    status: previewStatus,
     getZip: getZip,
     tipWeatherShoutout: tipWeatherShoutout,
     getAccountReport: function () {
