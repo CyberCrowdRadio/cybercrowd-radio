@@ -371,99 +371,17 @@
       .catch(function () {});
   }
 
-  // Account ZIP -> Authority's NOAA hourly forecast -> audible preview.
-  var previewState = {stage:'idle',error:'',signedIn:false};
-  var previewUtterance = null;
-  async function preview() {
-    var auth = session();
-    previewState = {stage:'preparing',error:'',signedIn:!!auth};
-    if (!auth || !window.CCAuthority) {
-      previewState.stage='unavailable'; previewState.error='account-unavailable'; return;
-    }
-    try {
-      var account = await window.CCAuthority.ask('/api/session',{session:auth});
-      if (session()!==auth) return;
-      var zip = account && typeof account.zip==='string' ? account.zip.trim() : '';
-      if (!account || account.success!==true || !/^\\d{5}$/.test(zip)) throw new Error('account-zip-unavailable');
-      var response = await window.CCAuthority.ask('/api/weather',{session:auth});
-      if (session()!==auth) return;
-      var report = response && response.report;
-      if (!response || response.success!==true || !report || report.kind!=='hourly-forecast' ||
-          !Number.isFinite(report.temperature) || report.temperatureUnit!=='F' ||
-          !report.script || !(Date.parse(report.validFrom)<=Date.now() && Date.now()<Date.parse(report.validUntil))) {
-        throw new Error('noaa-forecast-unavailable');
-      }
-      if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) throw new Error('speech-unavailable');
-      window.speechSynthesis.cancel();
-      var utterance = new SpeechSynthesisUtterance(report.script);
-      previewUtterance = utterance;
-      utterance.onstart=function () { if (previewUtterance===utterance) previewState.stage='speaking'; };
-      utterance.onend=function () { if (previewUtterance===utterance) { previewState.stage='finished'; previewUtterance=null; } };
-      utterance.onerror=function (e) { if (previewUtterance===utterance) { previewState.stage='audio-unavailable'; previewState.error=e.error||'speech-failed'; previewUtterance=null; } };
-      window.speechSynthesis.speak(utterance);
-    } catch (e) {
-      previewState.stage='unavailable'; previewState.error=e.message||'weather-unavailable';
-    }
-  }
-  function previewStatus() { return {stage:previewState.stage,error:previewState.error,signedIn:!!session()}; }
-
-  // Automatic, listener-local NOAA forecast at the half-hour every three hours.
-  // Use the signed-in account ZIP; never publish the ZIP to the common stream.
-  var lastWeatherBreak = '';
-  var scheduledReport = null;
-  var scheduledFor = '';
-  function weatherBreakTime(now) {
-    var date = new Date(now);
-    date.setMinutes(30,0,0);
-    var hour = date.getHours();
-    date.setHours(hour - ((hour % 3 + 3) % 3));
-    if (date.getTime() < now) date.setHours(date.getHours()+3);
-    return date.getTime();
-  }
-  async function prepareScheduledWeather(mark,auth) {
-    if (!auth || !window.CCAuthority) return;
-    try {
-      var account = await window.CCAuthority.ask('/api/session',{session:auth});
-      if (session()!==auth || !account || account.success!==true || !/^\\d{5}$/.test(String(account.zip||''))) return;
-      var reply = await window.CCAuthority.ask('/api/weather',{session:auth});
-      if (session()!==auth || !reply || reply.success!==true || !reply.report ||
-          reply.report.kind!=='hourly-forecast' || !reply.report.script ||
-          !(Date.parse(reply.report.validFrom)<=mark && mark<Date.parse(reply.report.validUntil))) return;
-      scheduledReport={mark:mark,session:auth,zip:account.zip,script:reply.report.script};
-    } catch (_) {}
-  }
-  function automaticWeatherTick() {
-    var now=Date.now(), mark=weatherBreakTime(now), auth=session();
-    if (!auth) { scheduledReport=null; scheduledFor=''; return; }
-    // Fetch shortly before the break so the forecast is fresh.
-    if (mark-now<=120000 && mark-now>0 && scheduledFor!==String(mark)+auth) {
-      scheduledFor=String(mark)+auth;
-      prepareScheduledWeather(mark,auth);
-    }
-    // The current break may have begun within the past few seconds.
-    var active=mark-now>0 ? mark-10800000 : mark;
-    if (active>now || now-active>10000 || lastWeatherBreak===String(active)) return;
-    if (!scheduledReport || scheduledReport.mark!==active || scheduledReport.session!==auth) return;
-    var audio=window.CCPlayerAudio;
-    if (!audio || audio.paused || !window.speechSynthesis || !window.SpeechSynthesisUtterance) return;
-    lastWeatherBreak=String(active);
-    var line=String(scheduledReport.zip)+'. Here is your local National Weather Service forecast. '+scheduledReport.script;
-    var utterance=new SpeechSynthesisUtterance(line);
-    utterance.rate=1;
-    window.speechSynthesis.speak(utterance);
-  }
-  setInterval(automaticWeatherTick,1000);
-
-  window.CCWeather = {
+  // Weather display utilities only. Kinetic's actual voice and schedule belong
+  // to the existing weather.cybercrowdradio.com listener receiver.
+  // Do not overwrite its window.CCWeather.preview/status interface.
+  window.CCWeatherUI = {
     fetchWeather: fetchWeather,
-    preview: preview,
-    status: previewStatus,
     getZip: getZip,
     tipWeatherShoutout: tipWeatherShoutout,
     getAccountReport: function () {
       if (!accountReport || accountReportToken !== session() || Date.now() >= Date.parse(accountReport.validUntil)) return null;
       return accountReport;
-    },
+    }
   };
 
   if (document.readyState === 'loading') {
