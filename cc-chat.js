@@ -390,7 +390,7 @@ if (chatForm) chatForm.addEventListener("submit", async function(e) {
   finally { sending = false; }
 });
 viewReady = true;
-setChatState(isMobile() ? "closed" : placement);
+setChatState("closed");
 window.addEventListener("storage", function(e) {
   if (e.key === "ccr-session") { discardRoom(); refreshIdentity(); }
 });
