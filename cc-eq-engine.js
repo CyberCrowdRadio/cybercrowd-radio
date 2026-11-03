@@ -162,7 +162,27 @@ window.CCEQEngine = (function () {
     } catch (_) { return null; }
   }
 
+  // Local weather voice shares the receiver's existing EQ and volume output.
+  function audioContext() {
+    return ctx && source && masterGain ? ctx : null;
+  }
+
+  function playOverlay(buffer, offset, duration) {
+    if (!audioContext() || !buffer || !(duration > 0)) return null;
+    try {
+      var voice = ctx.createBufferSource();
+      voice.buffer = buffer;
+      voice.connect(masterGain);
+      voice.start(0, Math.max(0, offset || 0), duration);
+      return voice;
+    } catch (_) {
+      return null;
+    }
+  }
+
   return {
+    audioContext: audioContext,
+    playOverlay: playOverlay,
     attach: attach,
     setBand: setBand,
     setVolume: setVolume,
