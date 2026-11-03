@@ -117,12 +117,12 @@
     if (state.hls) state.hls.destroy();
   }
   async function attach(audio, fallback) {
-    if (current && current.audio===audio) return;
+    if (current && current.audio===audio) return true;
     destroy();
     if (!audio || !/^https:\/\/stream\.cybercrowdradio\.com\/stream\/?$/.test(fallback)) return;
     var status;
-    try { status=await request('/weather/status'); } catch (_) { return; }
-    if (!status.ready || status.protocol!==1) return;
+    try { status=await request('/weather/status'); } catch (_) { return false; }
+    if (!status.ready || status.protocol!==1) return false;
     var state={audio:audio,session:token(),cues:[],ready:null,preparing:false,voice:null,events:[],hls:null};
     current=state;
     function on(name,fn) { audio.addEventListener(name,fn); state.events.push([name,fn]); }
@@ -159,6 +159,7 @@
     state.timer=setInterval(function () { tick(state); state.cues=state.cues.filter(function (c) { return c.end>audio.currentTime-60; }); },100);
     state.poll=setInterval(function () { prepare(state); },60000);
     prepare(state);
+    return true;
   }
   window.addEventListener('cc-account-verified',function () { if (current) { tick(current); prepare(current); } });
   window.addEventListener('storage',function (e) { if (current && (e.key==='ccr-session'||e.key===null)) { tick(current); prepare(current); } });
