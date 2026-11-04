@@ -755,7 +755,10 @@
     const isCorner = id.startsWith("corner-");
     const list = isCorner ? (adworm.corners || []) : (adworm.banners || []);
     const meta = list.find((b) => b.id === id) || {};
-    el.innerHTML = `<a href="#advertise"><span>AD — ${meta.label || id}<br />Your Pop here · ${adworm.popPrice || "$5.99"}</span></a>`;
+    // Positions remain defined, but empty inventory must never appear on the live station.
+    // A real, approved campaign renderer will explicitly reveal and populate a position.
+    el.replaceChildren();
+    el.style.display = "none";
     allBlocks.push(el);
   });
   if (!reduced && allBlocks.length > 1) {
