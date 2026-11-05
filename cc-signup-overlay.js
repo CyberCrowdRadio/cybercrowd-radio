@@ -168,6 +168,9 @@
       if (expectedEmail && result.email !== expectedEmail) return false;
       sessionVerified = true;
       updateEntryLinks();
+      window.CCAccount = window.CCAccount || {};
+      window.CCAccount.zip = result.zip || '';
+      window.CCAccount.stageName = result.stageName;
       try { localStorage.setItem('ccr-handle', result.stageName); } catch (_) {}
       closeOverlay();
       publishAccount();
@@ -379,28 +382,19 @@
         localStorage.setItem('ccr-email', email);
         if (res.projectName) localStorage.setItem('ccr-project', res.projectName);
       } catch (_) {}
+      // Resolve the private ZIP from the verified Authority session.
+      try {
+        var verified = await window.CCAuthority.ask('/api/session', { session: res.session });
+        if (verified && verified.success && verified.email === email) {
+          window.CCAccount = window.CCAccount || {};
+          window.CCAccount.zip = verified.zip || '';
+          window.CCAccount.stageName = verified.stageName || res.stageName;
+        }
+      } catch (_) {}
       sessionVerified = true;
       updateEntryLinks();
       closeOverlay();
       publishAccount();
-      // Bridge the verified Radio account to its existing Firebase profile.
-      // This is additive: Authority remains the source of ZIP and sessions.
-      try {
-        if (window.CCAuth && window.CCAuth.signIn && window.CCAuth.init) {
-          window.CCAuth.signIn(email, pw, true).then(function(identity) {
-            if (!identity || !identity.uid || !window.CCAuthBase) return;
-            return window.CCAuthBase.init().then(function() {
-              var db = window.CCAuthBase.services().db;
-              return db.ref('users/' + identity.uid).update({
-                handle: res.stageName,
-                radioAccount: true
-              });
-            });
-          }).catch(function() {
-            // Existing Authority login remains valid even if Firebase needs linking.
-          });
-        }
-      } catch (_) {}
       try { sessionStorage.removeItem('ccr-signup-step'); } catch (_) {}
       currentStep = 'email';
       try { sessionStorage.removeItem('ccr-verify-token'); } catch (_) {}
