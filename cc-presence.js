@@ -22,33 +22,23 @@
   var initialized = false;
   var uid = null;
 
+  // Presence keys identify this page connection, never the member's stage name.
+  // A fresh key per load prevents one tab's disconnect from removing another.
+  var connectionId = null;
   function getUid() {
-    try {
-      var savedHandle = localStorage.getItem('ccr-handle');
-      if (savedHandle) {
-        window.CCAccount = window.CCAccount || {};
-        window.CCAccount.stageName = savedHandle;
-      }
-    } catch (e) {}
-    // A signed-in member is counted under his stage name;
-    // a guest gets an anonymous counting id that shows nowhere.
-    try {
-      var h = (window.CCAccount && window.CCAccount.stageName) || null;
-      if (h) return 'h_' + h.replace(/[^a-z0-9]/gi, '').toLowerCase();
-    } catch (e) {}
-    // Fallback: random ID persisted in localStorage
-    try {
-      var id = localStorage.getItem('cc-presence-uid');
-      if (!id) {
-        id = 'u_' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('cc-presence-uid', id);
-      }
-      return id;
-    } catch (e) {
-      return 'u_' + Math.random().toString(36).substr(2, 9);
+    if (connectionId) return connectionId;
+    var bytes = new Uint8Array(16);
+    if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+      crypto.getRandomValues(bytes);
+      connectionId = 'u_' + Array.prototype.map.call(bytes, function (b) {
+        return ('0' + b.toString(16)).slice(-2);
+      }).join('');
+    } else {
+      connectionId = 'u_' + Date.now().toString(36) + '_' +
+        Math.random().toString(36).slice(2) + Math.random().toString(36).slice(2);
     }
+    return connectionId;
   }
-
   function formatCount(n) {
     if (n >= 1000000) return (n / 1000000).toFixed(1) + 'M';
     if (n >= 1000) return (n / 1000).toFixed(1) + 'K';
@@ -72,7 +62,17 @@
   }
 
   function init() {
-    if (initialized) { var newUid = getUid(); if (newUid !== uid) { if (myRef) { try { myRef.remove(); } catch (e) {} } uid = newUid; if (presenceRef) { myRef = presenceRef.child(uid); var reinitStageName = (window.CCAccount && window.CCAccount.stageName) || 'guest'; var reinitHasAccount = 0; try { reinitHasAccount = localStorage.getItem('ccr-session') ? 1 : 0; } catch (e) {} myRef.set({ t: Date.now(), v: 1, stageName: reinitStageName, hasAccount: reinitHasAccount }); myRef.onDisconnect().remove(); } } return; }
+    // A sign-in updates the existing connection's display metadata.
+    // It must not create a second presence record or replace the connection key.
+    if (initialized) {
+      if (myRef) {
+        var updatedStageName = (window.CCAccount && window.CCAccount.stageName) || 'guest';
+        var updatedHasAccount = 0;
+        try { updatedHasAccount = localStorage.getItem('ccr-session') ? 1 : 0; } catch (e) {}
+        myRef.set({ t: Date.now(), v: 1, stageName: updatedStageName, hasAccount: updatedHasAccount });
+      }
+      return;
+    }
     if (typeof firebase === 'undefined') {
       console.warn('[CCPresence] Firebase SDK not loaded');
       return;
