@@ -192,6 +192,16 @@ let destination = "world", destinationChosen = false, reading = false, lastSessi
 let snapshotValue = null, currentRound = null, baseline = new Set();
 let ownSender = "", host = false, moderator = false, identityRound = "", firstSnapshot = true;
 let liveView = !isMobile(), viewReady = false;
+let seenChatIds = new Set(), chatNotificationReady = false;
+function notifyIncomingChat() {
+  // Notification belongs to the listener's browser, never the shared radio stream.
+  try {
+    if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) return;
+    const speech = new SpeechSynthesisUtterance("You got chat");
+    speech.rate = 1; speech.volume = 0.75;
+    window.speechSynthesis.speak(speech);
+  } catch (_) { /* Browser may require an earlier user gesture. */ }
+}
 const note = chatDock && chatDock.querySelector(".chat-note");
 function status(text) { if (note) note.textContent = text; }
 function session() { try { return localStorage.getItem("ccr-session") || ""; } catch (_) { return ""; } }
@@ -267,7 +277,7 @@ function selectDestination(next) {
     status("Send or erase your draft before changing destinations. It stays addressed to " + (destination === "world" ? "World." : "the booth.")); return;
   }
   destinationChosen = true;
-  if (destination !== next) { destination = next; discardRoom(); }
+  if (destination !== next) { destination = next; discardRoom(); seenChatIds = new Set(); chatNotificationReady = false; }
   updateDestination(); refreshIdentity();
 }
 function updateDestination() {
@@ -305,14 +315,14 @@ function render() {
   });
 }
 async function refreshIdentity() {
-  if (reading || !liveView || document.hidden) return;
+  if (reading || document.hidden) return;
   const token = session(), target = destination;
-  if (token !== lastSession) { discardRoom(); protectButton.hidden = true; lastSession = token; }
+  if (token !== lastSession) { discardRoom(); seenChatIds = new Set(); chatNotificationReady = false; protectButton.hidden = true; lastSession = token; }
   if (!token) { discardRoom(); verifyButton.hidden = true; status("Sign in with your verified account to enter chat."); return; }
   reading = true;
   try {
     const result = await ask("read");
-    if (token !== session() || target !== destination || !liveView) return;
+    if (token !== session() || target !== destination) return;
     protectButton.hidden = !(result && (result.role === "owner" || result.owner === true));
     verifyButton.hidden = !(result && result.error === "verification required");
     if (!result || !result.success || !result.room) {
@@ -332,6 +342,14 @@ async function refreshIdentity() {
     ownSender = result && result.success ? result.sender || "" : "";
     identityRound = result && result.success ? result.round || "" : "";
     snapshotValue = result.room;
+    const nextIds = new Set(Object.keys(snapshotValue.messages || {}));
+    const newIncoming = chatNotificationReady && Array.from(nextIds).some(id => {
+      const msg = snapshotValue.messages[id];
+      return !seenChatIds.has(id) && msg && msg.sender !== ownSender;
+    });
+    seenChatIds = nextIds;
+    chatNotificationReady = true;
+    if (newIncoming) notifyIncomingChat();
     const changed = currentRound !== snapshotValue.meta.id;
     currentRound = snapshotValue.meta.id;
     if (firstSnapshot) { clearView(); firstSnapshot = false; }
