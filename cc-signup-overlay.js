@@ -157,6 +157,8 @@
       var stored = '';
       try { stored = localStorage.getItem('ccr-session') || ''; } catch (_) {}
       sessionVerified = false;
+      window.CCAccount = window.CCAccount || {};
+      window.CCAccount.uidl = null;
       updateEntryLinks();
       if (!stored) return false;
       var result = null;
@@ -171,6 +173,7 @@
       window.CCAccount = window.CCAccount || {};
       window.CCAccount.zip = result.zip || '';
       window.CCAccount.stageName = result.stageName;
+      window.CCAccount.uidl = typeof result.uidl === 'string' && result.uidl.trim() ? result.uidl : null;
       try { localStorage.setItem('ccr-handle', result.stageName); } catch (_) {}
       closeOverlay();
       publishAccount();
@@ -351,11 +354,15 @@
     // Sign in — the authority judges the password and hands back the
     // session; only then does the plaque lift.
     async function doSignin() {
-      var email = (els.signinEmail.value || '').trim();
+      var email = (els.signinEmail.value || '').trim().toLowerCase();
       var pw = els.signinPassword.value || '';
       els.signinStatus.style.color = '#f44336';
       if (!isValidEmail(email)) { els.signinStatus.textContent = 'Please enter a valid email.'; return; }
       if (!pw) { els.signinStatus.textContent = 'Please enter your password.'; return; }
+      sessionVerified = false;
+      window.CCAccount = window.CCAccount || {};
+      window.CCAccount.uidl = null;
+      updateEntryLinks();
       els.signinBtn.disabled = true;
       var label = els.signinBtn.textContent;
       els.signinBtn.textContent = 'Signing in...';
@@ -382,19 +389,11 @@
         localStorage.setItem('ccr-email', email);
         if (res.projectName) localStorage.setItem('ccr-project', res.projectName);
       } catch (_) {}
-      // Resolve the private ZIP from the verified Authority session.
-      try {
-        var verified = await window.CCAuthority.ask('/api/session', { session: res.session });
-        if (verified && verified.success && verified.email === email) {
-          window.CCAccount = window.CCAccount || {};
-          window.CCAccount.zip = verified.zip || '';
-          window.CCAccount.stageName = verified.stageName || res.stageName;
-        }
-      } catch (_) {}
-      sessionVerified = true;
-      updateEntryLinks();
-      closeOverlay();
-      publishAccount();
+      // Publish account details only after the stored session is verified.
+      if (!await verifyStoredSession(email)) {
+        els.signinStatus.textContent = 'Your sign-in could not be confirmed. Please try again.';
+        return;
+      }
       try { sessionStorage.removeItem('ccr-signup-step'); } catch (_) {}
       currentStep = 'email';
       try { sessionStorage.removeItem('ccr-verify-token'); } catch (_) {}
