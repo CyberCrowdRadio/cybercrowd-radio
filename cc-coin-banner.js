@@ -17,6 +17,8 @@
   var css = [
     '.cc-coin-banner {',
     '  position: relative;',
+    '  display: block;',
+    '  text-decoration: none;',
     '  width: 100%;',
     '  max-width: 420px;',
     '  margin: 0 auto;',
@@ -25,6 +27,7 @@
     '  background: linear-gradient(135deg, #0a2463 0%, #1e5aa8 50%, #0a2463 100%);',
     '  box-shadow: 0 4px 24px rgba(30, 90, 168, 0.4);',
     '}',
+    '.cc-coin-banner:focus-visible { outline: 3px solid #ffd700; outline-offset: 4px; }',
     '.cc-coin-banner video {',
     '  display: block;',
     '  width: 100%;',
@@ -93,11 +96,16 @@
     style.textContent = css;
     document.head.appendChild(style);
 
-    var banner = document.createElement('div');
+    var banner = document.createElement('a');
     banner.className = 'cc-coin-banner';
+    banner.href = 'https://moonshot.money/';
+    banner.target = '_blank';
+    banner.rel = 'noopener noreferrer';
+    banner.setAttribute('aria-label', 'CRWD coin — open Moonshot (opens in a new tab)');
 
     var video = document.createElement('video');
     video.src = VIDEO_URL;
+    video.setAttribute('aria-hidden', 'true');
     video.muted = true;
     video.autoplay = true;
     video.loop = true;
@@ -112,13 +120,10 @@
     var emblemCover = document.createElement('div');
     emblemCover.className = 'cc-emblem-cover';
 
-    var btn = document.createElement('a');
+    var btn = document.createElement('span');
     btn.className = 'cc-refill-btn';
     btn.textContent = 'Open Moonshot';
-    btn.href = 'https://moonshot.money/';
-    btn.target = '_blank';
-    btn.rel = 'noopener noreferrer';
-    btn.setAttribute('aria-label', 'Open Moonshot (opens in a new tab)');
+
 
     banner.appendChild(video);
     banner.appendChild(emblemCover);
