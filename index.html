@@ -38,9 +38,8 @@
       <p class="enter-note">Tap ENTER — the live stream starts.</p>
     </section>
 
-    <!-- ============ WELCOME FEED + JESTER ============ -->
-    <section class="welcome-row" aria-label="Welcome to the crowd">
-      <div class="welcome-feed" id="welcomeFeed" aria-live="polite"></div>
+    <!-- ============ TIP JAR ============ -->
+    <section class="welcome-row" aria-label="Support the station">
       <div class="tipjar" id="tipjar" aria-label="Tip jar — buy and tip CRWD">
         <p class="tipjar-title">Tip the station</p>
         <img class="tipjar-qr" src="crwd-tip-qr.png" alt="Scan to tip CRWD" />
@@ -122,18 +121,6 @@
           + "&message=" + encodeURIComponent("Tip the station");
       }
 
-      /* Welcome feed: last 5 handles pop in as plain words (no boxes).
-         Newest on top; older than five roll off. */
-      try {
-        var handles = JSON.parse(localStorage.getItem("cybercrowd-handles") || "[]").slice(-5);
-        var feed = document.getElementById("welcomeFeed");
-        handles.reverse().forEach(function (h) {
-          var p = document.createElement("p");
-          p.className = "welcome-word";
-          p.textContent = "Welcome, " + h;
-          feed.appendChild(p);
-        });
-      } catch (err) { /* no feed without storage */ }
     })();
   </script>
 </body>
