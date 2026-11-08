@@ -37,7 +37,8 @@ var seenKeys = {};
   }
   function showCountOnly() { }
   function displayName(val) {
-    var name = (val && val.stageName) || "";
+    if (!val || val.v !== 2 || val.hasAccount !== 1) return "Guest";
+    var name = val.stageName || "";
     if (typeof name !== "string") name = String(name);
     name = name.trim();
     if (!name || name.toLowerCase() === "guest") return "Guest";
@@ -56,7 +57,7 @@ var seenKeys = {};
         if (!val || typeof val !== "object") return;
         var t = val.t;
         if (typeof t === "string") t = Number(t);
-        if (typeof t === "number" && !isNaN(t) && t <= cutoff) return;
+        if (typeof t !== "number" || !Number.isFinite(t) || t <= cutoff || t > Date.now() + 30000) return;
         current[key] = displayName(val); order.push(key);
       });
     }
@@ -104,3 +105,4 @@ Object.keys(seenKeys).forEach(function (k) { if (!current[k]) delete seenKeys[k]
   }
   window.CCWelcomeWindow = { init: init, refresh: refresh, render: render };
 })();
+
