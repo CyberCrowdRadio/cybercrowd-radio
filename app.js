@@ -21,19 +21,12 @@
     return h;
   }
   function getHandle() {
-    try {
-      let h = localStorage.getItem(HANDLE_KEY);
-      // Don't auto-generate random junk — ask the user to pick their handle
-      // James: "it always randomly picks my name... Thats not becoming a part of the radio"
-      if (!h) {
-        // If they cancel or enter invalid, use guest (not random)
-        return "guest";
-      }
-      return h;
-    } catch (_) { return "guest"; }
+    var account = window.CCAccount;
+    return account && account.verified === true ? account.stageName || "guest" : "guest";
   }
   function isFounder(h) {
-    return (h || "").toLowerCase() === FOUNDER_HANDLE;
+    return !!(window.CCAccount && window.CCAccount.verified === true &&
+      window.CCAccount.email === "cybercrowdradio@gmail.com");
   }
   function setHandle(h) {
     h = (h || "").trim().toLowerCase().replace(/[^a-z0-9'_-]/g, "");
@@ -67,23 +60,21 @@
       }
     }
   }
-     window.updateHandlePill = function () {
-        renderHandle();
-        try {
-           var e = (localStorage.getItem('ccr-email') || '').trim().toLowerCase();
-           var h = (localStorage.getItem('ccr-handle') || '').trim();
-           if (e === 'cybercrowdradio@gmail.com' ||
-               h === 'Sonny Daze') {
-              ['modeAIDJ', 'modeStraight', 'modeLive', 'thunderBtn', 'fadeBtn', 'skipBtn', 'rateLike', 'rateHate', 'rateBg'].forEach(function (id) {
-                 var b = document.getElementById(id);
-                 if (b) b.style.removeProperty('display');
-              });
-           }
-        } catch (_) {}
-     };
+  window.updateHandlePill = function () {
+    renderHandle();
+    var owner = isFounder();
+    ['modeAIDJ', 'modeStraight', 'modeLive', 'thunderBtn', 'fadeBtn', 'skipBtn', 'rateLike', 'rateHate', 'rateBg'].forEach(function (id) {
+      var button = $(id);
+      if (!button) return;
+      if (owner) button.style.removeProperty('display');
+      else button.style.setProperty('display', 'none');
+    });
+  };
+  window.addEventListener('cc-account-verified', window.updateHandlePill);
+  window.addEventListener('cc-account-cleared', window.updateHandlePill);
   // The handle pill shows the stage name.
   const handlePill = $("handlePill");
-  renderHandle();
+  window.updateHandlePill();
   
   /* ---------- footer year ---------- */
   $("year").textContent = new Date().getFullYear();
@@ -902,3 +893,4 @@
     });
   }
 })();
+
