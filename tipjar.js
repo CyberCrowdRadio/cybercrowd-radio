@@ -87,20 +87,9 @@
   }
 
   function openMoonshot() {
-    // Try the Moonshot app first, fall back to the website
-    var appUrl = 'moonshot://';
-    var webUrl = 'https://moonshot.money/';
-    // If a specific CRWD token URL is configured, use it
-    if (window.CCConfig && window.CCConfig.CRWD_MOONSHOT_URL) {
-      webUrl = window.CCConfig.CRWD_MOONSHOT_URL;
-    }
-    setStatus('Opening Moonshot…');
-    // Try app deep link
-    window.location.href = appUrl;
-    // Fall back to web after a beat (if app not installed)
-    setTimeout(function () {
-      window.open(webUrl, '_blank');
-    }, 1500);
+    // External browsing is not a payment receipt or an account-balance change.
+    setStatus('Moonshot opens separately. Buying there does not refill this jar. Return to this tab when finished.');
+    window.open('https://moonshot.money/', '_blank', 'noopener,noreferrer');
   }
 
   function build() {
