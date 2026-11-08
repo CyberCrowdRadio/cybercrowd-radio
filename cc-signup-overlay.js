@@ -12,6 +12,8 @@
   var creating = false;
   var sessionVerified = false;
   var chatVerification = false;
+  var identityGeneration = 0;
+  window.CCAccount = { verified: false, stageName: "", email: "", zip: "", uidl: null };
 
   function isValidEmail(v) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
@@ -153,28 +155,68 @@
       return true;
     }
 
+    function clearIdentity() {
+      sessionVerified = false;
+      window.CCAccount = { verified: false, stageName: '', email: '', zip: '', uidl: null };
+      ['ccr-handle', 'ccr-email', 'ccr-project'].forEach(function(key) {
+        try { localStorage.removeItem(key); } catch (_) {}
+      });
+      var label = document.getElementById('handleText');
+      if (label) label.textContent = 'guest';
+      if (signoutButton) signoutButton.hidden = true;
+      updateEntryLinks();
+      if (window.CCPresence) window.CCPresence.init();
+      if (window.CCWelcomeWindow) window.CCWelcomeWindow.refresh();
+      window.dispatchEvent(new Event('cc-account-cleared'));
+    }
+
+    function signOut() {
+      identityGeneration++;
+      try { localStorage.removeItem('ccr-session'); } catch (_) {}
+      ['ccr-verify-token', 'ccr-signup-step', 'cybercrowd_entry_email'].forEach(function(key) {
+        try { sessionStorage.removeItem(key); } catch (_) {}
+      });
+      clearIdentity();
+      if (els.signinPassword) els.signinPassword.value = '';
+      openOverlay('signin');
+    }
+    var signoutButton = document.createElement('button');
+    signoutButton.id = 'ccSignOut';
+    signoutButton.type = 'button';
+    signoutButton.className = 'btn btn-secondary';
+    signoutButton.textContent = 'Sign out';
+    signoutButton.hidden = true;
+    signoutButton.addEventListener('click', signOut);
+    var handlePill = document.getElementById('handlePill');
+    if (handlePill) handlePill.after(signoutButton);
+
     async function verifyStoredSession(expectedEmail) {
+      var generation = ++identityGeneration;
       var stored = '';
       try { stored = localStorage.getItem('ccr-session') || ''; } catch (_) {}
-      sessionVerified = false;
-      window.CCAccount = window.CCAccount || {};
-      window.CCAccount.uidl = null;
-      updateEntryLinks();
+      clearIdentity();
       if (!stored) return false;
       var result = null;
       try { result = await window.CCAuthority.ask('/api/session', { session: stored }); } catch (_) {}
       var latest = '';
       try { latest = localStorage.getItem('ccr-session') || ''; } catch (_) {}
-      if (stored !== latest) return false;
-      if (!result || result.success !== true || !result.stageName) return false;
-      if (expectedEmail && result.email !== expectedEmail) return false;
+      if (generation !== identityGeneration || stored !== latest) return false;
+      if (!result || result.success !== true || !result.stageName || !result.email ||
+          (expectedEmail && result.email !== expectedEmail)) return false;
       sessionVerified = true;
+      window.CCAccount = {
+        verified: true,
+        email: result.email,
+        stageName: result.stageName,
+        zip: result.zip || '',
+        uidl: typeof result.uidl === 'string' && result.uidl.trim() ? result.uidl : null
+      };
+      try {
+        localStorage.setItem('ccr-handle', result.stageName);
+        localStorage.setItem('ccr-email', result.email);
+      } catch (_) {}
+      signoutButton.hidden = false;
       updateEntryLinks();
-      window.CCAccount = window.CCAccount || {};
-      window.CCAccount.zip = result.zip || '';
-      window.CCAccount.stageName = result.stageName;
-      window.CCAccount.uidl = typeof result.uidl === 'string' && result.uidl.trim() ? result.uidl : null;
-      try { localStorage.setItem('ccr-handle', result.stageName); } catch (_) {}
       closeOverlay();
       publishAccount();
       return true;
@@ -359,10 +401,8 @@
       els.signinStatus.style.color = '#f44336';
       if (!isValidEmail(email)) { els.signinStatus.textContent = 'Please enter a valid email.'; return; }
       if (!pw) { els.signinStatus.textContent = 'Please enter your password.'; return; }
-      sessionVerified = false;
-      window.CCAccount = window.CCAccount || {};
-      window.CCAccount.uidl = null;
-      updateEntryLinks();
+      var generation = ++identityGeneration;
+      clearIdentity();
       els.signinBtn.disabled = true;
       var label = els.signinBtn.textContent;
       els.signinBtn.textContent = 'Signing in...';
@@ -372,6 +412,7 @@
       } catch (_) {}
       els.signinBtn.disabled = false;
       els.signinBtn.textContent = label;
+      if (generation !== identityGeneration) return;
       if (!res || !res.success || !res.session || !res.stageName) {
         var why = (res && res.error) ? String(res.error) : '';
         els.signinStatus.textContent = (why === 'no account for that email')
@@ -425,10 +466,8 @@
     }, { once: true });
 
     function publishAccount() {
-      var name = '';
-      try { name = localStorage.getItem('ccr-handle') || ''; } catch (_) {}
-      window.CCAccount = window.CCAccount || {};
-      window.CCAccount.stageName = name;
+      if (!sessionVerified || !window.CCAccount || !window.CCAccount.verified) return;
+      var name = window.CCAccount.stageName;
       var label = document.getElementById('handleText');
       if (label) label.textContent = name || 'guest';
       if (window.CCPresence) window.CCPresence.init();
@@ -436,9 +475,11 @@
       window.dispatchEvent(new Event('cc-account-verified'));
     }
     window.addEventListener('storage', async function(e) {
-      if (e.key !== 'ccr-session' && e.key !== 'ccr-email') return;
-      sessionVerified = false;
-      updateEntryLinks();
+      // A session change (including localStorage.clear) invalidates this tab too.
+      // Display-cache changes must not trigger verification loops between tabs.
+      if (e.key !== null && e.key !== 'ccr-session') return;
+      identityGeneration++;
+      clearIdentity();
       openOverlay('signin');
       await verifyStoredSession();
     });
@@ -463,6 +504,7 @@
     // Public API
     window.CCSignup = {
       open: openOverlay,
+      signOut: signOut,
       close: closeOverlay,
       verifyChat: function() {
         chatVerification = true;
@@ -569,3 +611,4 @@
     init();
   }
 })();
+
