@@ -78,18 +78,6 @@
         #tipjarBtn:active{filter:brightness(0.95);}
       </style>
     </section>
-  <script>
-    // Mount the CRWD coin light-ad banner in the tip jar
-    if (window.CCCoinBanner) {
-      if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', function () {
-          window.CCCoinBanner.mount('#coinBannerSlot');
-        });
-      } else {
-        window.CCCoinBanner.mount('#coinBannerSlot');
-      }
-    }
-  </script>
   </main>
 
   <!-- ============ FOOTER ============ -->
@@ -114,6 +102,18 @@
   <script src="adworm.js"></script>
   <script src="tipjar.js"></script>
   <script src="cc-coin-banner.js"></script>
+  <script>
+    // Mount the CRWD coin light-ad banner in the tip jar
+    if (window.CCCoinBanner) {
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', function () {
+          window.CCCoinBanner.mount('#coinBannerSlot');
+        });
+      } else {
+        window.CCCoinBanner.mount('#coinBannerSlot');
+      }
+    }
+  </script>
   <script src="cc-page.js"></script>
 </body>
 </html>
