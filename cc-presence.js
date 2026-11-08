@@ -61,15 +61,18 @@
     } catch (e) {}
   }
 
+  function identityMetadata() {
+    var account = window.CCAccount;
+    var verified = !!(account && account.verified === true && account.stageName);
+    return { t: Date.now(), v: 2, stageName: verified ? account.stageName : 'guest', hasAccount: verified ? 1 : 0 };
+  }
+
   function init() {
     // A sign-in updates the existing connection's display metadata.
     // It must not create a second presence record or replace the connection key.
     if (initialized) {
       if (myRef) {
-        var updatedStageName = (window.CCAccount && window.CCAccount.stageName) || 'guest';
-        var updatedHasAccount = 0;
-        try { updatedHasAccount = localStorage.getItem('ccr-session') ? 1 : 0; } catch (e) {}
-        myRef.set({ t: Date.now(), v: 1, stageName: updatedStageName, hasAccount: updatedHasAccount });
+        myRef.set(identityMetadata());
       }
       return;
     }
@@ -98,11 +101,7 @@
     myRef = presenceRef.child(uid);
 
     // Mark ourselves present with a timestamp
-    var now = Date.now();
-    var stageName = (window.CCAccount && window.CCAccount.stageName) || 'guest';
-    var hasAccount = 0;
-    try { hasAccount = localStorage.getItem('ccr-session') ? 1 : 0; } catch (e) {}
-    myRef.set({ t: now, v: 1, stageName: stageName, hasAccount: hasAccount });
+    myRef.set(identityMetadata());
 
     // Auto-remove on disconnect
     myRef.onDisconnect().remove();
@@ -110,10 +109,7 @@
     // Heartbeat: refresh timestamp every 30s so stale entries expire
     setInterval(function () {
       if (myRef) {
-        var heartbeatStageName = (window.CCAccount && window.CCAccount.stageName) || 'guest';
-        var heartbeatHasAccount = 0;
-        try { heartbeatHasAccount = localStorage.getItem('ccr-session') ? 1 : 0; } catch (e) {}
-        myRef.set({ t: Date.now(), v: 1, stageName: heartbeatStageName, hasAccount: heartbeatHasAccount });
+        myRef.set(identityMetadata());
       }
     }, 30000);
 
@@ -145,3 +141,4 @@
     getUid: getUid
   };
 })();
+
