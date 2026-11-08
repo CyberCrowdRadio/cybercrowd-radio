@@ -5,7 +5,7 @@
  * - Blue cover background
  * - "Refill" button with shine-sweep bling effect (not a flat paper cutout)
  * - Covers the watermark emblem in the video's bottom-right corner
- * - Refill opens Moonshot to buy CRWD
+ * - Portal opens the Moonshot website in a new tab
  *
  * Does not: touch the playlist, the DJ, or the stream.
  */
@@ -47,6 +47,10 @@
     '  bottom: 0;',
     '  width: 100%;',
     '  padding: 14px 0;',
+    '  display: block;',
+    '  box-sizing: border-box;',
+    '  text-align: center;',
+    '  text-decoration: none;',
     '  font-size: 1.1rem;',
     '  font-weight: 700;',
     '  color: #fff;',
@@ -81,17 +85,6 @@
     '}'
   ].join('\n');
 
-  function openMoonshot() {
-    // Try the Moonshot app first, fall back to website
-    var appUrl = 'moonshot://';
-    var webUrl = 'https://moonshot.money';
-    var start = Date.now();
-    window.location.href = appUrl;
-    setTimeout(function () {
-      if (Date.now() - start < 2000) window.open(webUrl, '_blank', 'noopener');
-    }, 1500);
-  }
-
   function mount(target) {
     var host = typeof target === 'string' ? document.querySelector(target) : target;
     if (!host) return null;
@@ -119,13 +112,13 @@
     var emblemCover = document.createElement('div');
     emblemCover.className = 'cc-emblem-cover';
 
-    var btn = document.createElement('button');
+    var btn = document.createElement('a');
     btn.className = 'cc-refill-btn';
-    btn.textContent = 'Refill';
-    btn.addEventListener('click', function (e) {
-      e.stopPropagation();
-      openMoonshot();
-    });
+    btn.textContent = 'Open Moonshot';
+    btn.href = 'https://moonshot.money/';
+    btn.target = '_blank';
+    btn.rel = 'noopener noreferrer';
+    btn.setAttribute('aria-label', 'Open Moonshot (opens in a new tab)');
 
     banner.appendChild(video);
     banner.appendChild(emblemCover);
