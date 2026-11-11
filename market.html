@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Creator Market | CyberCrowd Radio</title><link rel="stylesheet" href="style.css"></head>
+<body><main class="section" style="max-width:850px;margin:auto;padding:24px">
+<a href="channels.html">← Channels</a><h1>Creator Market</h1>
+<p>Creator merchandise workspace. Drafts stay in this browser until a verified UIDL and store publishing service are connected. This page does not collect payments or publish listings.</p>
+<form id="marketForm"><label>Verified UIDL <input id="uidl" required autocomplete="off" placeholder="UIDL"></label>
+<label>Channel ID <input id="channel" required autocomplete="off" placeholder="Channel ID"></label>
+<label>Product ID <input id="productId" required autocomplete="off"></label>
+<label>Product title <input id="title" required></label>
+<label>Price (USD) <input id="price" type="number" min="0" step=".01" required></label>
+<label>Existing HTTPS product URL <input id="productUrl" type="url" placeholder="https://"></label>
+<button type="submit">Save local draft</button></form>
+<p id="status" role="status" aria-live="polite"></p><h2>Local drafts</h2><div id="drafts"></div>
+</main><script src="cc-creator-market.js"></script><script>
+(function(){
+'use strict';
+const $=id=>document.getElementById(id);
+const key='cc-creator-market-local-drafts-v1';
+function load(){try{const x=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(x)?x:[]}catch(_){return []}}
+function render(){const box=$('drafts');box.replaceChildren();for(const record of load()){
+const p=document.createElement('p');p.textContent=record.title+' — $'+(record.priceCents/100).toFixed(2)+' ('+record.channelId+')';
+box.appendChild(p);
+if(record.productUrl){const a=document.createElement('a');a.href=record.productUrl;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Open product link';box.appendChild(a);box.appendChild(document.createElement('hr'));}
+}}
+$('marketForm').addEventListener('submit',function(e){e.preventDefault();try{
+const uidl=$('uidl').value.trim(),channel=$('channel').value.trim(),id=$('productId').value.trim();
+const cents=Math.round(Number($('price').value)*100);
+if(!Number.isSafeInteger(cents)||cents<0)throw Error('Invalid price');
+const records=load();if(records.some(x=>x.creatorUidl===uidl&&x.channelId===channel&&x.id===id))throw Error('Duplicate product ID for channel');
+let catalog=CCCreatorMarket.createCatalog({creatorUidl:uidl,channelId:channel});
+catalog=CCCreatorMarket.addItem(catalog,uidl,{id,title:$('title').value,priceCents:cents});
+const link=$('productUrl').value.trim();
+if(link)catalog=CCCreatorMarket.linkItem(catalog,uidl,id,link);
+const item=catalog.items[0];records.push({...item,creatorUidl:uidl,channelId:channel});
+localStorage.setItem(key,JSON.stringify(records));$('status').textContent='Saved locally only — not published.';render();
+}catch(err){$('status').textContent=err.message;}});render();
+})();
+</script></body></html>
