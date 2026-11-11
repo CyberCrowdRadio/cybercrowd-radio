@@ -16,9 +16,9 @@ const detail=document.createElement('p');detail.textContent='The department is r
 empty.append(title,detail);grid.append(empty);return;
 }
 for(const c of valid){
-const link=document.createElement('a');link.className='channel-card';link.href=secure(c.src);link.target='_blank';link.rel='noopener noreferrer';
+const link=document.createElement('a');link.className='channel-card';link.href='channel-view.html?channel='+encodeURIComponent(String(c.id||c.name));
 const name=document.createElement('span');name.className='channel-name';name.textContent=String(c.name||'Creator channel');
-const kind=document.createElement('span');kind.className='channel-kind';kind.textContent=String(c.kind||'Channel destination')+' — open feed';
+const kind=document.createElement('span');kind.className='channel-kind';kind.textContent=String(c.kind||'Channel destination')+' — view channel';
 link.append(name,kind);grid.append(link);
 }
 })();
