@@ -51,7 +51,7 @@ catalog=CCCreatorMarket.addItem(catalog,uidl,{id,title:$('title').value,priceCen
 const link=$('productUrl').value.trim();
 if(link)catalog=CCCreatorMarket.linkItem(catalog,uidl,id,link);
 const item=catalog.items[0];records.push({...item,creatorUidl:uidl,channelId:channel});
-await firebase.database().ref('users/'+uid+'/marketDrafts/'+encodeURIComponent(channel)+'__'+encodeURIComponent(id)).set({...item,creatorUidl:uidl,channelId:channel});
+await firebase.database().ref('users/'+uid+'/marketDrafts/'+btoa(unescape(encodeURIComponent(channel+'|'+id))).replace(/\\+/g,'-').replace(/\\//g,'_').replace(/=+$/,'')).set({...item,creatorUidl:uidl,channelId:channel});
 accountDrafts=records;$('status').textContent='Saved to account drafts — not published.';render();
 }catch(err){$('status').textContent=err.message;}});render();
 })();
