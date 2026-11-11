@@ -45,7 +45,7 @@ if(!currentUser||!accountChannel)throw Error('Verified account and channel requi
 const uidl=currentUser.uid,channel=accountChannel,id=$('productId').value.trim();
 const cents=Math.round(Number($('price').value)*100);
 if(!Number.isSafeInteger(cents)||cents<0)throw Error('Invalid price');
-const records=load();if(records.some(x=>x.creatorUidl===uidl&&x.channelId===channel&&x.id===id))throw Error('Duplicate product ID for channel');
+const records=load().slice();if(records.some(x=>x.creatorUidl===uidl&&x.channelId===channel&&x.id===id))throw Error('Duplicate product ID for channel');
 let catalog=CCCreatorMarket.createCatalog({creatorUidl:uidl,channelId:channel});
 catalog=CCCreatorMarket.addItem(catalog,uidl,{id,title:$('title').value,priceCents:cents});
 const link=$('productUrl').value.trim();
