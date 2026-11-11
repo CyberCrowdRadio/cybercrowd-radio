@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Channels Department — CyberCrowd Radio</title><link rel="stylesheet" href="style.css"><style>
+.department{max-width:760px;margin:auto;padding:24px}.department label{display:block;margin:14px 0}.department input:not([type=checkbox]),.department textarea{display:block;width:100%;max-width:650px;padding:10px;box-sizing:border-box}.department button{padding:12px}.department fieldset{margin:18px 0}
+</style></head><body><main class="department">
+<a href="channels.html">← Live Channels</a><h1>Channels Department</h1>
+<p>Manage your channel using your existing CyberCrowd account. A channel is your show/project identity, not a second account.</p>
+<p id="channelDepartmentStatus" role="status" aria-live="polite">Checking account…</p>
+<h2 id="channelName">Your channel</h2>
+<form id="channelDepartmentForm">
+<label>Channel description<textarea id="channelBio" maxlength="1000" rows="4" placeholder="Describe your show"></textarea></label>
+<label>Live stream URL (HTTPS)<input id="channelLiveUrl" type="url" placeholder="https://"></label>
+<label><input id="channelAudio" type="checkbox"> Use CyberCrowd Radio as the background audio preference when off-air</label>
+<fieldset><legend>Verified external destinations (links only; not live status verification)</legend>
+<label>Website<input id="websiteLink" type="url" placeholder="https://"></label>
+<label>YouTube<input id="youtubeLink" type="url" placeholder="https://"></label>
+<label>DLive<input id="dliveLink" type="url" placeholder="https://"></label>
+<label>Facebook<input id="facebookLink" type="url" placeholder="https://"></label>
+<label>X<input id="xLink" type="url" placeholder="https://"></label>
+</fieldset>
+<button id="channelSave" type="submit" disabled>Save channel settings</button>
+</form><p>Saving does not start a broadcast, authorize public publishing, or change the 24/7 radio stream.</p>
+<a href="market.html">Creator Market</a>
+</main>
+<script src="config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
+<script src="cc-auth.js"></script><script src="cc-channel-department.js"></script>
+</body></html>
