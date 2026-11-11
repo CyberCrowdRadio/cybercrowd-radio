@@ -18,7 +18,8 @@
 <label>X<input id="xLink" type="url" placeholder="https://"></label>
 </fieldset>
 <button id="channelSave" type="submit" disabled>Save channel settings</button>
-</form><p>Saving does not start a broadcast, authorize public publishing, or change the 24/7 radio stream.</p>
+<button id="channelPreview" type="button" disabled>Preview channel</button>
+</form><section id="channelPreviewPanel" hidden aria-label="Channel preview"><h2>Channel preview</h2><p id="channelPreviewStatus" role="status"></p><div id="channelMedia"></div><p><button id="channelStop" type="button">Stop preview</button></p></section><p>Saving does not start a broadcast, authorize public publishing, or change the 24/7 radio stream.</p>
 <a href="market.html">Creator Market</a>
 </main>
 <script src="config.js"></script>
