@@ -4,7 +4,7 @@
 <a href="channels.html">← Channels</a><h1>Creator Market</h1>
 <p>Creator merchandise workspace. Drafts stay in this browser until a verified UIDL and store publishing service are connected. This page does not collect payments or publish listings.</p>
 <form id="marketForm"><p id="identityStatus" role="status">Checking signed-in identity…</p>
-<label>Channel ID <input id="channel" required autocomplete="off" placeholder="Channel ID"></label>
+<p id="channelStatus">Loading account channel…</p>
 <label>Product ID <input id="productId" required autocomplete="off"></label>
 <label>Product title <input id="title" required></label>
 <label>Price (USD) <input id="price" type="number" min="0" step=".01" required></label>
@@ -15,9 +15,23 @@
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
-let currentUser=null;
+let currentUser=null,accountChannel=null;
 const key='cc-creator-market-local-drafts-v1';
-CCAuth.onUser(function(user){currentUser=user&&user.emailVerified?user:null;$('saveDraft').disabled=!currentUser;$('identityStatus').textContent=currentUser?'Signed in: '+(currentUser.email||'verified account'):'Sign in with a verified account to save drafts.';render();});
+CCAuth.onUser(async function(user){
+currentUser=null;accountChannel=null;$('saveDraft').disabled=true;
+if(!user||!user.emailVerified){$('identityStatus').textContent='Verified sign-in required.';$('channelStatus').textContent='No verified channel';render();return;}
+try{
+await CCAuth.init();
+const snap=await firebase.database().ref('users/'+user.uid).get();
+const profile=snap.val();
+if(!profile||typeof profile.project!=='string'||!profile.project.trim())throw Error('Set your show or channel name in your account first.');
+currentUser=user;accountChannel=profile.project.trim();
+$('identityStatus').textContent='Signed in: '+(user.email||'verified account');
+$('channelStatus').textContent='Channel: '+accountChannel;
+$('saveDraft').disabled=false;
+}catch(err){$('identityStatus').textContent='Account channel unavailable: '+err.message;$('channelStatus').textContent='No verified channel';}
+render();
+});
 function load(){try{const x=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(x)?x:[]}catch(_){return []}}
 function render(){const box=$('drafts');box.replaceChildren();if(!currentUser)return;for(const record of load().filter(x=>x.creatorUidl===currentUser.uid)){
 const p=document.createElement('p');p.textContent=record.title+' — $'+(record.priceCents/100).toFixed(2)+' ('+record.channelId+')';
@@ -25,8 +39,8 @@ box.appendChild(p);
 if(record.productUrl){const a=document.createElement('a');a.href=record.productUrl;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Open product link';box.appendChild(a);box.appendChild(document.createElement('hr'));}
 }}
 $('marketForm').addEventListener('submit',function(e){e.preventDefault();try{
-if(!currentUser)throw Error('Verified sign-in required');
-const uidl=currentUser.uid,channel=$('channel').value.trim(),id=$('productId').value.trim();
+if(!currentUser||!accountChannel)throw Error('Verified account and channel required');
+const uidl=currentUser.uid,channel=accountChannel,id=$('productId').value.trim();
 const cents=Math.round(Number($('price').value)*100);
 if(!Number.isSafeInteger(cents)||cents<0)throw Error('Invalid price');
 const records=load();if(records.some(x=>x.creatorUidl===uidl&&x.channelId===channel&&x.id===id))throw Error('Duplicate product ID for channel');
