@@ -1,29 +1,24 @@
-/* CCChannelsPage — live channel grid for channels.html.
- * One file, one job: render channels from STATION_CONFIG.
- * Empty until the studio connects feeds — then this wall fills in.
+/* CCChannelsPage — render configured channels and open their actual destinations.
+ * No fabricated live status, no replay substituted for live.
  */
-(function () {
-  "use strict";
-  var cfg = window.STATION_CONFIG || {};
-  var grid = document.getElementById("channelsGrid");
-  if (!grid) return;
-
-  var channels = (cfg.channels || []).filter(function (c) { return (c.src || "").trim() !== ""; });
-  if (!channels.length) {
-    grid.innerHTML =
-      '<div class="channel-empty">' +
-      '<p class="channel-empty-title">The channels go live when the studio does.</p>' +
-      "<p>Studio Live. Vinyl Vault. The booth decides the lineup \u2014 this wall fills in when the feeds connect.</p>" +
-      "</div>";
-    return;
-  }
-  channels.forEach(function (c) {
-    var el = document.createElement("button");
-    el.className = "channel-card";
-    el.type = "button";
-    var nm = String(c.name || "").replace(/</g, "&lt;");
-    var kd = String(c.kind || "live").replace(/</g, "&lt;");
-    el.innerHTML = '<span class="channel-name">' + nm + '</span><span class="channel-kind">' + kd + "</span>";
-    grid.appendChild(el);
-  });
+(function(){
+'use strict';
+const grid=document.getElementById('channelsGrid');
+if(!grid)return;
+const channels=(window.STATION_CONFIG&&window.STATION_CONFIG.channels)||[];
+function secure(src){try{const u=new URL(src);return u.protocol==='https:'&&!u.username&&!u.password?u.href:null;}catch(_){return null;}}
+const valid=channels.filter(c=>c&&secure(c.src));
+grid.replaceChildren();
+if(!valid.length){
+const empty=document.createElement('div');empty.className='channel-empty';
+const title=document.createElement('p');title.className='channel-empty-title';title.textContent='No verified channel feeds configured yet.';
+const detail=document.createElement('p');detail.textContent='The department is ready for creators. A channel appears here only after its actual destination is configured.';
+empty.append(title,detail);grid.append(empty);return;
+}
+for(const c of valid){
+const link=document.createElement('a');link.className='channel-card';link.href=secure(c.src);link.target='_blank';link.rel='noopener noreferrer';
+const name=document.createElement('span');name.className='channel-name';name.textContent=String(c.name||'Creator channel');
+const kind=document.createElement('span');kind.className='channel-kind';kind.textContent=String(c.kind||'Channel destination')+' — open feed';
+link.append(name,kind);grid.append(link);
+}
 })();
