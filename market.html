@@ -2,23 +2,23 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Creator Market | CyberCrowd Radio</title><link rel="stylesheet" href="style.css"></head>
 <body><main class="section" style="max-width:850px;margin:auto;padding:24px">
 <a href="channels.html">← Channels</a><h1>Creator Market</h1>
-<p>Creator merchandise workspace. Drafts stay in this browser until a verified UIDL and store publishing service are connected. This page does not collect payments or publish listings.</p>
+<p>Creator merchandise workspace. Drafts are stored in your authenticated Firebase account when database permissions allow. This page does not collect payments or publish listings.</p>
 <form id="marketForm"><p id="identityStatus" role="status">Checking signed-in identity…</p>
 <p id="channelStatus">Loading account channel…</p>
 <label>Product ID <input id="productId" required autocomplete="off"></label>
 <label>Product title <input id="title" required></label>
 <label>Price (USD) <input id="price" type="number" min="0" step=".01" required></label>
 <label>Existing HTTPS product URL <input id="productUrl" type="url" placeholder="https://"></label>
-<button id="saveDraft" type="submit" disabled>Save local draft</button></form>
-<p id="status" role="status" aria-live="polite"></p><h2>Local drafts</h2><div id="drafts"></div>
+<button id="saveDraft" type="submit" disabled>Save account draft</button></form>
+<p id="status" role="status" aria-live="polite"></p><h2>Account drafts</h2><div id="drafts"></div>
 </main><script src="config.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script><script src="cc-auth.js"></script><script src="cc-creator-market.js"></script><script>
 (function(){
 'use strict';
 const $=id=>document.getElementById(id);
 let currentUser=null,accountChannel=null;
-const key='cc-creator-market-local-drafts-v1';
+let accountDrafts=[];
 CCAuth.onUser(async function(user){
-currentUser=null;accountChannel=null;$('saveDraft').disabled=true;
+currentUser=null;accountChannel=null;accountDrafts=[];$('saveDraft').disabled=true;
 if(!user||!user.emailVerified){$('identityStatus').textContent='Verified sign-in required.';$('channelStatus').textContent='No verified channel';render();return;}
 try{
 await CCAuth.init();
@@ -26,19 +26,21 @@ const snap=await firebase.database().ref('users/'+user.uid).get();
 const profile=snap.val();
 if(!profile||typeof profile.project!=='string'||!profile.project.trim())throw Error('Set your show or channel name in your account first.');
 currentUser=user;accountChannel=profile.project.trim();
+const draftSnap=await firebase.database().ref('users/'+user.uid+'/marketDrafts').get();
+accountDrafts=Object.values(draftSnap.val()||{});
 $('identityStatus').textContent='Signed in: '+(user.email||'verified account');
 $('channelStatus').textContent='Channel: '+accountChannel;
 $('saveDraft').disabled=false;
 }catch(err){$('identityStatus').textContent='Account channel unavailable: '+err.message;$('channelStatus').textContent='No verified channel';}
 render();
 });
-function load(){try{const x=JSON.parse(localStorage.getItem(key)||'[]');return Array.isArray(x)?x:[]}catch(_){return []}}
+function load(){return accountDrafts;}
 function render(){const box=$('drafts');box.replaceChildren();if(!currentUser)return;for(const record of load().filter(x=>x.creatorUidl===currentUser.uid)){
 const p=document.createElement('p');p.textContent=record.title+' — $'+(record.priceCents/100).toFixed(2)+' ('+record.channelId+')';
 box.appendChild(p);
 if(record.productUrl){const a=document.createElement('a');a.href=record.productUrl;a.target='_blank';a.rel='noopener noreferrer';a.textContent='Open product link';box.appendChild(a);box.appendChild(document.createElement('hr'));}
 }}
-$('marketForm').addEventListener('submit',function(e){e.preventDefault();try{
+$('marketForm').addEventListener('submit',async function(e){e.preventDefault();try{
 if(!currentUser||!accountChannel)throw Error('Verified account and channel required');
 const uidl=currentUser.uid,channel=accountChannel,id=$('productId').value.trim();
 const cents=Math.round(Number($('price').value)*100);
@@ -49,7 +51,8 @@ catalog=CCCreatorMarket.addItem(catalog,uidl,{id,title:$('title').value,priceCen
 const link=$('productUrl').value.trim();
 if(link)catalog=CCCreatorMarket.linkItem(catalog,uidl,id,link);
 const item=catalog.items[0];records.push({...item,creatorUidl:uidl,channelId:channel});
-localStorage.setItem(key,JSON.stringify(records));$('status').textContent='Saved locally only — not published.';render();
+await firebase.database().ref('users/'+uid+'/marketDrafts/'+encodeURIComponent(channel)+'__'+encodeURIComponent(id)).set({...item,creatorUidl:uidl,channelId:channel});
+accountDrafts=records;$('status').textContent='Saved to account drafts — not published.';render();
 }catch(err){$('status').textContent=err.message;}});render();
 })();
 </script></body></html>
