@@ -277,7 +277,7 @@
       : (typeof standbyText === "function" ? standbyText() : "Standby — the needle drops when we go live");
   }
 
-  playBtn.addEventListener("click", async () => {
+  async function toggleRadio() {
     // ONE BUTTON: live studio stream if on air, otherwise Sonny Daze from the bucket.
     const streamUrl = (cfg.streamUrl || "").trim();
     if (!streamUrl) {
@@ -324,7 +324,10 @@
       setLive(false);
       say("Couldn't reach the stream — it may be offline. Try again in a bit.");
     }
-  });
+  }
+
+  playBtn.addEventListener("click", toggleRadio);
+  window.CCToggleRadio = toggleRadio;
 
   /* ============================================================
      3 BROADCAST MODES — switch on the fly

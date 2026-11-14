@@ -206,9 +206,58 @@ async function streamTrack(request, env, id) {
   return new Response(full.body, { status: 200, headers: fullHeaders });
 }
 
+async function serveStationEntrance(request, assets) {
+  const url = new URL(request.url);
+  const [landing, station] = await Promise.all([
+    assets.fetch(new Request(new URL("/", url))),
+    assets.fetch(new Request(new URL("/station", url))),
+  ]);
+  if (!landing.ok || !station.ok) return landing;
+
+  const html = await landing.clone().text();
+  const startMarker = "<!-- station-entry:start -->";
+  const endMarker = "<!-- station-entry:end -->";
+  const start = html.indexOf(startMarker);
+  const end = html.indexOf(endMarker);
+  if (start === -1 || end < start) return landing;
+
+  const entrance = html.slice(start + startMarker.length, end);
+  const headStart = html.indexOf("<head>");
+  const headEnd = html.indexOf("</head>");
+  if (headStart === -1 || headEnd < headStart) return landing;
+  const landingHead = html.slice(headStart + "<head>".length, headEnd);
+  const response = new HTMLRewriter()
+    .on("head", {
+      element(head) {
+        head.setInnerContent(`${landingHead}
+  <style>body[data-station-entry] > :not(#stationEntry) { display: none !important; }</style>`,
+          { html: true });
+      },
+    })
+    .on("body", {
+      element(body) {
+        body.setAttribute("data-station-entry", "");
+        body.append(entrance, { html: true });
+      },
+    })
+    .transform(station);
+
+  const headers = new Headers(response.headers);
+  headers.delete("etag");
+  headers.delete("content-length");
+  return new Response(request.method === "HEAD" ? null : response.body, {
+    status: response.status,
+    headers,
+  });
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+
+    if (url.pathname === "/" && (request.method === "GET" || request.method === "HEAD")) {
+      return serveStationEntrance(request, env.ASSETS);
+    }
 
     /* Sonny Daze stream routes — served from the R2 bucket, no manifest. */
     if (url.pathname === '/now') {

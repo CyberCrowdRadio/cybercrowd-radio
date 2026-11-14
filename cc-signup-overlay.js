@@ -449,22 +449,6 @@
 
     // No dismissal: only a verified sign-in releases the blocker.
 
-    // Music: ENTER's tap set the autostart flag. If the browser still
-    // held the sound, the visitor's first touch anywhere is the
-    // gesture that starts it — once, and only if the player shows
-    // its play face (never a toggle-off).
-    document.addEventListener('pointerdown', function() {
-      var armed = false;
-      try { armed = sessionStorage.getItem('ccr-autostart') === '1'; } catch (_) {}
-      if (!armed) return;
-      try { sessionStorage.removeItem('ccr-autostart'); } catch (_) {}
-      var iconPlay = document.getElementById('iconPlay');
-      var playBtn = document.getElementById('playBtn');
-      if (iconPlay && playBtn && window.getComputedStyle(iconPlay).display !== 'none') {
-        playBtn.click();
-      }
-    }, { once: true });
-
     function publishAccount() {
       if (!sessionVerified || !window.CCAccount || !window.CCAccount.verified) return;
       var name = window.CCAccount.stageName;
@@ -519,19 +503,10 @@
       }
     };
 
-    // Arrival: the blue link (?token=), the old road (?verified=1),
-    // ENTER's flag (?signup=1) — or no session at all, which raises
-    // the plaque over the playing station on its own.
+    // Arrival supports verification links and restores signup progress.
     (async function() {
       var params = null;
       try { params = new URLSearchParams(window.location.search); } catch (_) {}
-       var entered = false;
-       try { entered = sessionStorage.getItem('ccr-autostart') === '1'; } catch (_) {}
-      if (entered) {
-        var play = document.getElementById('playBtn');
-        var icon = document.getElementById('iconPlay');
-        if (play && icon && window.getComputedStyle(icon).display !== 'none') play.click();
-      }
       var cleanUrl = function() {
         if (window.history && window.history.replaceState) {
           try { window.history.replaceState({}, '', window.location.pathname); } catch (_) {}
@@ -594,18 +569,13 @@
         openOverlay('check');
         return;
       }
-      if (params && params.get('signup') === '1' && entered) {
-        cleanUrl();
-      
-        openOverlay('email');
-
-        return;
-      }
       if (!hasSession()) openOverlay('email');
     })();
   }
 
-  if (document.readyState === 'loading') {
+  if (document.body.hasAttribute('data-station-entry')) {
+    document.addEventListener('cc-station-entered', init, { once: true });
+  } else if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
   } else {
     init();

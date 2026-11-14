@@ -25,6 +25,9 @@
 </head>
 <body class="landing">
 
+  <script src="config.js"></script>
+  <!-- station-entry:start -->
+  <div id="stationEntry">
   <main class="landing-wrap">
 
     <!-- ============ OPENER ============ -->
@@ -76,26 +79,26 @@
     <p class="footer-copy">© <span id="year">2026</span> Cybercrowd Radio. All rights reserved.</p>
   </footer>
 
-  <script src="config.js"></script>
   <script>
     (function () {
       var cfg = window.STATION_CONFIG || {};
       document.getElementById("year").textContent = new Date().getFullYear();
 
-      /* ENTER starts the live stream: set autostart flag, go to station.
-         One tap on ENTER is the user gesture that unlocks audio. */
       var enterBtn = document.getElementById("enterBtn");
-      if (enterBtn) {
-        // Members skip signup; new users get signup overlay on station (audio keeps playing)
-        try {
-          var list = JSON.parse(localStorage.getItem("cybercrowd-list") || "[]");
-          if (list.length === 0) enterBtn.href = "station.html?signup=1";
-        } catch (err) { enterBtn.href = "station.html?signup=1"; }
+      enterBtn.addEventListener("click", function (event) {
+        if (!window.CCToggleRadio || event.ctrlKey || event.metaKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
 
-        enterBtn.addEventListener("click", function () {
-          try { sessionStorage.setItem("ccr-autostart", "1"); sessionStorage.setItem("ccr-entry-start", String(Date.now())); } catch (e) {}
-        });
-      }
+        try { sessionStorage.setItem("ccr-entry-start", String(Date.now())); } catch (_) {}
+        window.CCToggleRadio();
+
+        window.history.pushState(null, "", "/station");
+        window.addEventListener("popstate", function () { window.location.reload(); }, { once: true });
+        document.body.removeAttribute("data-station-entry");
+        document.getElementById("stationEntry").hidden = true;
+        window.scrollTo(0, 0);
+        document.dispatchEvent(new Event("cc-station-entered"));
+      });
 
       /* Patreon — honest when the URL isn't set yet */
       var url = (cfg.patreonUrl || "").trim();
@@ -125,5 +128,7 @@
 
     })();
   </script>
+  </div>
+  <!-- station-entry:end -->
 </body>
 </html>
