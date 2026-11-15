@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>My Account | CyberCrowd Radio</title>
+<link rel="stylesheet" href="style.css">
+<style>
+main.uidl { box-sizing:border-box; max-width:38rem; margin:auto; padding:1.25rem; color:#fff7ea; }
+.uidl h1 { overflow-wrap:anywhere; }
+.uidl a { color:#f2c77e; }
+.uidl button, .uidl input { font:inherit; min-height:44px; padding:.55rem .8rem; }
+.uidl button { border:1px solid #856c48; border-radius:.5rem; background:#251f18; color:#fff7ea; }
+.uidl form button { background:#f2c77e; color:#23190c; font-weight:bold; }
+.uidl form { display:flex; gap:.5rem; flex-wrap:wrap; align-items:end; }
+.uidl input { display:block; box-sizing:border-box; width:100%; }
+.uidl li { margin-block:.65rem; display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; overflow-wrap:anywhere; }
+.uidl li span { flex:1 1 12rem; }
+.uidl ul { padding:0; }
+</style>
+</head>
+<body style="background:#15120f">
+<main class="uidl">
+<a href="channels.html">‹ Channels</a>
+<h1 id="welcome">My Account</h1>
+<p id="status" role="status">Checking your session…</p>
+<a id="sign-in" href="signin.html?return=uidl" hidden>Sign in to CyberCrowd Radio</a>
+<section id="projects" hidden>
+<h2>My Projects</h2>
+<p id="empty">Your project list is empty.</p>
+<ul id="active" aria-label="Active projects"></ul>
+<form id="add-project">
+<label>Project name<input name="projectName" maxlength="100" required></label>
+<button>Add another project</button>
+</form>
+<details>
+<summary>Archived channels</summary>
+<ul id="archived" aria-label="Archived channels"></ul>
+</details>
+</section>
+<p><a href="channel-department.html">Existing channel settings</a></p>
+</main>
+<script src="cc-authority.js"></script>
+<script src="uidl-projects.js"></script>
+</body>
+</html>
