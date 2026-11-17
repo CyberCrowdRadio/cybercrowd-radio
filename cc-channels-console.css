@@ -224,3 +224,46 @@
   }
   .cc-radio-disconnect:focus-visible { border-color: #fff; }
 }
+
+.cc-radio-buttons { display: flex; justify-content: center; flex-wrap: wrap; gap: .25rem; }
+.cc-channels-eq {
+  width: min(100%, 24rem);
+  padding: .75rem;
+  border: 1px solid var(--cyan);
+  border-radius: 10px;
+  background: #080f17;
+  box-shadow: 0 8px 20px #000b;
+}
+.cc-eq-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: .5rem;
+  margin-bottom: .5rem;
+}
+.cc-eq-heading h2, .cc-eq-heading button { margin: 0; }
+.cc-eq-heading button { background: #0b1c27; cursor: pointer; }
+#channelsEqControls .cc-eq-seat-faders { width: 100%; }
+#channelsEqControls .cc-eq-faders {
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 2px;
+  padding: 4px;
+}
+#channelsEqControls .cc-eq-fader { min-width: 0; }
+#channelsEqControls .cc-eq-fader input[type="range"] {
+  width: 44px;
+  min-width: 44px;
+  margin: 0;
+  background-size: 44px 100%;
+}
+#channelsEqControls .cc-eq-fader-value { min-width: 0; width: 100%; text-align: center; }
+#channelsEqPanel .cc-eq-gated { opacity: .75; }
+@container cc-chassis (min-width: 760px) {
+  .cc-channels-eq {
+    position: absolute;
+    z-index: 2;
+    inset: 56% auto auto 4%;
+  }
+}

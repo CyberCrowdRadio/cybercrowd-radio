@@ -65,7 +65,10 @@
       <div class="cc-console">
         <aside class="cc-tools" aria-label="Radio and channel tools">
           <section class="cc-module cc-radio-controls" id="channelsRadio" aria-label="Radio controls">
-            <button type="button" class="cc-enter" id="channelsRadioEnter">Enter</button>
+            <div class="cc-radio-buttons">
+              <button type="button" class="cc-enter" id="channelsRadioEnter">Enter</button>
+              <button type="button" class="cc-enter" id="channelsEqOpen" aria-expanded="false" aria-controls="channelsEqPanel" disabled>Open EQ</button>
+            </div>
             <p role="status" id="channelsRadioStatus">Disconnected</p>
           </section>
           <nav class="cc-module cc-deck-nav" aria-label="Channel shortcuts">
@@ -98,6 +101,15 @@
         </section>
         <div class="cc-creator-socket" aria-hidden="true">Creator Links</div>
         <button type="button" id="channelsRadioDisconnect" class="cc-radio-disconnect" disabled>Disconnect</button>
+        <section id="channelsEqPanel" class="cc-channels-eq" aria-labelledby="channelsEqTitle" hidden>
+          <div class="cc-eq-heading">
+            <h2 id="channelsEqTitle">Equalizer</h2>
+            <button type="button" class="cc-enter" id="channelsEqClose">Close EQ</button>
+          </div>
+          <div id="channelsEqControls"></div>
+          <p role="status" id="channelsEqStatus"></p>
+          <a href="membership.html" id="channelsEqMembership" hidden>Membership</a>
+        </section>
       </div>
       <nav class="cc-module cc-console-dock" aria-label="Console">
         <a href="#channelsRadio">Radio</a>
@@ -128,6 +140,16 @@
 
   <script src="config.js"></script>
   <script src="cc-channels-page.js"></script>
+  <script src="cc-eq-engine.js"></script>
+  <script src="cc-eq-rail.js"></script>
+  <script src="cc-eq-faders.js"></script>
+  <script src="cc-eq-reset.js"></script>
+  <script src="cc-eq-reset-design.js"></script>
+  <script src="cc-eq-gate.js"></script>
+  <script src="cc-eq-trial.js"></script>
+  <script src="cc-eq-mount.js"></script>
+  <script src="cc-eq-fader-design.js"></script>
+  <script src="cc-channels-eq.js"></script>
   <script src="cc-channels-radio.js"></script>
   <script src="cc-page.js"></script>
 </body>
