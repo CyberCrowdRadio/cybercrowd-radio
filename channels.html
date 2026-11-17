@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
-  <style>.adworm-corner:empty{display:none!important}</style>
+  <link rel="stylesheet" href="cc-channels-console.css" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='8' y='8' width='84' height='84' rx='6' fill='%231a120b' stroke='%23c9a227' stroke-width='5'/><circle cx='50' cy='50' r='22' fill='none' stroke='%23c9a227' stroke-width='4'/><circle cx='50' cy='50' r='5' fill='%23a93226'/></svg>" />
 </head>
 <body>
@@ -56,25 +56,59 @@
   </nav>
 
   <main id="content">
-<section class="section" id="channels" aria-label="Live channels">
-      <div class="section-head">
-        <p class="eyebrow">Pick your room</p>
-        <h2>Live&nbsp;Channels</h2>
-        <p class="section-sub">YouTube-style — choose a channel, stay in the building.</p>
-      </div>
-      <div class="channel-entrances" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin:22px 0">
-        <section style="border:1px solid #6b5731;border-radius:12px;padding:22px">
-          <h3>WATCH</h3><p>Watch public channels for free.</p><p>Creator and audience interactions require paid access.</p>
-          <a href="#channelsGrid" style="display:inline-block;padding:12px 18px;border:1px solid #c9a227;border-radius:8px">Watch for free</a>
+    <section class="cc-deck" id="channels" aria-labelledby="channelsTitle">
+      <div class="cc-chassis">
+      <header class="cc-deck-heading">
+        <span>CyberCrowd Radio</span>
+        <h1 id="channelsTitle">Channels</h1>
+      </header>
+      <div class="cc-console">
+        <aside class="cc-tools" aria-label="Radio and channel tools">
+          <section class="cc-module cc-radio-controls" aria-label="Radio controls">
+            <a class="cc-enter" href="station.html">Enter</a>
+          </section>
+          <nav class="cc-module cc-deck-nav" aria-label="Channel shortcuts">
+            <a href="#channelsGrid">Channels</a>
+            <a href="archive.html">Archive</a>
+            <a href="shows.html">Schedule</a>
+            <a href="channel-department.html">Channels Department</a>
+            <a href="market.html">Creator Market</a>
+          </nav>
+        </aside>
+        <section class="cc-module cc-bay" aria-label="Channels">
+          <div class="cc-page-controls" id="rotatorControls" hidden>
+            <button type="button" id="rotatorPrevious" aria-label="Previous channels">‹</button>
+            <span id="rotatorPosition"></span>
+            <button type="button" id="rotatorNext" aria-label="Next channels">›</button>
+          </div>
+          <div id="channelsGrid" class="cc-channel-grid" tabindex="-1"></div>
         </section>
-        <section style="border:1px solid #6b5731;border-radius:12px;padding:22px">
-          <h3>BUILD</h3><p>Build and preview your channel for free.</p><p>Publication and Observability require paid access.</p>
-          <a href="uidl.html" style="display:inline-block;padding:12px 18px;border:1px solid #c9a227;border-radius:8px">Build my channel — free</a>
+        <section class="cc-module cc-channel-info" id="channelInfo" aria-labelledby="channelInfoTitle">
+          <h2 id="channelInfoTitle">Channel Info</h2>
+          <p id="channelEmptyInfo">Choose a channel to open its details.</p>
+          <div id="channelDetails" hidden>
+            <h3 id="selectedChannelName"></h3>
+            <p id="selectedChannelDescription"></p>
+            <a id="selectedChannelLink">Enter channel</a>
+            <div id="selectedCreatorLinks" class="cc-creator-links" hidden>
+              <h3>Creator links</h3><ul></ul>
+            </div>
+          </div>
         </section>
+        <div class="cc-creator-socket" aria-hidden="true">Creator Links</div>
       </div>
-      <div class="channels" id="channelsGrid"></div>
-      <p><a href="channel-department.html">Channels Department — manage your show</a></p>
-      <p><a href="market.html">Creator Market — merchandise workspace</a></p>
+      <nav class="cc-module cc-console-dock" aria-label="Console">
+        <a href="station.html">Radio</a>
+        <a href="#channelsTitle" aria-current="page">Channels</a>
+        <a href="archive.html">Archive</a>
+        <a href="uidl.html">Account</a>
+      </nav>
+      </div>
+      <div class="cc-doors">
+        <div><a href="#channelsGrid">Watch</a><p>Watch public channels free. Chat, comments and likes with membership.</p></div>
+        <div><a href="uidl.html">Build</a><p>Build and preview free. Publish, share and enter rotation with membership.</p></div>
+        <a class="cc-membership-link" href="membership.html">Membership · $3.99/month</a>
+      </div>
     </section>
   </main>
 
@@ -88,16 +122,9 @@
     <p class="footer-copy">© <span id="year">2026</span> Cybercrowd Radio. All rights reserved.</p>
   </footer>
 
-  <!-- ============ adWorm corners: 4 fixed squares ============ -->
-  <div class="adworm-corner" data-adworm="corner-nw" role="complementary" aria-label="Advertisement"></div>
-  <div class="adworm-corner" data-adworm="corner-ne" role="complementary" aria-label="Advertisement"></div>
-  <div class="adworm-corner" data-adworm="corner-sw" role="complementary" aria-label="Advertisement"></div>
-  <div class="adworm-corner" data-adworm="corner-se" role="complementary" aria-label="Advertisement"></div>
-
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
   <script src="config.js"></script>
-  <script src="adworm.js"></script>
   <script src="cc-channels-page.js"></script>
   <script src="cc-page.js"></script>
 </body>
