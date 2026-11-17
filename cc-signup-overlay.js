@@ -126,6 +126,10 @@
 
     function showStep(name) {
       currentStep = name;
+      els.overlay.dataset.signupStep = name;
+      els.overlay.setAttribute('aria-label', name === 'create'
+        ? 'Complete your CyberCrowd Radio account'
+        : 'Sign up or sign in to enter');
       try { sessionStorage.setItem('ccr-signup-step', name); } catch (_) {}
       var progress = document.getElementById('signupProgress');
       if (progress) progress.textContent = name === 'signin' ? 'Welcome back'
@@ -136,6 +140,7 @@
       els.stepCheck.style.display = name === 'check' ? 'block' : 'none';
       els.stepCreate.style.display = name === 'create' ? 'block' : 'none';
       if (els.stepSignin) els.stepSignin.style.display = name === 'signin' ? 'block' : 'none';
+      if (name === 'create') els.overlay.scrollTop = 0;
     }
 
     function openOverlay(step, verificationOnly) {
@@ -144,7 +149,10 @@
       lockPage();
       els.overlay.style.display = 'grid';
       els.overlay.scrollTop = 0;
-
+      if (currentStep === 'create') {
+        var title = document.getElementById('accountSetupTitle');
+        if (title) title.focus({ preventScroll: true });
+      }
     }
 
     function closeOverlay() {
@@ -311,38 +319,49 @@
       });
     });
 
-    // Password match — blue glow
     var pwInput = document.getElementById('overlayPassword');
     var confirmInput = document.getElementById('overlayConfirm');
-    function checkMatch() {
-      var pw = pwInput.value, cpw = confirmInput.value;
-      if (!cpw) {
-        confirmInput.style.borderColor = '';
-        confirmInput.style.boxShadow = '';
-        return;
-      }
-      if (pw === cpw && pw.length >= 8) {
-        confirmInput.style.borderColor = '#2196F3';
-        confirmInput.style.boxShadow = '0 0 15px #2196F3';
-      } else {
-        confirmInput.style.borderColor = '';
-        confirmInput.style.boxShadow = '';
-      }
+    var createForm = document.getElementById('accountSetupForm');
+    var createBtn = document.getElementById('overlayCreate');
+    var passwordLength = document.getElementById('accountPasswordLength');
+    var passwordMatch = document.getElementById('accountPasswordMatch');
+
+    function showPasswordFeedback() {
+      var password = pwInput.value;
+      var confirmation = confirmInput.value;
+      var meetsLength = password.length >= 8 && password.length <= 29;
+      var matches = confirmation !== '' && confirmation === password;
+      passwordLength.textContent = meetsLength
+        ? '✓ Password length is valid.'
+        : 'Use 8 to 29 characters.';
+      passwordLength.classList.toggle('account-setup-valid', meetsLength);
+      passwordMatch.textContent = matches ? '✓ Passwords match.'
+        : (confirmation ? 'Passwords do not match yet.' : 'Enter the same password again.');
+      passwordMatch.classList.toggle('account-setup-valid', matches);
     }
-    if (pwInput && confirmInput) {
-      pwInput.addEventListener('input', checkMatch);
-      confirmInput.addEventListener('input', checkMatch);
+
+    if (createForm) {
+      createForm.addEventListener('input', function(event) {
+        event.target.removeAttribute('aria-invalid');
+        if (event.target === pwInput || event.target === confirmInput) {
+          confirmInput.removeAttribute('aria-invalid');
+          showPasswordFeedback();
+        }
+      });
     }
 
     // Create account — the authority builds it; this face only asks.
-    var createBtn = document.getElementById('overlayCreate');
-    if (createBtn) createBtn.addEventListener('click', async function() {
+    if (createForm) createForm.addEventListener('submit', async function(event) {
+      event.preventDefault();
       if (creating) return;
       var createStatus = document.getElementById('signupCreateStatus');
       function problem(message, field) {
         if (createStatus) createStatus.textContent = message;
         var input = field && document.getElementById(field);
-        if (input) input.focus();
+        if (input) {
+          input.setAttribute('aria-invalid', 'true');
+          input.focus();
+        }
       }
       if (createStatus) createStatus.textContent = '';
       var handle = document.getElementById('overlayHandle').value.trim();
@@ -352,7 +371,7 @@
       var pw = pwInput.value;
       var cpw = confirmInput.value;
       var email = document.getElementById('overlayEmailDisplay').textContent;
-      if (!handle || !pw) { problem('Enter your stage name and password.', !handle ? 'overlayHandle' : 'overlayPassword'); return; }
+      if (!handle) { problem('Enter your stage name.', 'overlayHandle'); return; }
       if (pw.length < 8 || pw.length > 29) { problem('Password must be 8 to 29 characters.', 'overlayPassword'); return; }
       if (pw !== cpw) { problem('Your passwords do not match.', 'overlayConfirm'); return; }
       if (!zip) { problem('Enter your ZIP code. It stays private.', 'overlayZip'); return; }
@@ -372,14 +391,16 @@
           zip: zip
         });
       } catch (_) {}
-      creating = false;
-      createBtn.disabled = false;
-      createBtn.textContent = 'Finish & listen';
       if (!res || !res.success) {
+        creating = false;
+        createBtn.disabled = false;
+        createBtn.textContent = 'Finish & listen';
         var why = (res && res.error) ? String(res.error) : '';
         problem((why === 'authority-unreachable' || why === 'authority-bad-answer')
           ? 'The station could not be reached. Please try again.'
-          : (why || 'That did not go through. Please try again.'));
+          : (why === 'stage name taken' ? 'That stage name is taken. Choose another.'
+            : (why || 'That did not go through. Please try again.')),
+          /stage name/i.test(why) ? 'overlayHandle' : undefined);
         return;
       }
       // The account exists; sign in using the password just submitted.
@@ -389,8 +410,14 @@
         els.signinStatus.textContent = 'Your account is created. Sign in to enter.';
       }
       els.signinPassword.value = pw;
-      await doSignin();
-      if (!hasSession()) showStep('signin');
+      try {
+        await doSignin();
+      } finally {
+        creating = false;
+        createBtn.disabled = false;
+        createBtn.textContent = 'Finish & listen';
+        if (!hasSession()) showStep('signin');
+      }
     });
 
     // Sign in — the authority judges the password and hands back the
@@ -440,6 +467,7 @@
       try { sessionStorage.removeItem('ccr-verify-token'); } catch (_) {}
       pwInput.value = '';
       confirmInput.value = '';
+      if (createForm) showPasswordFeedback();
       els.signinPassword.value = '';
     }
     if (els.signinBtn) els.signinBtn.addEventListener('click', doSignin);

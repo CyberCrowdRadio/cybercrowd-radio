@@ -1,0 +1,139 @@
+/* The verified-account step, using the station's existing console artwork. */
+#signupOverlay[data-signup-step="create"] {
+  align-items: start !important;
+  padding: clamp(10px, 3vw, 24px) !important;
+  background: #05090dee !important;
+}
+
+#signupOverlay[data-signup-step="create"] > div {
+  max-width: 520px !important;
+  padding: clamp(16px, 4vw, 32px) !important;
+  margin: 0 auto !important;
+  border: 1px solid #385461 !important;
+  background: #0a1118 !important;
+}
+
+#signupOverlay[data-signup-step="create"] #signupProgress {
+  margin: 0;
+  color: #9edbee !important;
+  font-size: .875rem !important;
+  font-weight: 600 !important;
+}
+
+#signupOverlay[data-signup-step="create"] #signupTimeNote {
+  margin: 6px 0 14px;
+  color: #becbd3 !important;
+  font-size: .875rem !important;
+}
+
+#signupStepCreate {
+  color: #f1f6f8;
+  font: 400 1rem/1.5 Inter, system-ui, sans-serif;
+}
+
+#signupStepCreate .account-setup-art {
+  aspect-ratio: 5.2;
+  margin-bottom: 20px;
+  border: 1px solid #385461;
+  border-radius: 8px;
+  background: #05090d url("cc-channels-console-art.jpg") left top / 237% auto no-repeat;
+}
+
+#signupStepCreate h2 {
+  margin: 0 0 22px;
+  color: #f1f6f8;
+  font: 700 clamp(1.45rem, 6vw, 2rem)/1.2 Inter, system-ui, sans-serif;
+}
+
+#signupStepCreate fieldset {
+  min-inline-size: 0;
+  margin: 0 0 20px;
+  padding: 0 0 18px;
+  border: 0;
+  border-bottom: 1px solid #354552;
+}
+
+#signupStepCreate legend {
+  padding: 0;
+  margin-bottom: 8px;
+  color: #9edbee;
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+#signupStepCreate label,
+#signupStepCreate .account-setup-label {
+  display: block;
+  margin: 10px 0 5px;
+  font-weight: 600;
+  font-size: .9375rem;
+}
+
+#signupStepCreate label span,
+#signupStepCreate .account-setup-hint {
+  color: #becbd3;
+  font-size: .875rem;
+  font-weight: 400;
+}
+
+#signupStepCreate input,
+#overlayEmailDisplay {
+  width: 100%;
+  min-height: 46px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #617581;
+  border-radius: 6px;
+  background: #121e28;
+  color: #f1f6f8;
+  font: inherit;
+}
+
+#overlayEmailDisplay {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+#signupStepCreate .account-setup-hint {
+  margin: 5px 0 0;
+}
+
+#signupStepCreate .account-setup-valid {
+  color: #96e5b9;
+}
+
+#signupStepCreate input[aria-invalid="true"] {
+  border: 2px solid #ffb1a7;
+}
+
+#signupStepCreate :focus-visible {
+  outline: 2px solid #9edbee;
+  outline-offset: 3px;
+}
+
+#signupCreateStatus {
+  color: #ffb1a7;
+  margin: 0 0 12px;
+}
+
+#signupCreateStatus:empty {
+  margin: 0;
+}
+
+#overlayCreate {
+  width: 100%;
+  min-height: 48px;
+  padding: 10px 16px;
+  border: 1px solid #f7c46a;
+  border-radius: 6px;
+  background: #f7c46a;
+  color: #17120b;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+#overlayCreate:disabled {
+  opacity: .65;
+  cursor: wait;
+}
