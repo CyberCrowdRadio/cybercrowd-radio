@@ -64,8 +64,9 @@
       </header>
       <div class="cc-console">
         <aside class="cc-tools" aria-label="Radio and channel tools">
-          <section class="cc-module cc-radio-controls" aria-label="Radio controls">
-            <a class="cc-enter" href="station.html">Enter</a>
+          <section class="cc-module cc-radio-controls" id="channelsRadio" aria-label="Radio controls">
+            <button type="button" class="cc-enter" id="channelsRadioEnter">Enter</button>
+            <p role="status" id="channelsRadioStatus">Disconnected</p>
           </section>
           <nav class="cc-module cc-deck-nav" aria-label="Channel shortcuts">
             <a href="#channelsGrid">Channels</a>
@@ -96,9 +97,10 @@
           </div>
         </section>
         <div class="cc-creator-socket" aria-hidden="true">Creator Links</div>
+        <button type="button" id="channelsRadioDisconnect" class="cc-radio-disconnect" disabled>Disconnect</button>
       </div>
       <nav class="cc-module cc-console-dock" aria-label="Console">
-        <a href="station.html">Radio</a>
+        <a href="#channelsRadio">Radio</a>
         <a href="#channelsTitle" aria-current="page">Channels</a>
         <a href="archive.html">Archive</a>
         <a href="uidl.html">Account</a>
@@ -126,6 +128,7 @@
 
   <script src="config.js"></script>
   <script src="cc-channels-page.js"></script>
+  <script src="cc-channels-radio.js"></script>
   <script src="cc-page.js"></script>
 </body>
 </html>

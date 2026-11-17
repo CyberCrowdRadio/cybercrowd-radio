@@ -191,3 +191,36 @@
 @container cc-chassis (max-width: 759px) {
   .cc-creator-socket { display: none; }
 }
+
+.cc-radio-controls .cc-enter {
+  background: #0b1c27;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 800;
+}
+.cc-radio-controls .cc-enter:disabled { cursor: default; opacity: .65; }
+.cc-radio-disconnect {
+  min-height: 44px;
+  padding: .35rem .7rem;
+  border: 2px solid #ff757c;
+  border-radius: 999px;
+  color: #fff;
+  background: radial-gradient(ellipse at 34% 24%, #b72b32, #4b070a);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.cc-radio-disconnect:disabled { cursor: default; filter: brightness(.7); }
+@container cc-chassis (min-width: 760px) {
+  .cc-radio-disconnect {
+    position: absolute;
+    inset: 71.2% 3% auto auto;
+    width: 8.6%;
+    height: 15.5%;
+    padding: 0;
+    background: transparent;
+    border-color: transparent;
+    color: transparent;
+  }
+  .cc-radio-disconnect:focus-visible { border-color: #fff; }
+}
