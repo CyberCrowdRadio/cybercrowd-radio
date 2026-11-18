@@ -2,10 +2,10 @@
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Channels Department — CyberCrowd Radio</title><link rel="stylesheet" href="style.css"><style>
 .department{max-width:760px;margin:auto;padding:24px}.department label{display:block;margin:14px 0}.department input:not([type=checkbox]),.department textarea{display:block;width:100%;max-width:650px;padding:10px;box-sizing:border-box}.department button{padding:12px}.department fieldset{margin:18px 0}
 </style></head><body><main class="department">
-<a href="channels.html">← Live Channels</a><h1>Channels Department</h1>
+<a href="palm.html">My Palm</a><h1>Channels Department</h1>
 <p>Manage your channel using your existing CyberCrowd account. A channel is your show/project identity, not a second account.</p>
 <p id="channelDepartmentStatus" role="status" aria-live="polite">Checking account…</p>
-<h2 id="channelName">Your channel</h2>
+<div id="owner" hidden><label>Project <select id="project"></select></label><h2 id="channelName">Your channel</h2>
 <form id="channelDepartmentForm">
 <label>Channel description<textarea id="channelBio" maxlength="1000" rows="4" placeholder="Describe your show"></textarea></label>
 <p>Your channel is hosted within CyberCrowd. No website or streaming URL is required.</p>
@@ -19,11 +19,11 @@
 <button id="channelSave" type="submit" disabled>Save channel settings</button>
 <button id="channelPreview" type="button" disabled>Preview my channel box</button>
 </form><section id="channelPreviewPanel" hidden aria-label="Channel preview"><h2>Channel preview</h2><p id="channelPreviewStatus" role="status"></p><div id="channelMedia"></div><p><button id="channelStop" type="button">Stop preview</button></p></section><p>Saving does not start a broadcast, authorize public publishing, or change the 24/7 radio stream.</p>
-<a href="market.html">Creator Market</a>
+<button type="button" id="recover">Preview earlier channel settings</button><a href="market.html">Creator Market</a></div>
 </main>
-<script src="config.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
-<script src="cc-auth.js"></script><script src="cc-channel-department.js"></script>
+
+
+
+
+<script src="cc-authority.js"></script><script src="cc-owner-tools.js"></script><script src="cc-channel-department.js?v=uidl"></script>
 </body></html>

@@ -1,38 +1,27 @@
-/* Channels Department: owner-only profile editor.
- * Account identity comes from Firebase Auth; channel name from users/{uid}/project.
- * Writes remain inside the existing user's profile. Public publication requires
- * separately verified database rules and a public directory.
- */
-(function(){
+/*
+File repo: CyberCrowdRadio/cybercrowd-radio
+File name: cc-channel-department.js
+Movements: Edit and preview an attached project using the owner's verified UIDL.
+Purpose: Save private channel settings through Authority.
+Does NOT: Publish a channel.
+*/
+(async function(){
 'use strict';
 const $=id=>document.getElementById(id);
-const status=$('channelDepartmentStatus'),form=$('channelDepartmentForm');
-if(!status||!form)return;
-let current=null,project='';
+const {open, ask, earlier}=CCOwnerTools;
+const form=$('channelDepartmentForm'),status=$('channelDepartmentStatus');
 const allowed=['youtube','dlive','facebook','x'];
-function https(s){if(!s)return '';const u=new URL(s);if(u.protocol!=='https:'||u.username||u.password)throw Error('HTTPS link required');return u.href;}
-function setReady(ready){$('channelSave').disabled=!ready;$('channelPreview').disabled=!ready;}
-setReady(false);
-CCAuth.onUser(async function(user){
-current=null;project='';setReady(false);
-if(!user||!user.emailVerified){status.textContent='Sign in with a verified account to manage your channel.';return;}
-try{
-await CCAuth.init();
-const snap=await firebase.database().ref('users/'+user.uid).get();
-const profile=snap.val();
-if(!profile||!profile.project)throw Error('Your account has no show/channel name.');
-current=user;project=String(profile.project);
-$('channelName').textContent=project;
-const c=profile.channelDepartment||{};
-$('channelBio').value=String(c.bio||'');
-
-$('channelAudio').checked=!!c.radioBackground;
-for(const k of allowed)$(k+'Link').value=String((c.links||{})[k]||'');
-status.textContent='Editing your account channel. Saving does not make a stream live.';
-setReady(true);
-}catch(e){status.textContent='Channel unavailable: '+e.message;}
-});
-
+let project='',revision=0;
+function fill(c){$('channelBio').value=c.bio||'';$('channelAudio').checked=!!c.radioBackground;for(const k of allowed)$(k+'Link').value=c.links?.[k]||'';}
+function ready(on){$('channelSave').disabled=!on;$('channelPreview').disabled=!on;}
+async function load(){
+  const now=++revision; ready(false);$('channelPreviewPanel').hidden=true; fill({});
+  project=$('project').selectedOptions[0].text; $('channelName').textContent=project;
+  try{const res=await ask('channel-settings-get');if(revision!==now)return;fill(res.settings||{});status.textContent='Private channel settings';ready(true);}
+  catch(e){if(revision===now)status.textContent=e.message;}
+}
+try{await open();await load();}catch(e){status.textContent=e.message;return;}
+$('project').onchange=load;
 $('channelStop').addEventListener('click',function(){
 $('channelMedia').replaceChildren();$('channelPreviewPanel').hidden=true;
 });
@@ -46,16 +35,20 @@ media.append(heading,bio,note);
 message.textContent='Previewing your channel inside CyberCrowd.';
 });
 
-form.addEventListener('submit',async function(ev){
-ev.preventDefault();if(!current||!project)return;
-setReady(false);
-try{
-const links={};for(const k of allowed)links[k]=https($(k+'Link').value.trim());
 
-const ref=firebase.database().ref('users/'+current.uid+'/channelDepartment');
-await ref.update({bio:$('channelBio').value.trim().slice(0,1000),radioBackground:$('channelAudio').checked,links:links,updatedAt:firebase.database.ServerValue.TIMESTAMP});
-status.textContent='Channel settings saved to your account. Live status is not verified.';
-}catch(e){status.textContent='Save failed: '+e.message;}
-finally{setReady(!!current);}
-});
+form.onsubmit=async event=>{
+  event.preventDefault();ready(false);$('project').disabled=true;
+  try{
+    const links=Object.fromEntries(allowed.map(k=>[k,$(k+'Link').value.trim()]));
+    await ask('channel-settings-save',{asset:{bio:$('channelBio').value.trim(),radioBackground:$('channelAudio').checked,links}});
+    status.textContent='Channel settings saved to your account.';
+  }catch(e){status.textContent=e.message;}finally{ready(true);$('project').disabled=false;}
+};
+$('recover').onclick=async()=>{
+  const now=revision;
+  try{const settings=await earlier('channelDepartment');if(now!==revision)return;
+    if(!settings){status.textContent='No earlier settings found.';return;}
+    fill(settings);status.textContent='Earlier settings loaded for preview. Save to attach them to the selected project.';
+  }catch(e){status.textContent=e.message;}
+};
 })();
