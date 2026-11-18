@@ -163,6 +163,14 @@ window.CCEQEngine = (function () {
   }
 
   return {
+    // The meter is a silent analysis branch after the filters and listener volume.
+    outputMeter: function () {
+      if (!masterGain) return null;
+      var analyser = ctx.createAnalyser();
+      analyser.fftSize = 4096;
+      masterGain.connect(analyser);
+      return analyser;
+    },
     audioContext: audioContext,
     playOverlay: playOverlay,
     attach: attach,

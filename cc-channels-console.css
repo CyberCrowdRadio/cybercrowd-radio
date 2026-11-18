@@ -267,3 +267,20 @@
     inset: 56% auto auto 4%;
   }
 }
+
+#channelsSpectrum {
+  display: block;
+  width: 9rem;
+  height: 3rem;
+  background: #090908;
+  border-radius: 3px;
+}
+@container cc-chassis (min-width: 760px) {
+  #channelsSpectrum {
+    position: absolute;
+    left: 75.5%;
+    top: 74.5%;
+    width: 12.5%;
+    height: 8.5%;
+  }
+}
