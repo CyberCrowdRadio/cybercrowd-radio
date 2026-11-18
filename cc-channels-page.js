@@ -9,7 +9,7 @@
   const directory = window.STATION_CONFIG?.channels || [];
   const pageSize = 6;
   const channels = directory.filter(channel => channel && secure(channel.src));
-  const pageCount = Math.ceil(channels.length / pageSize);
+  const positions = Math.max(pageSize, channels.length);
   const previous = byId('rotatorPrevious');
   const next = byId('rotatorNext');
   const viewer = byId('selectedChannelLink');
@@ -17,7 +17,7 @@
   const placeholder = byId('channelEmptyInfo');
   const returnChannel = new URLSearchParams(location.search).get('selected');
   let selected = returnChannel ? channels.findIndex(channel => String(channel.id || channel.name) === returnChannel) : -1;
-  let page = selected < 0 ? 0 : Math.floor(selected / pageSize);
+  let first = selected < 0 ? 0 : Math.floor(selected / pageSize) * pageSize;
   let swipe;
   let lastTouchTap;
   let ignoreClickUntil = 0;
@@ -60,18 +60,19 @@
 
   function renderPage() {
     grid.replaceChildren();
-    if (!channels.length) {
-      const empty = document.createElement('div');
-      empty.className = 'cc-channel-empty';
-      const title = document.createElement('p');
-      title.textContent = 'No verified channel feeds configured yet.';
-      empty.append(title);
-      grid.append(empty);
-      return;
-    }
-
-    channels.slice(page * pageSize, (page + 1) * pageSize).forEach((channel, offset) => {
-      const index = page * pageSize + offset;
+    for (let offset = 0; offset < pageSize; offset++) {
+      const index = (first + offset) % positions;
+      const channel = channels[index];
+      if (!channel) {
+        const socket = document.createElement('div');
+        socket.className = 'cc-rotator-socket';
+        socket.setAttribute('aria-hidden', 'true');
+        const marker = document.createElement('span');
+        marker.textContent = String(index + 1).padStart(2, '0');
+        socket.append(marker);
+        grid.append(socket);
+        continue;
+      }
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'cc-channel-select';
@@ -101,19 +102,19 @@
         viewer.click();
       });
       grid.append(button);
-    });
-
-    previous.disabled = page === 0;
-    next.disabled = page === pageCount - 1;
-    byId('rotatorPosition').textContent = (page + 1) + ' / ' + pageCount;
+    }
+    const position = String(first + 1).padStart(2, '0') + ' / ' + String(positions).padStart(2, '0');
+    byId('rotatorPosition').textContent = (channels.length ? '' : 'No feeds · ') + position;
   }
 
   function move(direction) {
-    const target = page + direction;
-    if (target < 0 || target >= pageCount) return;
+    first = (first + direction + positions) % positions;
     lastTouchTap = undefined;
-    page = target;
     renderPage();
+    if (grid.animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      grid.animate([{ transform: 'translateX(' + (direction * 12) + 'px)', opacity: 0.75 },
+        { transform: 'none', opacity: 1 }], { duration: 180, easing: 'ease-out' });
+    }
   }
 
   previous.addEventListener('click', () => move(-1));
@@ -132,7 +133,12 @@
     move(x < 0 ? 1 : -1);
   });
 
-  byId('rotatorControls').hidden = pageCount < 2;
+  grid.addEventListener('keydown', event => {
+    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+    event.preventDefault();
+    move(event.key === 'ArrowLeft' ? -1 : 1);
+    grid.focus();
+  });
   renderPage();
   if (selected >= 0) selectChannel(selected);
 })();

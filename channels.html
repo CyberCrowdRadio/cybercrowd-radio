@@ -79,13 +79,20 @@
             <a href="market.html">Creator Market</a>
           </nav>
         </aside>
-        <section class="cc-module cc-bay" aria-label="Channels">
-          <div class="cc-page-controls" id="rotatorControls" hidden>
-            <button type="button" id="rotatorPrevious" aria-label="Previous channels">‹</button>
-            <span id="rotatorPosition"></span>
-            <button type="button" id="rotatorNext" aria-label="Next channels">›</button>
+        <section class="cc-module cc-bay" aria-label="Channel rotator" aria-roledescription="carousel">
+          <div class="cc-page-controls" id="rotatorControls">
+            <button type="button" id="rotatorPrevious" aria-label="Rotate left">‹</button>
+            <span id="rotatorPosition" role="status">No feeds · 01 / 06</span>
+            <button type="button" id="rotatorNext" aria-label="Rotate right">›</button>
           </div>
-          <div id="channelsGrid" class="cc-channel-grid" tabindex="-1"></div>
+          <div id="channelsGrid" class="cc-channel-grid" tabindex="0" aria-label="Channel sockets">
+            <div class="cc-rotator-socket" aria-hidden="true"><span>01</span></div>
+            <div class="cc-rotator-socket" aria-hidden="true"><span>02</span></div>
+            <div class="cc-rotator-socket" aria-hidden="true"><span>03</span></div>
+            <div class="cc-rotator-socket" aria-hidden="true"><span>04</span></div>
+            <div class="cc-rotator-socket" aria-hidden="true"><span>05</span></div>
+            <div class="cc-rotator-socket" aria-hidden="true"><span>06</span></div>
+          </div>
         </section>
         <section class="cc-module cc-channel-info" id="channelInfo" aria-labelledby="channelInfoTitle">
           <h2 id="channelInfoTitle">Channel Info</h2>

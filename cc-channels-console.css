@@ -47,7 +47,7 @@
 .cc-channel-select { display: flex; flex-direction: column; align-items: flex-start; justify-content: flex-end; min-height: 92px; padding: .7rem; text-align: left; overflow-wrap: anywhere; box-shadow: inset 0 0 12px #3bc6eb38; }
 .cc-channel-select[aria-pressed="true"] { border-color: var(--amber); box-shadow: inset 0 0 12px #ffc16e45; }
 .cc-channel-select span { color: #b8d0df; }
-.cc-channel-empty { grid-column: 1 / -1; display: grid; place-content: center; gap: .55rem; text-align: center; min-height: 190px; border: 1px solid #41677a; border-radius: 8px; padding: 1rem; background: radial-gradient(ellipse, #102734, #060b10); }
+
 .cc-console-dock { display: flex; justify-content: center; flex-wrap: wrap; gap: .3rem .8rem; margin-top: .9rem; }
 .cc-console-dock a { min-height: 44px; display: inline-flex; align-items: center; padding: 0 .4rem; }
 .cc-console-dock a[aria-current="page"] { color: var(--amber); border-bottom: 2px solid var(--amber); }
@@ -154,12 +154,7 @@
     border: 2px solid #78ddfb;
     box-shadow: inset 0 0 14px #1b86ac5c, 0 0 9px #108fb94d;
   }
-  .cc-channel-empty {
-    grid-row: 1 / -1;
-    min-height: 0;
-    border: 2px solid #65d7fa;
-    box-shadow: inset 0 0 16px #24a9da45, 0 0 10px #24a9da45;
-  }
+  
   .cc-channel-info {
     inset: 24.3% auto auto 74.9%;
     width: 21.3%;
@@ -283,4 +278,31 @@
     width: 12.5%;
     height: 8.5%;
   }
+}
+
+.cc-bay { overflow: hidden; }
+.cc-bay .cc-page-controls { border-bottom: 1px solid #315565; padding-bottom: .3rem; }
+#rotatorPosition { color: #b1ebfb; font: 650 .85rem/1.3 system-ui, sans-serif; font-variant-numeric: tabular-nums; }
+.cc-rotator-socket {
+  position: relative;
+  min-height: 78px;
+  border: 2px solid #4c98af;
+  border-radius: 7px;
+  background: radial-gradient(ellipse at 50% 0%, #163648, #091621 62%, #050c12);
+  box-shadow: inset 0 0 0 3px #060e16, inset 0 0 16px #18729144, 0 0 5px #43b9dc33;
+}
+.cc-rotator-socket::before {
+  content: '';
+  position: absolute;
+  inset: 9%;
+  border-block: 1px solid #39617766;
+}
+.cc-rotator-socket span { position: absolute; bottom: 12%; left: 9%; color: #86aabd; font: 600 .82rem/1 monospace; }
+@container cc-chassis (min-width: 760px) {
+  .cc-rotator-socket { min-height: 0; }
+  .cc-bay .cc-channel-grid { gap: clamp(3px, .7cqw, 10px); margin-top: .35rem; }
+}
+@container cc-chassis (max-width: 759px) {
+  .cc-console { display: grid; grid-template-columns: minmax(0,1fr); }
+  .cc-bay { grid-column: 1; grid-row: 1; }
 }
