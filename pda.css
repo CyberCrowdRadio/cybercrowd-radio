@@ -1,0 +1,15 @@
+/* CyberCrowd private phone PDA • identity strip, rotating Earth and right edge */
+#workspace {background:#08161c;border:2px solid #49646d;border-radius:1.1rem;padding:clamp(.45rem,2vw,1.2rem);box-shadow:inset 0 0 0 3px #172d36}
+#workspace>.account-head {background:linear-gradient(110deg,#204552,#0a1c25);margin:.25rem 0 .6rem;padding:.7rem;border-radius:.35rem}
+#identity-welcome {font-size:clamp(1.35rem,4vw,2.5rem)}
+.device {display:grid;grid-template-columns:minmax(0,1fr) clamp(4.3rem,18vw,7rem);gap:.5rem}
+.screen {min-width:0}
+.edge {display:flex;flex-flow:column;align-items:stretch;align-self:start;position:sticky;top:.35rem;gap:.45rem;margin:0}
+.edge a {display:grid;place-items:center;min-height:48px;background:linear-gradient(150deg,#254956,#112b35);border:1px solid #72919b;border-left:3px solid #ffc276;border-radius:1rem .3rem .3rem 1rem;color:#ebf8ff;text-decoration:none;font-weight:700}
+.earth {background:radial-gradient(ellipse,#143846,#050e15 75%);text-align:center;padding:.65rem}
+.earth h2 {font-size:1.1rem;color:#a5edf5}
+#earth {width:min(100%,23rem);display:block;margin:auto;touch-action:pan-y}
+.rotation {display:flex;align-items:center;justify-content:center;gap:.65rem;color:#9fc5d2}
+.rotation button {width:3rem}
+#panel section {margin-top:.5rem;padding:clamp(.6rem,2vw,1.4rem)}
+@media(max-width:480px){#workspace form{display:block}#workspace input,#workspace form button{margin:.3rem 0}main{width:calc(100% - .8rem)}}

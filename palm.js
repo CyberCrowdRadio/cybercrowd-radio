@@ -55,8 +55,9 @@ async function refresh() {
   const generation = ++version;
   el('refresh').disabled = true;
   try {
-    const { profiles, feeds } = await ask('palm-list');
+    const { profiles, feeds, stageName } = await ask('palm-list');
     if (generation !== version) return;
+    el('identity-welcome').textContent = stageName ? 'Welcome, ' + stageName : 'My Palm';
     el('workspace').hidden = false;
     el('panel').hidden = false;
     el('signin').hidden = true;

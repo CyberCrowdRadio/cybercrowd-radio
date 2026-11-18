@@ -16,19 +16,20 @@ main {padding:1rem 0} header {display:flex;align-items:baseline;justify-content:
 header a,li a {overflow-wrap:anywhere} .account-head {margin-bottom:1rem}
 li {display:block} li small {display:block;color:#abc6ce} li button {margin:.45rem .4rem 0 0}
 a {line-height:1.65} input {min-width:0} #events a {font-weight:bold}
-</style></head><body><main>
+</style>
+<link rel="stylesheet" href="pda.css"></head><body><main>
 <div id="workspace" hidden>
-<header class="account-head"><div><p class="eyebrow">CyberCrowd</p><h1>My Palm</h1></div></header>
-<div id="panel" hidden>
+<header class="account-head"><div><p class="eyebrow">CyberCrowd</p><h1 id="identity-welcome">My Palm</h1></div></header>
+<div class="device"><div class="screen"><section class="earth"><h2>World map</h2><canvas id="earth" width="560" height="560" tabindex="0" aria-label="World map. Drag or use the left and right arrow keys to rotate."></canvas><div class="rotation"><button id="west" aria-label="Rotate west">←</button><span>Rotate</span><button id="east" aria-label="Rotate east">→</button></div></section><div id="panel" hidden>
 <section><header><h2>Activity</h2><button id="refresh" style="width:auto">Refresh</button></header>
 <p id="empty"></p><ul id="events"></ul></section>
-<section><h2>My platforms</h2><ul id="profiles"></ul><a href="uidl.html#socials">Attach profiles</a></section>
-<section><h2>My feeds</h2><p>Attach an RSS or Atom feed for XR, news, posts or replies. It must allow reading from your browser.</p>
+<section id="platforms"><h2>My platforms</h2><ul id="profiles"></ul><a href="uidl.html#socials">Attach profiles</a></section>
+<section id="feeds"><h2>My feeds</h2><p>Attach an RSS or Atom feed for XR, news, posts or replies. It must allow reading from your browser.</p>
 <form id="add"><label for="address">Feed address</label><input type="url" id="address" placeholder="https://" maxlength="1000" required><button>Attach feed</button></form>
 <ul id="sources"></ul></section>
 </div>
-<nav><a href="channels.html">Channels</a><a href="uidl.html#resume">My living résumé</a><a href="uidl.html">My account</a><a href="index.html">Radio entrance</a></nav>
+</div><nav class="edge" aria-label="PDA edge controls"><a href="#platforms">Social</a><a href="channels.html">Public</a><a href="uidl.html#projects">Private</a><a href="market.html">Shop</a><a href="uidl.html#resume">I CAN</a></nav></div><nav><a href="#feeds">My feeds</a><a href="uidl.html#identity">My Dewey card</a><a href="index.html">Radio entrance</a></nav>
 </div>
 <p id="status" role="status">Checking your account…</p>
 <a id="signin" href="signin.html?return=palm" hidden>Sign in</a>
-</main><script src="cc-authority.js"></script><script src="palm.js?v=account-palm" type="module"></script></body></html>
+</main><script src="cc-authority.js"></script><script src="palm.js?v=pda" type="module"></script><script type="module" src="pda-earth.js"></script></body></html>
