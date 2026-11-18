@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="cc-channels-console.css" />
+  <link rel="stylesheet" href="cc-channels-console.css?v=puzzle1" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='8' y='8' width='84' height='84' rx='6' fill='%231a120b' stroke='%23c9a227' stroke-width='5'/><circle cx='50' cy='50' r='22' fill='none' stroke='%23c9a227' stroke-width='4'/><circle cx='50' cy='50' r='5' fill='%23a93226'/></svg>" />
 </head>
 <body>
@@ -79,19 +79,64 @@
             <a href="market.html">Creator Market</a>
           </nav>
         </aside>
-        <section class="cc-module cc-bay" aria-label="Channel rotator" aria-roledescription="carousel">
-          <div class="cc-page-controls" id="rotatorControls">
-            <button type="button" id="rotatorPrevious" aria-label="Rotate left">‹</button>
-            <span id="rotatorPosition" role="status">No feeds · 01 / 06</span>
-            <button type="button" id="rotatorNext" aria-label="Rotate right">›</button>
-          </div>
-          <div id="channelsGrid" class="cc-channel-grid" tabindex="0" aria-label="Channel sockets">
-            <div class="cc-rotator-socket" aria-hidden="true"><span>01</span></div>
-            <div class="cc-rotator-socket" aria-hidden="true"><span>02</span></div>
-            <div class="cc-rotator-socket" aria-hidden="true"><span>03</span></div>
-            <div class="cc-rotator-socket" aria-hidden="true"><span>04</span></div>
-            <div class="cc-rotator-socket" aria-hidden="true"><span>05</span></div>
-            <div class="cc-rotator-socket" aria-hidden="true"><span>06</span></div>
+        <section class="cc-module cc-bay" aria-label="Channel puzzle lock">
+          <div id="channelsGrid" class="cc-puzzle-lock" tabindex="-1">
+            <div class="lock-cap" aria-hidden="true">▾</div>
+            <div class="lock-ring" data-lane="socials" role="group" aria-label="Socials">
+              <button class="turn-back" type="button" aria-label="Turn Socials left">‹</button>
+              <button class="lock-face" type="button" aria-label="Socials, empty position 0" aria-disabled="true">
+                <span class="dial-before" aria-hidden="true">9</span>
+                <span class="dial-center"><strong>Socials</strong><small class="dial-entry">Empty · 0</small></span>
+                <span class="dial-after" aria-hidden="true">1</span>
+              </button>
+              <button class="turn-next" type="button" aria-label="Turn Socials right">›</button>
+            </div>
+            <div class="lock-ring" data-lane="following" role="group" aria-label="Following">
+              <button class="turn-back" type="button" aria-label="Turn Following left">‹</button>
+              <button class="lock-face" type="button" aria-label="Following, empty position 0" aria-disabled="true">
+                <span class="dial-before" aria-hidden="true">9</span>
+                <span class="dial-center"><strong>Following</strong><small class="dial-entry">Empty · 0</small></span>
+                <span class="dial-after" aria-hidden="true">1</span>
+              </button>
+              <button class="turn-next" type="button" aria-label="Turn Following right">›</button>
+            </div>
+            <div class="lock-ring" data-lane="liked" role="group" aria-label="Liked">
+              <button class="turn-back" type="button" aria-label="Turn Liked left">‹</button>
+              <button class="lock-face" type="button" aria-label="Liked, empty position 0" aria-disabled="true">
+                <span class="dial-before" aria-hidden="true">9</span>
+                <span class="dial-center"><strong>Liked</strong><small class="dial-entry">Empty · 0</small></span>
+                <span class="dial-after" aria-hidden="true">1</span>
+              </button>
+              <button class="turn-next" type="button" aria-label="Turn Liked right">›</button>
+            </div>
+            <div class="lock-ring" data-lane="new" role="group" aria-label="New listings">
+              <button class="turn-back" type="button" aria-label="Turn New listings left">‹</button>
+              <button class="lock-face" type="button" aria-label="New listings, empty position 0" aria-disabled="true">
+                <span class="dial-before" aria-hidden="true">9</span>
+                <span class="dial-center"><strong>New listings</strong><small class="dial-entry">Empty · 0</small></span>
+                <span class="dial-after" aria-hidden="true">1</span>
+              </button>
+              <button class="turn-next" type="button" aria-label="Turn New listings right">›</button>
+            </div>
+            <div class="lock-ring" data-lane="news" role="group" aria-label="News channels">
+              <button class="turn-back" type="button" aria-label="Turn News channels left">‹</button>
+              <button class="lock-face" type="button" aria-label="News channels, empty position 0" aria-disabled="true">
+                <span class="dial-before" aria-hidden="true">9</span>
+                <span class="dial-center"><strong>News channels</strong><small class="dial-entry">Empty · 0</small></span>
+                <span class="dial-after" aria-hidden="true">1</span>
+              </button>
+              <button class="turn-next" type="button" aria-label="Turn News channels right">›</button>
+            </div>
+            <div class="lock-ring" data-lane="attached" role="group" aria-label="Attached channels">
+              <button class="turn-back" type="button" aria-label="Turn Attached channels left">‹</button>
+              <button class="lock-face" type="button" aria-label="Attached channels, empty position 0" aria-disabled="true">
+                <span class="dial-before" aria-hidden="true">9</span>
+                <span class="dial-center"><strong>Attached channels</strong><small class="dial-entry">Empty · 0</small></span>
+                <span class="dial-after" aria-hidden="true">1</span>
+              </button>
+              <button class="turn-next" type="button" aria-label="Turn Attached channels right">›</button>
+            </div>
+            <div class="lock-cap lock-foot" aria-hidden="true">▴</div>
           </div>
         </section>
         <section class="cc-module cc-channel-info" id="channelInfo" aria-labelledby="channelInfoTitle">
@@ -147,7 +192,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
   <script src="config.js"></script>
-  <script src="cc-channels-page.js"></script>
+  <script src="cc-channels-page.js?v=puzzle1"></script>
   <script src="cc-eq-engine.js"></script>
   <script src="cc-eq-rail.js"></script>
   <script src="cc-eq-faders.js"></script>

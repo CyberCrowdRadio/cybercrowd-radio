@@ -280,29 +280,27 @@
   }
 }
 
-.cc-bay { overflow: hidden; }
-.cc-bay .cc-page-controls { border-bottom: 1px solid #315565; padding-bottom: .3rem; }
-#rotatorPosition { color: #b1ebfb; font: 650 .85rem/1.3 system-ui, sans-serif; font-variant-numeric: tabular-nums; }
-.cc-rotator-socket {
-  position: relative;
-  min-height: 78px;
-  border: 2px solid #4c98af;
-  border-radius: 7px;
-  background: radial-gradient(ellipse at 50% 0%, #163648, #091621 62%, #050c12);
-  box-shadow: inset 0 0 0 3px #060e16, inset 0 0 16px #18729144, 0 0 5px #43b9dc33;
-}
-.cc-rotator-socket::before {
-  content: '';
-  position: absolute;
-  inset: 9%;
-  border-block: 1px solid #39617766;
-}
-.cc-rotator-socket span { position: absolute; bottom: 12%; left: 9%; color: #86aabd; font: 600 .82rem/1 monospace; }
-@container cc-chassis (min-width: 760px) {
-  .cc-rotator-socket { min-height: 0; }
-  .cc-bay .cc-channel-grid { gap: clamp(3px, .7cqw, 10px); margin-top: .35rem; }
-}
-@container cc-chassis (max-width: 759px) {
-  .cc-console { display: grid; grid-template-columns: minmax(0,1fr); }
-  .cc-bay { grid-column: 1; grid-row: 1; }
+
+/* Six brass drums share the alignment marks and rotate separately. */
+.cc-console .cc-bay.cc-module {display:grid;grid-template-rows:minmax(0,1fr);place-items:stretch center;overflow:hidden;background:radial-gradient(ellipse,#20303a,#070e14 72%);}
+.cc-puzzle-lock {width:min(99%,31rem);display:grid;grid-template-rows:.46fr repeat(6,1fr) .46fr;min-height:0;padding-inline:2%;filter:drop-shadow(0 4px 4px #000);}
+.lock-ring,.lock-cap {border:1px solid #60451c;border-radius:7% / 15%;background:linear-gradient(90deg,#35291a,#9b8244 10%,#c1a866 20%,#6b572d 31%,#ddc88d 48%,#f2dea2 55%,#9c8141 72%,#4b391b 93%,#211b14);box-shadow:inset 0 2px 1px #fff0ba8a,inset 0 -3px 2px #241d10,0 2px 1px black;}
+.lock-cap {width:98%;justify-self:center;display:grid;place-items:end center;line-height:1;color:#35250c;font-size:1rem;border-radius:19% 19% 6% 6% / 58% 58% 22% 22%;}
+.lock-foot {place-items:start center;transform:scaleY(1);border-radius:6% 6% 19% 19% / 22% 22% 58% 58%;}
+.lock-ring {display:grid;align-items:stretch;grid-template-columns:10% 1fr 10%;min-height:0;isolation:isolate;}
+.lock-ring button {font:inherit;border:0;border-radius:0;background:transparent;color:#211a0d;cursor:pointer;padding:0;min-width:0;min-height:0;touch-action:manipulation;}
+.lock-ring .turn-back,.lock-ring .turn-next {color:#ffe6a2;font-size:1.45rem;text-shadow:0 1px 2px black;}
+.lock-ring .lock-face {touch-action:pan-y pinch-zoom;display:grid;grid-template-columns:16% 1fr 16%;align-items:stretch;user-select:none;background:repeating-linear-gradient(90deg,transparent 0 10%,#372a1580 10.4%,#fff5c680 10.8%,transparent 11% 21%);}
+.lock-face > span {align-content:center;text-align:center;}
+.dial-before,.dial-after {font:700 clamp(.8rem,1.5vw,1.1rem)/1 Georgia,serif;color:#342711;text-shadow:0 1px #eed998;}
+.dial-center {min-width:0;border-inline:1px solid #513d1e;background:linear-gradient(90deg,#b49b61,#ecda9f 50%,#baa16b);display:grid;padding:1px 3px;}
+.dial-center strong,.dial-entry {display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#241b0d;line-height:1.15;}
+.dial-center strong {font-size:clamp(.85rem,1.7cqw,1.3rem);}
+.dial-entry {font:600 clamp(.7rem,1.15cqw,.92rem)/1.15 system-ui,sans-serif;}
+.lock-ring:focus-within {outline:2px solid #83e7ff;outline-offset:-2px;}
+@container cc-chassis (max-width:759px) {
+  .cc-console {display:grid;grid-template-columns:minmax(0,1fr);}
+  .cc-bay {grid-column:1;grid-row:1;}
+  .cc-puzzle-lock {min-height:344px;}
+  .lock-ring {grid-template-columns:44px 1fr 44px;}
 }

@@ -1,27 +1,19 @@
-/* Render the published directory and browse it without entering a channel. */
+/*
+File repo: CyberCrowdRadio/cybercrowd-radio
+File name: cc-channels-page.js
+Movements: Give each puzzle ring its own turning position.
+Purpose: Browse published destinations inside the Channels console.
+Does NOT: Publish drafts or expose an observer's private follows or likes.
+*/
 (function () {
   'use strict';
-
   const byId = id => document.getElementById(id);
   const grid = byId('channelsGrid');
   if (!grid) return;
-
-  const directory = window.STATION_CONFIG?.channels || [];
-  const pageSize = 6;
-  const channels = directory.filter(channel => channel && secure(channel.src));
-  const positions = Math.max(pageSize, channels.length);
-  const previous = byId('rotatorPrevious');
-  const next = byId('rotatorNext');
+  const channels = (window.STATION_CONFIG?.channels || []).filter(item => item && secure(item.src));
   const viewer = byId('selectedChannelLink');
   const stage = byId('channelDetails');
   const placeholder = byId('channelEmptyInfo');
-  const returnChannel = new URLSearchParams(location.search).get('selected');
-  let selected = returnChannel ? channels.findIndex(channel => String(channel.id || channel.name) === returnChannel) : -1;
-  let first = selected < 0 ? 0 : Math.floor(selected / pageSize) * pageSize;
-  let swipe;
-  let lastTouchTap;
-  let ignoreClickUntil = 0;
-
   function secure(value) {
     try {
       const url = new URL(value);
@@ -32,7 +24,6 @@
   }
 
   function selectChannel(index) {
-    selected = index;
     const channel = channels[index];
     byId('selectedChannelName').textContent = channel.name || 'Creator channel';
     byId('selectedChannelDescription').textContent = channel.description || '';
@@ -51,94 +42,87 @@
       list.append(item);
     }
     creatorLinks.hidden = !list.childElementCount;
-    grid.querySelectorAll('button').forEach(card => {
-      card.setAttribute('aria-pressed', String(Number(card.dataset.channelIndex) === index));
-    });
     placeholder.hidden = true;
     stage.hidden = false;
   }
 
-  function renderPage() {
-    grid.replaceChildren();
-    for (let offset = 0; offset < pageSize; offset++) {
-      const index = (first + offset) % positions;
-      const channel = channels[index];
-      if (!channel) {
-        const socket = document.createElement('div');
-        socket.className = 'cc-rotator-socket';
-        socket.setAttribute('aria-hidden', 'true');
-        const marker = document.createElement('span');
-        marker.textContent = String(index + 1).padStart(2, '0');
-        socket.append(marker);
-        grid.append(socket);
-        continue;
+
+  const returning = new URLSearchParams(location.search).get('selected');
+  const entries = { socials: [], following: [], liked: [], new: [], news: [], attached: [] };
+  channels.forEach((channel, index) => {
+    const entry = { label: channel.name || 'Creator channel', index };
+    entries.new.push(entry);
+    if (channel.kind === 'news' || channel.category === 'news') entries.news.push(entry);
+    if (channel.attached === true) entries.attached.push(entry);
+    for (const link of Array.isArray(channel.links) ? channel.links : []) {
+      const href = secure(link?.url);
+      if (href && link.label) entries.socials.push({ label: link.label, index, href });
+    }
+  });
+
+  for (const ring of grid.querySelectorAll('.lock-ring')) {
+    const lane = ring.dataset.lane;
+    const items = entries[lane];
+    const stops = Math.max(10, items.length);
+    const face = ring.querySelector('.lock-face');
+    const title = ring.querySelector('strong').textContent;
+    const restored = lane === 'new' && returning
+      ? items.findIndex(item => String(channels[item.index].id || channels[item.index].name) === returning) : -1;
+    let position = Math.max(0, restored);
+    let drag;
+    let ignoreUntil = 0;
+    let lastTap = -Infinity;
+    function paint() {
+      const item = items[position];
+      const value = item ? item.label : 'Empty · ' + position;
+      ring.querySelector('.dial-before').textContent = (position + stops - 1) % stops;
+      ring.querySelector('.dial-after').textContent = (position + 1) % stops;
+      ring.querySelector('.dial-entry').textContent = value;
+      face.setAttribute('aria-label', title + ', ' + value + ', position ' + position);
+      face.setAttribute('aria-disabled', String(!item));
+    }
+    function turn(step) {
+      position = (position + stops + step) % stops;
+      lastTap = -Infinity;
+      paint();
+      if (face.animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        face.animate([{ backgroundPositionX: (step * 21) + 'px' }, { backgroundPositionX: '0px' }], { duration: 220 });
       }
-      const button = document.createElement('button');
-      button.type = 'button';
-      button.className = 'cc-channel-select';
-      button.dataset.channelIndex = index;
-      button.setAttribute('aria-pressed', String(selected === index));
-      const title = document.createElement('strong');
-      title.textContent = channel.name || 'Creator channel';
-      const kind = document.createElement('span');
-      kind.textContent = channel.kind || 'Channel destination';
-      button.append(title, kind);
-      button.addEventListener('click', event => {
-        const now = performance.now();
-        if (now < ignoreClickUntil) return;
-        selectChannel(index);
-        if (event.pointerType === 'touch') {
-          if (lastTouchTap?.index === index && now - lastTouchTap.time <= 350) {
-            lastTouchTap = undefined;
-            viewer.click();
-            return;
-          }
-          lastTouchTap = { index, time: now };
-        }
-      });
-      button.addEventListener('dblclick', event => {
-        if (event.sourceCapabilities?.firesTouchEvents || performance.now() < ignoreClickUntil) return;
-        selectChannel(index);
-        viewer.click();
-      });
-      grid.append(button);
     }
-    const position = String(first + 1).padStart(2, '0') + ' / ' + String(positions).padStart(2, '0');
-    byId('rotatorPosition').textContent = (channels.length ? '' : 'No feeds · ') + position;
-  }
-
-  function move(direction) {
-    first = (first + direction + positions) % positions;
-    lastTouchTap = undefined;
-    renderPage();
-    if (grid.animate && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      grid.animate([{ transform: 'translateX(' + (direction * 12) + 'px)', opacity: 0.75 },
-        { transform: 'none', opacity: 1 }], { duration: 180, easing: 'ease-out' });
+    ring.querySelector('.turn-back').addEventListener('click', () => turn(-1));
+    ring.querySelector('.turn-next').addEventListener('click', () => turn(1));
+    ring.addEventListener('keydown', event => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      event.preventDefault();
+      turn(event.key === 'ArrowLeft' ? -1 : 1);
+    });
+    face.addEventListener('pointerdown', event => {
+      if (!event.isPrimary || event.button !== 0) return;
+      drag = { id: event.pointerId, x: event.clientX, y: event.clientY };
+      face.setPointerCapture(event.pointerId);
+    });
+    face.addEventListener('pointercancel', () => { drag = undefined; });
+    face.addEventListener('pointerup', event => {
+      if (!drag || event.pointerId !== drag.id) return;
+      const dx = event.clientX - drag.x, dy = event.clientY - drag.y;
+      drag = undefined;
+      if (Math.abs(dx) < 28 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+      ignoreUntil = performance.now() + 420;
+      turn(dx < 0 ? 1 : -1);
+    });
+    function show(item) {
+      selectChannel(item.index);
+      viewer.textContent = item.href ? 'Open ' + item.label : 'Enter channel';
+      if (item.href) viewer.href = item.href;
     }
+    face.addEventListener('click', event => {
+      const now = performance.now(), item = items[position];
+      if (!item || now < ignoreUntil) return;
+      show(item);
+      if (event.detail === 2 || (event.pointerType === 'touch' && now - lastTap < 350)) viewer.click();
+      lastTap = now;
+    });
+    paint();
+    if (restored >= 0) show(items[restored]);
   }
-
-  previous.addEventListener('click', () => move(-1));
-  next.addEventListener('click', () => move(1));
-  grid.addEventListener('pointerdown', event => {
-    if (event.pointerType === 'touch' && event.isPrimary) swipe = { x: event.clientX, y: event.clientY };
-  });
-  grid.addEventListener('pointercancel', () => { swipe = undefined; });
-  grid.addEventListener('pointerup', event => {
-    if (!swipe || !event.isPrimary) return;
-    const x = event.clientX - swipe.x;
-    const y = event.clientY - swipe.y;
-    swipe = undefined;
-    if (Math.abs(x) < 45 || Math.abs(x) <= Math.abs(y) * 1.25) return;
-    ignoreClickUntil = performance.now() + 350;
-    move(x < 0 ? 1 : -1);
-  });
-
-  grid.addEventListener('keydown', event => {
-    if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
-    event.preventDefault();
-    move(event.key === 'ArrowLeft' ? -1 : 1);
-    grid.focus();
-  });
-  renderPage();
-  if (selected >= 0) selectChannel(selected);
 })();
