@@ -63,7 +63,7 @@ Does NOT: Publish drafts or expose an observer's private follows or likes.
   for (const ring of grid.querySelectorAll('.lock-ring')) {
     const lane = ring.dataset.lane;
     const items = entries[lane];
-    const stops = Math.max(10, items.length);
+    let stops = Math.max(10, items.length);
     const face = ring.querySelector('.lock-face');
     const title = ring.querySelector('strong').textContent;
     const restored = lane === 'new' && returning
@@ -111,7 +111,13 @@ Does NOT: Publish drafts or expose an observer's private follows or likes.
       turn(dx < 0 ? 1 : -1);
     });
     function show(item) {
-      selectChannel(item.index);
+      if (item.personal) {
+        byId('selectedChannelName').textContent = item.label;
+        byId('selectedChannelDescription').textContent = item.href;
+        byId('selectedCreatorLinks').hidden = true;
+        placeholder.hidden = true;
+        stage.hidden = false;
+      } else selectChannel(item.index);
       viewer.textContent = item.href ? 'Open ' + item.label : 'Enter channel';
       if (item.href) viewer.href = item.href;
     }
@@ -123,6 +129,18 @@ Does NOT: Publish drafts or expose an observer's private follows or likes.
       lastTap = now;
     });
     paint();
+    if (lane === 'socials') {
+      const session = localStorage.getItem('ccr-session');
+      if (session) window.CCAuthority.ask('/api/channel-projects', { session, action: 'list-socials' }).then(result => {
+        if (!Array.isArray(result.urls)) return;
+        const own = result.urls.map(secure).filter(Boolean).map(href => ({
+          label: new URL(href).host.replace(/^www\./, '') + new URL(href).pathname.replace(/\/$/, ''), href, personal: true
+        }));
+        items.unshift(...own);
+        stops = Math.max(10, items.length);
+        paint();
+      });
+    }
     if (restored >= 0) show(items[restored]);
   }
 })();

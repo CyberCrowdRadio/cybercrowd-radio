@@ -46,11 +46,24 @@
         </dl>
         <button id="card-action" type="button" hidden>Load account details</button>
       </section>
+      <section id="socials" aria-labelledby="social-title">
+        <h2 id="social-title">My socials</h2>
+        <p>Attach profile links to your private Socials ring.</p>
+        <form id="social-form" hidden>
+          <label for="social-url">Social profile URL</label>
+          <input id="social-url" type="url" inputmode="url" placeholder="https://" maxlength="1000" required>
+          <button>Attach link</button>
+        </form>
+        <ul id="social-list" aria-label="Attached profiles"></ul>
+        <p id="social-status" role="status"></p>
+        <a href="channels.html#channelsGrid">Open my Socials ring</a>
+      </section>
     </div>
     <nav aria-label="Account settings"><a href="channel-department.html">Channel settings</a><a href="recovery.html">Account recovery</a></nav>
   </main>
   <script src="cc-authority.js"></script>
   <script src="uidl-projects.js"></script>
+  <script src="uidl-socials.js"></script>
   <script src="uidl-account-card.js"></script>
 </body>
 </html>
