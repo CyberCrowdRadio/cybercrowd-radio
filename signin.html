@@ -59,7 +59,7 @@ document.getElementById('signinForm').addEventListener('submit', async function(
     localStorage.setItem('ccr-session', res.session);
   } catch (_) {}
   window.location.href = new URLSearchParams(location.search).get('return') === 'uidl'
-    ? 'uidl.html' : 'station.html';
+    ? 'uidl.html' : new URLSearchParams(location.search).get('return') === 'palm' ? 'palm.html' : 'station.html';
 });
 </script>
 </body>

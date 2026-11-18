@@ -10,7 +10,7 @@
 <body>
   <header class="mast">
     <a class="wordmark" href="station.html" aria-label="CyberCrowd Radio station"></a>
-    <a href="channels.html">‹ Channels</a>
+    <a href="palm.html">My Palm</a> <a href="channels.html">‹ Channels</a>
   </header>
   <main>
     <header class="account-head">
@@ -46,6 +46,16 @@
         </dl>
         <button id="card-action" type="button" hidden>Load account details</button>
       </section>
+      <section id="resume">
+        <h2>My living résumé</h2>
+        <p id="ican-status" role="status">Loading I CAN…</p>
+        <ul id="ican-list"></ul>
+        <form id="ican-form" hidden>
+          <label for="ican-name">I CAN</label><input id="ican-name" maxlength="300" required placeholder="What can you do?">
+          <label for="ican-proof">Evidence link (optional)</label><input id="ican-proof" type="url" maxlength="1000" placeholder="https://">
+          <button>Attach to my résumé</button>
+        </form>
+      </section>
       <section id="socials" aria-labelledby="social-title">
         <h2 id="social-title">My socials</h2>
         <p>Attach profile links to your private Socials ring.</p>
@@ -63,6 +73,7 @@
   </main>
   <script src="cc-authority.js"></script>
   <script src="uidl-projects.js"></script>
+  <script src="uidl-ican.js" defer></script>
   <script src="uidl-socials.js"></script>
   <script src="uidl-account-card.js"></script>
 </body>
