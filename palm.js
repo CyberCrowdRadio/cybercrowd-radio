@@ -1,14 +1,26 @@
 /*
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: palm.js
-Movements: Load UIDL subscriptions and display attributed activity at the Radio entrance.
+Movements: Load UIDL subscriptions and display attributed activity inside the verified account.
 Purpose: Let the owner open profiles, read feeds and acknowledge entries.
 Does NOT: Infer reactions or contacts from a profile URL.
 */
 import { publicLink, readFeed } from './palm-feed.js';
 const el = id => document.getElementById(id);
 const status = message => { el('status').textContent = message; };
-el('full').hidden = window.top === window;
+const accountSession = localStorage.getItem('ccr-session');
+function requireSignIn() {
+  el('workspace').hidden = true;
+  location.replace('signin.html?return=palm');
+}
+window.addEventListener('storage', () => {
+  if (localStorage.getItem('ccr-session') !== accountSession) {
+    el('workspace').hidden = true;
+    location.reload();
+  }
+});
+window.addEventListener('pagehide', () => { el('workspace').hidden = true; });
+window.addEventListener('pageshow', event => { if (event.persisted) location.reload(); });
 function make(tag, text) {
   const node = document.createElement(tag);
   node.textContent = text;
@@ -32,9 +44,9 @@ function button(label, handler) {
 }
 async function ask(action, url, entryIds) {
   const session = localStorage.getItem('ccr-session');
-  if (!session) throw Error('Sign in to see your platforms and activity.');
+  if (!session || session !== accountSession) { requireSignIn(); throw Error('Sign in required.'); }
   const result = await window.CCAuthority.ask('/api/channel-projects', { session, action, url, entryIds });
-  if (result.signIn) { el('panel').hidden = true; el('signin').hidden = false; }
+  if (result.signIn) { requireSignIn(); throw Error('Sign in required.'); }
   if (result.error || result.ok === false) throw Error(result.error || 'Authority is unavailable.');
   return result;
 }
@@ -45,6 +57,7 @@ async function refresh() {
   try {
     const { profiles, feeds } = await ask('palm-list');
     if (generation !== version) return;
+    el('workspace').hidden = false;
     el('panel').hidden = false;
     el('signin').hidden = true;
     const profileRows = profiles.filter(url => publicLink(url)).map(url => {
@@ -104,5 +117,5 @@ el('add').onsubmit = async event => {
   catch (error) { status(error.message); }
   finally { save.disabled = false; }
 };
-el('signin').hidden = !!localStorage.getItem('ccr-session');
-refresh();
+if (accountSession) refresh();
+else requireSignIn();

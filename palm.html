@@ -2,14 +2,14 @@
 <!--
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: palm.html
-Movements: Open the owner's Palm from the public Radio entrance.
+Movements: Open the owner's Palm inside the verified account.
 Purpose: Read connected feeds and open the owner's attached platforms.
 Does NOT: Publish private subscriptions.
 -->
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>My Palm | CyberCrowd</title><base target="_top">
+<title>My Palm | CyberCrowd</title>
 <link rel="stylesheet" href="uidl-account.css">
 <style>
 main {padding:1rem 0} header {display:flex;align-items:baseline;justify-content:space-between;gap:.5rem}
@@ -17,9 +17,8 @@ header a,li a {overflow-wrap:anywhere} .account-head {margin-bottom:1rem}
 li {display:block} li small {display:block;color:#abc6ce} li button {margin:.45rem .4rem 0 0}
 a {line-height:1.65} input {min-width:0} #events a {font-weight:bold}
 </style></head><body><main>
-<header class="account-head"><div><p class="eyebrow">CyberCrowd</p><h1>My Palm</h1></div><a id="full" href="palm.html" hidden>Full screen</a></header>
-<p id="status" role="status">Opening your Palm…</p>
-<a id="signin" href="signin.html?return=palm" hidden>Sign in to My Palm</a>
+<div id="workspace" hidden>
+<header class="account-head"><div><p class="eyebrow">CyberCrowd</p><h1>My Palm</h1></div></header>
 <div id="panel" hidden>
 <section><header><h2>Activity</h2><button id="refresh" style="width:auto">Refresh</button></header>
 <p id="empty"></p><ul id="events"></ul></section>
@@ -29,4 +28,7 @@ a {line-height:1.65} input {min-width:0} #events a {font-weight:bold}
 <ul id="sources"></ul></section>
 </div>
 <nav><a href="channels.html">Channels</a><a href="uidl.html#resume">My living résumé</a><a href="uidl.html">My account</a><a href="index.html">Radio entrance</a></nav>
-</main><script src="cc-authority.js"></script><script src="palm.js" type="module"></script></body></html>
+</div>
+<p id="status" role="status">Checking your account…</p>
+<a id="signin" href="signin.html?return=palm" hidden>Sign in</a>
+</main><script src="cc-authority.js"></script><script src="palm.js?v=account-palm" type="module"></script></body></html>

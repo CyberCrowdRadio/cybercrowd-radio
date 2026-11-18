@@ -12,7 +12,10 @@
 
   async function ask(action, fields = {}) {
     const result = await window.CCAuthority.ask('/api/channel-projects', { session, action, ...fields });
-    if (result.signIn) signIn.hidden = false;
+    if (result.signIn) {
+      signIn.hidden = false;
+      byId('my-palm').hidden = true;
+    }
     if (result.error || result.ok === false) throw new Error(
       result.ok === false ? 'Could not reach Radio Authority. Try again.' : result.error
     );
@@ -53,6 +56,7 @@
       byId(project.archived ? 'archived' : 'active').append(row);
     }
     byId('projects').hidden = false;
+    byId('my-palm').hidden = false;
   }
 
   async function change(action, fields) {
