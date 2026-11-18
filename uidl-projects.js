@@ -24,6 +24,12 @@
     byId('welcome').textContent = result.stageName ? 'Welcome, ' + result.stageName : 'My Account';
     for (const id of ['active', 'archived']) byId(id).replaceChildren();
     byId('empty').hidden = result.projects.some(project => !project.archived);
+    const archivedCount = result.projects.filter(project => project.archived).length;
+    byId('archive-count').textContent = '(' + archivedCount + ')';
+    byId('no-archives').hidden = archivedCount > 0;
+    byId('add-button').textContent = result.projects.length ? 'Add another project' : 'Create first project';
+    if (!result.projects.length) byId('empty').textContent = 'Create your first private channel draft.';
+    else byId('empty').textContent = 'All your projects are archived.';
     for (const project of result.projects) {
       const row = document.createElement('li');
       const name = document.createElement('span');

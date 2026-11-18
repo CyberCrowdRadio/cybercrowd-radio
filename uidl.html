@@ -1,46 +1,56 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>My Account | CyberCrowd Radio</title>
-<link rel="stylesheet" href="style.css">
-<style>
-main.uidl { box-sizing:border-box; max-width:38rem; margin:auto; padding:1.25rem; color:#fff7ea; }
-.uidl h1 { overflow-wrap:anywhere; }
-.uidl a { color:#f2c77e; }
-.uidl button, .uidl input { font:inherit; min-height:44px; padding:.55rem .8rem; }
-.uidl button { border:1px solid #856c48; border-radius:.5rem; background:#251f18; color:#fff7ea; }
-.uidl form button { background:#f2c77e; color:#23190c; font-weight:bold; }
-.uidl form { display:flex; gap:.5rem; flex-wrap:wrap; align-items:end; }
-.uidl input { display:block; box-sizing:border-box; width:100%; }
-.uidl li { margin-block:.65rem; display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; overflow-wrap:anywhere; }
-.uidl li span { flex:1 1 12rem; }
-.uidl ul { padding:0; }
-</style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#09121a">
+  <title>My Account | CyberCrowd Radio</title>
+  <link rel="stylesheet" href="uidl-account.css">
 </head>
-<body style="background:#15120f">
-<main class="uidl">
-<a href="channels.html">‹ Channels</a>
-<h1 id="welcome">My Account</h1>
-<p id="status" role="status">Checking your session…</p>
-<a id="sign-in" href="signin.html?return=uidl" hidden>Sign in to CyberCrowd Radio</a>
-<section id="projects" hidden>
-<h2>My Projects</h2>
-<p id="empty">Your project list is empty.</p>
-<ul id="active" aria-label="Active projects"></ul>
-<form id="add-project">
-<label>Project name<input name="projectName" maxlength="100" required></label>
-<button>Add another project</button>
-</form>
-<details>
-<summary>Archived channels</summary>
-<ul id="archived" aria-label="Archived channels"></ul>
-</details>
-</section>
-<p><a href="channel-department.html">Existing channel settings</a></p>
-</main>
-<script src="cc-authority.js"></script>
-<script src="uidl-projects.js"></script>
+<body>
+  <header class="mast">
+    <a class="wordmark" href="station.html" aria-label="CyberCrowd Radio station"></a>
+    <a href="channels.html">‹ Channels</a>
+  </header>
+  <main>
+    <header class="account-head">
+      <p class="eyebrow">My account</p>
+      <h1 id="welcome">Welcome</h1>
+      <p id="status" role="status">Checking your session…</p>
+      <a id="sign-in" href="signin.html?return=uidl" hidden>Sign in to CyberCrowd Radio</a>
+    </header>
+    <div class="desk">
+      <section id="projects" hidden>
+        <h2>My projects</h2>
+        <p id="empty">Create your first private channel draft.</p>
+        <ul id="active" aria-label="Active projects"></ul>
+        <form id="add-project">
+          <label for="project-name">Project or show name</label>
+          <input id="project-name" name="projectName" maxlength="100" required>
+          <button id="add-button">Create project</button>
+        </form>
+        <details><summary>Archived channels <span id="archive-count"></span></summary>
+          <p id="no-archives">No archived channels.</p>
+          <ul id="archived" aria-label="Archived channels"></ul>
+        </details>
+      </section>
+      <section id="identity" hidden>
+        <p class="eyebrow">Private account details</p>
+        <h2>My Dewey card</h2>
+        <p id="card-status" role="status">Loading account details…</p>
+        <dl id="card-fields" hidden>
+          <dt>Stage name</dt><dd id="stage"></dd>
+          <dt>Channel / show name on card</dt><dd id="show"></dd>
+          <dt>Account email</dt><dd id="email"></dd>
+          <dt>Weather ZIP</dt><dd id="zip"></dd>
+        </dl>
+        <button id="card-action" type="button" hidden>Load account details</button>
+      </section>
+    </div>
+    <nav aria-label="Account settings"><a href="channel-department.html">Channel settings</a><a href="recovery.html">Account recovery</a></nav>
+  </main>
+  <script src="cc-authority.js"></script>
+  <script src="uidl-projects.js"></script>
+  <script src="uidl-account-card.js"></script>
 </body>
 </html>
