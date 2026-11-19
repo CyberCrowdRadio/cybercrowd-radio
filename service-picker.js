@@ -47,7 +47,7 @@ const services = [
   ["medium","Medium","Username","https://medium.com/@","Publishing"],
   ["vimeo","Vimeo","Profile name","https://vimeo.com/","Video"],
   ["kick","Kick","Channel name","https://kick.com/","Video"],
-  ["steam","Steam","Custom profile name","https://steamcommunity.com/id/","Gaming"],
+  ["steam","Steam","Custom profile name","https://steamcommunity.com/id/","Gaming",true],
   ["itchdotio","itch.io","Creator name","https://{handle}.itch.io/","Gaming"],
   ["linktree","Linktree","Username","https://linktr.ee/","Publishing"]
 ];
@@ -98,6 +98,7 @@ class ServicePicker extends HTMLElement {
       menu.hidden = !atMenu;
       grid.hidden = atMenu;
       back.hidden = atMenu;
+      manual.hidden=true;
       heading.textContent = atMenu ? 'Choose a category' : term ? 'Search results' : group;
       form.hidden = true;
       message.textContent = '';
@@ -144,6 +145,30 @@ class ServicePicker extends HTMLElement {
     message.setAttribute('role','status');
     form.append(label,input,save);
     let selected;
+    const manual=document.createElement('button');
+    manual.type='button';
+    manual.textContent='Save a public profile link';
+    manual.hidden=true;
+    const ready=new Set(['steam']);
+    function labelTile(tile,name){
+      const direct=ready.has(tile.dataset.service);
+      tile.lastChild.textContent=direct ? 'Sign in' : 'Profile link';
+      tile.setAttribute('aria-label',(direct?'Sign in with ':'Add a public link for ')+name);
+    }
+    function signIntoRadio(id){
+      sessionStorage.setItem('cc-social-resume',id);
+      location.assign('signin.html?return=uidl#socials');
+    }
+    manual.onclick=()=>{
+      const [,name,field,base]=selected;
+      manual.hidden=true;
+      label.textContent=name+' · '+field;
+      form.hidden=false;
+      input.value='';
+      input.type=base?'text':'url';
+      input.placeholder=base?field:'https://';
+      input.focus();
+    };
     for (const service of services) {
       const [id,name,field,base,group,consent] = service;
       const tile = document.createElement('button');
@@ -153,49 +178,34 @@ class ServicePicker extends HTMLElement {
       tile.dataset.search = (name+' '+group+' '+id).toLowerCase();
       tile.setAttribute('aria-pressed','false');
       tile.innerHTML = '<svg aria-hidden="true" focusable="false"><use href="palm-icons.svg?v=catalog43#'+id+'"></use></svg>';
-      tile.append(document.createTextNode(name));
-      tile.setAttribute('aria-label',(consent?'Connect ':'Add ')+name);
+      tile.append(document.createTextNode(name),document.createElement('small'));
+      labelTile(tile,name);
       tile.onclick = async () => {
-        selected = service;
-        form.hidden = true;
-        const session = localStorage.getItem('ccr-session');
-        if (!session) { location.assign('signin.html?return=uidl'); return; }
-        if (!consent) {
-          for(const other of grid.children) other.setAttribute('aria-pressed',String(other===tile));
-          message.textContent = 'Save your '+name+' page to your private Socials ring.';
-          label.textContent = name+' · '+field;
-          input.value = '';
-          input.type = base ? 'text' : 'url';
-          input.placeholder = base ? field : 'https://';
-          form.hidden = false;
-          input.focus();
+        selected=service;
+        form.hidden=true;
+        manual.hidden=true;
+        const session=localStorage.getItem('ccr-session');
+        if(!session){signIntoRadio(id);return;}
+        for(const other of grid.children) other.setAttribute('aria-pressed',String(other===tile));
+        if(!consent){
+          message.textContent=name+' account sign-in is unavailable on CyberCrowd.';
+          manual.hidden=false;
+          manual.focus();
           return;
         }
-        input.type='text';
-        input.placeholder=field;
-        for (const other of grid.children) {
-          other.disabled = true;
-          other.setAttribute('aria-pressed',String(other === tile));
-        }
-        message.textContent = 'Opening '+name+' sign-in…';
+        message.textContent='Opening '+name+' sign-in…';
+        for(const other of grid.children) other.disabled=true;
         try {
-          const result = await window.CCAuthority.ask('/api/social-connect',{action:'begin',provider:id,session});
-          if (result.signIn) { location.assign('signin.html?return=uidl'); return; }
-          if (result.url && result.state) {
+          const result=await window.CCAuthority.ask('/api/social-connect',{action:'begin',provider:id,session});
+          if(result.signIn){signIntoRadio(id);return;}
+          if(result.url && result.state){
             sessionStorage.setItem('cc-social-pending',JSON.stringify({state:result.state,provider:id,back:location.pathname}));
-            location.assign(result.url);
-            return;
+            location.assign(result.url);return;
           }
-          message.textContent = result.error || 'Connection unavailable. Try again.';
-          if (result.unavailable) {
-            message.textContent = name+' sign-in is unavailable. You can save your public profile here.';
-            label.textContent = name+' '+field.toLowerCase();
-            form.hidden = false;
-            input.value = '';
-            input.focus();
-          }
-        } catch { message.textContent = 'Could not open sign-in. Try again.'; }
-        finally { for (const other of grid.children) other.disabled=false; }
+          message.textContent=result.unavailable ? name+' account sign-in is unavailable on CyberCrowd.' : result.error || 'Could not open sign-in. Try again.';
+          manual.hidden=!result.unavailable;
+        }catch{message.textContent='Could not open sign-in. Try again.';}
+        finally{for(const other of grid.children) other.disabled=false;}
       };
       grid.append(tile);
     }
@@ -217,7 +227,20 @@ class ServicePicker extends HTMLElement {
       } catch (error) { message.textContent = error.message; }
       finally { save.disabled = false; for (const tile of grid.children) tile.disabled = false; }
     };
-    this.append(filters,heading,menu,message,form,empty,grid);
+    this.append(filters,heading,menu,message,manual,form,empty,grid);
+    fetch('https://radio-authority.cybercrowdradio.workers.dev/api/social-connect',{cache:'no-store'})
+      .then(response=>response.ok ? response.json() : null).then(result=>{
+        if(!Array.isArray(result?.configured))return;
+        ready.clear();
+        for(const id of result.configured)ready.add(id);
+        Array.from(grid.children).forEach((tile,index)=>labelTile(tile,services[index][1]));
+      }).catch(()=>{});
+    const resume=sessionStorage.getItem('cc-social-resume');
+    if(resume && localStorage.getItem('ccr-session') && location.hash==='#socials'){
+      sessionStorage.removeItem('cc-social-resume');
+      const tile=Array.from(grid.children).find(tile=>tile.dataset.service===resume);
+      if(tile){group=tile.dataset.group;queueMicrotask(()=>tile.click());}
+    }
     renderMenu();
   }
 }
