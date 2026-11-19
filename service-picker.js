@@ -78,26 +78,56 @@ class ServicePicker extends HTMLElement {
     search.type = 'search';
     search.placeholder = 'Find a platform';
     search.setAttribute('aria-label','Find a platform');
-    const category = document.createElement('select');
-    category.setAttribute('aria-label','Filter platforms by use');
-    category.add(new Option('All platforms',''));
-    for (const group of [...new Set(services.map(s=>s[4]))].sort()) category.add(new Option(group,group));
-    filters.append(search,category);
+    const back = document.createElement('button');
+    back.type = 'button';
+    back.textContent = '‹ Categories';
+    const heading = document.createElement('h3');
+    const menu = document.createElement('div');
+    menu.className = 'service-menu';
+    menu.setAttribute('role','group');
+    menu.setAttribute('aria-label','Platform categories');
+    filters.append(search,back);
     const empty = document.createElement('p');
     empty.hidden = true;
-    empty.textContent = 'No matching platforms. Try another name or category.';
-    function filter() {
-      let count=0;
-      const term=search.value.trim().toLowerCase();
-      for(const tile of grid.children){
-        tile.hidden=!!((category.value && tile.dataset.group!==category.value) ||
-          !tile.dataset.search.includes(term));
-        if(!tile.hidden) count++;
+    empty.textContent = 'No matching platforms. Try another name.';
+    let group = '';
+    let lastCategory;
+    function renderMenu() {
+      const term = search.value.trim().toLowerCase();
+      const atMenu = !term && !group;
+      menu.hidden = !atMenu;
+      grid.hidden = atMenu;
+      back.hidden = atMenu;
+      heading.textContent = atMenu ? 'Choose a category' : term ? 'Search results' : group;
+      form.hidden = true;
+      message.textContent = '';
+      let count = 0;
+      for (const tile of grid.children) {
+        tile.hidden = atMenu || (term ? !tile.dataset.search.includes(term) : tile.dataset.group !== group);
+        if (!tile.hidden) count++;
       }
-      empty.hidden=count!==0;
+      empty.hidden = atMenu || count > 0;
     }
-    search.addEventListener('input',filter);
-    category.addEventListener('change',filter);
+    for (const name of [...new Set(services.map(service => service[4]))].sort()) {
+      const option = document.createElement('button');
+      option.type = 'button';
+      const count = services.filter(service => service[4] === name).length;
+      option.textContent = name + ' (' + count + ')';
+      option.onclick = () => {
+        group = name;
+        lastCategory = option;
+        renderMenu();
+        Array.from(grid.children).find(tile => !tile.hidden)?.focus();
+      };
+      menu.append(option);
+    }
+    search.addEventListener('input', () => { group = ''; renderMenu(); });
+    back.onclick = () => {
+      group = '';
+      search.value = '';
+      renderMenu();
+      (lastCategory || search).focus();
+    };
     const form = document.createElement('form');
     form.hidden = true;
     const label = document.createElement('label');
@@ -187,7 +217,8 @@ class ServicePicker extends HTMLElement {
       } catch (error) { message.textContent = error.message; }
       finally { save.disabled = false; for (const tile of grid.children) tile.disabled = false; }
     };
-    this.append(filters,message,form,empty,grid);
+    this.append(filters,heading,menu,message,form,empty,grid);
+    renderMenu();
   }
 }
 customElements.define('cc-service-picker',ServicePicker);
