@@ -1,9 +1,9 @@
 /*
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: service-picker.js
-Movements: Attach platforms by choosing their service icon and entering a handle.
+Movements: Start provider sign-in from each platform icon.
 Purpose: Save profile attachments through the existing UIDL authority.
-Does NOT: Sign into another service or subscribe to its private activity.
+Does NOT: Collect provider passwords.
 */
 const services = [
   [
@@ -96,14 +96,41 @@ class ServicePicker extends HTMLElement {
       tile.setAttribute('aria-pressed','false');
       tile.innerHTML = '<svg aria-hidden="true" focusable="false"><use href="palm-icons.svg#'+id+'"></use></svg>';
       tile.append(document.createTextNode(name));
-      tile.onclick = () => {
+      tile.setAttribute('aria-label','Connect '+name);
+      tile.onclick = async () => {
         selected = service;
-        for (const other of grid.children) other.setAttribute('aria-pressed',String(other === tile));
-        label.textContent = name+' '+field.toLowerCase();
-        form.hidden = false;
-        input.value = '';
-        message.textContent = '';
-        input.focus();
+        form.hidden = true;
+        const session = localStorage.getItem('ccr-session');
+        if (!session) { location.assign('signin.html?return=uidl'); return; }
+        for (const other of grid.children) {
+          other.disabled = true;
+          other.setAttribute('aria-pressed',String(other === tile));
+        }
+        message.textContent = 'Opening '+name+' sign-in…';
+        try {
+          const result = await window.CCAuthority.ask('/api/social-connect',{action:'begin',provider:id,session});
+          if (result.signIn) { location.assign('signin.html?return=uidl'); return; }
+          if (result.url && result.state) {
+            sessionStorage.setItem('cc-social-pending',JSON.stringify({state:result.state,provider:id,back:location.pathname}));
+            location.assign(result.url);
+            return;
+          }
+          message.textContent = result.error || 'Connection unavailable. Try again.';
+          if (result.unavailable) {
+            const manual = document.createElement('button');
+            manual.type = 'button';
+            manual.textContent = 'Save a profile link instead';
+            manual.onclick = () => {
+              manual.remove();
+              label.textContent = name+' '+field.toLowerCase();
+              form.hidden = false;
+              input.value = '';
+              input.focus();
+            };
+            message.append(' ',manual);
+          }
+        } catch { message.textContent = 'Could not open sign-in. Try again.'; }
+        finally { for (const other of grid.children) other.disabled=false; }
       };
       grid.append(tile);
     }
