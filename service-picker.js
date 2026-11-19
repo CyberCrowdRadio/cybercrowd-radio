@@ -117,17 +117,11 @@ class ServicePicker extends HTMLElement {
           }
           message.textContent = result.error || 'Connection unavailable. Try again.';
           if (result.unavailable) {
-            const manual = document.createElement('button');
-            manual.type = 'button';
-            manual.textContent = 'Save a profile link instead';
-            manual.onclick = () => {
-              manual.remove();
-              label.textContent = name+' '+field.toLowerCase();
-              form.hidden = false;
-              input.value = '';
-              input.focus();
-            };
-            message.append(' ',manual);
+            message.textContent = name+' sign-in is unavailable. You can save your public profile here.';
+            label.textContent = name+' '+field.toLowerCase();
+            form.hidden = false;
+            input.value = '';
+            input.focus();
           }
         } catch { message.textContent = 'Could not open sign-in. Try again.'; }
         finally { for (const other of grid.children) other.disabled=false; }

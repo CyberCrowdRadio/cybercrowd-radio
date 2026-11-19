@@ -14,6 +14,7 @@ try {
     throw Error('This sign-in did not start in this tab. Return to your account and tap the service again.');
   sessionStorage.removeItem('cc-social-pending');
   if (['/palm','/palm.html'].includes(pending.back)) {back.href='/palm';back.textContent='Back to My Palm';}
+  if (['/channels','/channels.html'].includes(pending.back)) {back.href='/channels';back.textContent='Back to Channels';}
   if (params.has('error') || !params.get('code')) throw Error('Sign-in was not completed.');
   const result=await window.CCAuthority.ask('/api/social-connect',{
     action:'finish',provider:pending.provider,state:pending.state,code:params.get('code'),session:localStorage.getItem('ccr-session')

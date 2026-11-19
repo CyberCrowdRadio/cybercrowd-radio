@@ -304,3 +304,11 @@
   .cc-puzzle-lock {min-height:344px;}
   .lock-ring {grid-template-columns:44px 1fr 44px;}
 }
+
+#ring-prompt {width:min(92vw,26rem);max-height:85dvh;overflow:auto;box-sizing:border-box;padding:1.25rem;border:1px solid #68c4d4;border-radius:12px;color:#edf8fa;background:#0b1c24;font:1rem/1.45 system-ui,sans-serif}
+#ring-prompt::backdrop {background:#000b}
+#ring-prompt form[method="dialog"] {float:right}
+#ring-prompt h2 {margin:0 0 .75rem;font-size:1.5rem}
+#ring-prompt button,#ring-action {min-height:44px;cursor:pointer}
+#ring-action {display:inline-flex;align-items:center;padding:0 1rem;color:#171512;background:#ffd179;border-radius:6px;font-weight:700}
+#ring-prompt [hidden] {display:none}

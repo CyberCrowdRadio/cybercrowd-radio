@@ -74,12 +74,12 @@ Does NOT: Publish drafts or expose an observer's private follows or likes.
     let lastTap = -Infinity;
     function paint() {
       const item = items[position];
-      const value = item ? item.label : 'Empty · ' + position;
+      const value = item ? item.label : lane === 'socials' ? 'Link a social' : 'Tap to open';
       ring.querySelector('.dial-before').textContent = (position + stops - 1) % stops;
       ring.querySelector('.dial-after').textContent = (position + 1) % stops;
       ring.querySelector('.dial-entry').textContent = value;
       face.setAttribute('aria-label', title + ', ' + value + ', position ' + position);
-      face.setAttribute('aria-disabled', String(!item));
+      face.setAttribute('aria-haspopup',item ? 'false' : 'dialog');
     }
     function turn(step) {
       position = (position + stops + step) % stops;
@@ -123,23 +123,81 @@ Does NOT: Publish drafts or expose an observer's private follows or likes.
     }
     face.addEventListener('click', event => {
       const now = performance.now(), item = items[position];
-      if (!item || now < ignoreUntil) return;
+      if (now < ignoreUntil) return;
+      if (!item) { openEmpty(); return; }
       show(item);
       if (event.detail === 2 || (event.pointerType === 'touch' && now - lastTap < 350)) viewer.click();
       lastTap = now;
     });
+    const dialog = byId('ring-prompt');
+    const actionLink = byId('ring-action'), note = byId('ring-message'), picker = byId('ring-picker');
+    let socialState = 'guest';
+    function openEmpty() {
+      byId('ring-title').textContent = title;
+      picker.hidden = true;
+      actionLink.hidden = false;
+      actionLink.onclick = null;
+      if (lane === 'socials') {
+        const own = items.some(entry => entry.personal);
+        note.textContent = socialState === 'guest' ? 'Would you like to link a social to your account?' :
+          socialState === 'loading' ? 'Checking your socials…' :
+          socialState === 'error' ? 'Your socials couldn’t be loaded.' :
+          own ? 'Would you like to link another social?' : 'You have no socials linked. Would you like to link one?';
+        actionLink.textContent = socialState === 'guest' ? 'Sign in to link a social' : socialState === 'error' ? 'Try again' : 'Link a social';
+        actionLink.href = socialState === 'guest' ? 'signin.html?return=uidl#socials' : '#socials';
+        actionLink.hidden = socialState === 'loading';
+        if (socialState !== 'guest') actionLink.onclick = event => {
+          event.preventDefault();
+          if (socialState === 'error') { refreshSocials(); return; }
+          actionLink.hidden = true; picker.hidden = false; note.textContent = 'Choose a platform.';
+          picker.querySelector('button')?.focus();
+        };
+      } else {
+        const prompts = {
+          following:['There’s no followed channel in this position.','Find a service','/service'],
+          liked:['There’s no liked channel in this position.','Browse the archive','/archive'],
+          new:['There’s no new listing in this position.','Open my projects','/uidl#projects'],
+          news:['There’s no news channel in this position.','Explore the map','/palm'],
+          attached:['There’s no attached channel in this position.','Open channel settings','/channel-department']
+        };
+        const [message,label,href] = prompts[lane];
+        note.textContent = message; actionLink.textContent = label; actionLink.href = href;
+      }
+      dialog.dataset.lane = lane;
+      if (!dialog.open) dialog.showModal();
+      if (!actionLink.hidden) actionLink.focus();
+    }
+    async function refreshSocials(afterSave=false) {
+      const session=localStorage.getItem('ccr-session');
+      if (!session) return;
+      socialState='loading';
+      const isOpen=()=>dialog.open && dialog.dataset.lane==='socials';
+      if (isOpen()) openEmpty();
+      try {
+        const result=await window.CCAuthority.ask('/api/channel-projects',{session,action:'list-socials'});
+        if (result.signIn) socialState='guest';
+        else if (!Array.isArray(result.urls)) socialState='error';
+        else {
+          const creatorLinks=items.filter(entry=>!entry.personal);
+          const own=result.urls.map(secure).filter(Boolean).map(href=>({
+            label:new URL(href).host.replace(/^www\./,'')+new URL(href).pathname.replace(/\/$/,''),href,personal:true
+          }));
+          items.splice(0,items.length,...own,...creatorLinks);
+          stops=Math.max(10,items.length);
+          if(afterSave || position>=stops) position=0;
+          socialState='ready';
+        }
+      } catch { socialState='error'; }
+      paint();
+      if (isOpen()) {
+        if(afterSave && socialState==='ready' && items[0]?.personal) {dialog.close();show(items[0]);}
+        else openEmpty();
+      }
+    }
     paint();
-    if (lane === 'socials') {
-      const session = localStorage.getItem('ccr-session');
-      if (session) window.CCAuthority.ask('/api/channel-projects', { session, action: 'list-socials' }).then(result => {
-        if (!Array.isArray(result.urls)) return;
-        const own = result.urls.map(secure).filter(Boolean).map(href => ({
-          label: new URL(href).host.replace(/^www\./, '') + new URL(href).pathname.replace(/\/$/, ''), href, personal: true
-        }));
-        items.unshift(...own);
-        stops = Math.max(10, items.length);
-        paint();
-      });
+    if(lane==='socials'){
+      refreshSocials();
+      picker.addEventListener('cc-profile-attached',()=>refreshSocials(true));
     }
     if (restored >= 0) show(items[restored]);
   }
