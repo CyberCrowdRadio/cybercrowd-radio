@@ -107,6 +107,7 @@ async function refresh() {
   } catch (error) { if (generation === version) status(error.message); }
   finally { if (generation === version) el('refresh').disabled = false; }
 }
+document.addEventListener('cc-profile-attached',refresh);
 el('refresh').onclick = refresh;
 el('add').onsubmit = async event => {
   event.preventDefault();

@@ -1,0 +1,8 @@
+cc-service-picker {display:block;margin:.65rem 0}
+.service-grid {display:grid;grid-template-columns:repeat(auto-fit,minmax(min(5rem,100%),1fr));gap:.45rem}
+.service-grid button {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:.4rem;background:#102833;color:#edf8fc;border:1px solid #53727c;border-radius:.55rem;min-height:64px;padding:.45rem .18rem;font-size:.83rem}
+.service-grid svg,.edge svg {width:26px;height:26px;fill:currentColor}
+.service-grid [data-service=xbox] svg {color:#83da69}.service-grid [data-service=youtube] svg {color:#ff6969}.service-grid [data-service=twitch] svg {color:#c096ff}.service-grid [data-service=facebook] svg {color:#78afff}.service-grid [data-service=dlive] svg {color:#ffd15d}
+.service-grid button[aria-pressed=true] {border-color:#ffd182;background:#244856}
+.edge a {gap:.18rem;padding:.45rem 0}.edge svg {width:21px;height:21px}
+cc-service-picker form[hidden]{display:none!important}

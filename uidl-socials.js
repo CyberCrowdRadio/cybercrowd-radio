@@ -51,5 +51,6 @@ Does NOT: Publish a profile or ask for social passwords.
     event.preventDefault();
     refresh('attach-social', input.value.trim());
   };
+  document.addEventListener('cc-profile-attached', () => refresh());
   await refresh();
 })();

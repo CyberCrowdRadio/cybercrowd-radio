@@ -6,6 +6,7 @@
   <meta name="theme-color" content="#09121a">
   <title>My Account | CyberCrowd Radio</title>
   <link rel="stylesheet" href="uidl-account.css">
+  <link rel="stylesheet" href="service-icons.css"><script type="module" src="service-picker.js"></script>
 </head>
 <body>
   <header class="mast">
@@ -60,13 +61,13 @@
       </section>
       <section id="socials" aria-labelledby="social-title">
         <h2 id="social-title">My socials</h2>
-        <p>Attach profile links to your private Socials ring.</p>
+        <cc-service-picker></cc-service-picker><details><summary>Other platform</summary>
         <form id="social-form" hidden>
           <label for="social-url">Social profile URL</label>
           <input id="social-url" type="url" inputmode="url" placeholder="https://" maxlength="1000" required>
           <button>Attach link</button>
         </form>
-        <ul id="social-list" aria-label="Attached profiles"></ul>
+        </details><ul id="social-list" aria-label="Attached profiles"></ul>
         <p id="social-status" role="status"></p>
         <a href="channels.html#channelsGrid">Open my Socials ring</a>
       </section>

@@ -54,7 +54,8 @@ window.STATION_CONFIG = {
      YouTube-style live channel choices. Sources are not established yet —
      add channel entries here when they're real. Empty = section stays honest. */
   channels: [
-    // { name: "Studio Live",  kind: "video", src: "" },
+    // A channel may opt into the Palm map with a publicCountry two-letter country code.
+    // { name: "Studio Live", kind: "video", src: "", publicCountry: "US" },
     // { name: "Vinyl Vault",  kind: "playlist", src: "" },
   ],
 
