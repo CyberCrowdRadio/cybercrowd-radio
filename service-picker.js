@@ -96,6 +96,7 @@ class ServicePicker extends HTMLElement {
       const term = search.value.trim().toLowerCase();
       const atMenu = !term && !group;
       menu.hidden = !atMenu;
+      quick.hidden = !atMenu || !quickActions.children.length;
       grid.hidden = atMenu;
       back.hidden = atMenu;
       manual.hidden=true;
@@ -150,6 +151,24 @@ class ServicePicker extends HTMLElement {
     manual.textContent='Save a public profile link';
     manual.hidden=true;
     const ready=new Set(['steam']);
+    const quick=document.createElement('section');
+    const quickTitle=document.createElement('h3');
+    quickTitle.textContent='Link by signing in';
+    const quickActions=document.createElement('div');
+    quickActions.className='service-menu';
+    quick.append(quickTitle,quickActions);
+    function updateShortcuts(){
+      quickActions.replaceChildren();
+      for(const [index,service] of services.entries()){
+        if(!ready.has(service[0]))continue;
+        const button=document.createElement('button');
+        button.type='button';
+        button.textContent='Sign in with '+service[1];
+        button.onclick=()=>grid.children[index].click();
+        quickActions.append(button);
+      }
+      quick.hidden=menu.hidden || !quickActions.children.length;
+    }
     function labelTile(tile,name){
       const direct=ready.has(tile.dataset.service);
       tile.lastChild.textContent=direct ? 'Sign in' : 'Profile link';
@@ -227,13 +246,15 @@ class ServicePicker extends HTMLElement {
       } catch (error) { message.textContent = error.message; }
       finally { save.disabled = false; for (const tile of grid.children) tile.disabled = false; }
     };
-    this.append(filters,heading,menu,message,manual,form,empty,grid);
+    this.append(quick,filters,heading,menu,message,manual,form,empty,grid);
+    updateShortcuts();
     fetch('https://radio-authority.cybercrowdradio.workers.dev/api/social-connect',{cache:'no-store'})
       .then(response=>response.ok ? response.json() : null).then(result=>{
         if(!Array.isArray(result?.configured))return;
         ready.clear();
         for(const id of result.configured)ready.add(id);
         Array.from(grid.children).forEach((tile,index)=>labelTile(tile,services[index][1]));
+        updateShortcuts();
       }).catch(()=>{});
     const resume=sessionStorage.getItem('cc-social-resume');
     if(resume && localStorage.getItem('ccr-session') && location.hash==='#socials'){
