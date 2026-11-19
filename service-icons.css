@@ -6,3 +6,5 @@ cc-service-picker {display:block;margin:.65rem 0}
 .service-grid button[aria-pressed=true] {border-color:#ffd182;background:#244856}
 .edge a {gap:.18rem;padding:.45rem 0}.edge svg {width:21px;height:21px}
 cc-service-picker form[hidden]{display:none!important}
+
+.service-filters{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:.75rem}.service-filters input,.service-filters select{box-sizing:border-box;min-width:0;max-width:100%;min-height:44px;padding:.4rem .65rem}.service-filters input{flex:2 1 9rem}.service-filters select{flex:1 1 8rem}.service-grid button[hidden]{display:none!important}.service-grid button{overflow-wrap:anywhere}.service-grid [data-service=depop] svg,.service-grid [data-service=vinted] svg{width:42px}

@@ -5,66 +5,66 @@ Movements: Start provider sign-in from each platform icon.
 Purpose: Save profile attachments through the existing UIDL authority.
 Does NOT: Collect provider passwords.
 */
+// The last field enables Authority's provider-consent flow when configured.
 const services = [
-  [
-    "xbox",
-    "Xbox",
-    "Gamertag",
-    "https://www.xbox.com/en-US/play/user/"
-  ],
-  [
-    "playstation",
-    "PlayStation",
-    "Online ID",
-    "https://profile.playstation.com/"
-  ],
-  [
-    "facebook",
-    "Facebook",
-    "Username",
-    "https://www.facebook.com/"
-  ],
-  [
-    "youtube",
-    "YouTube",
-    "Handle",
-    "https://www.youtube.com/@"
-  ],
-  [
-    "instagram",
-    "Instagram",
-    "Username",
-    "https://www.instagram.com/"
-  ],
-  [
-    "tiktok",
-    "TikTok",
-    "Username",
-    "https://www.tiktok.com/@"
-  ],
-  [
-    "x-twitter",
-    "X",
-    "Username",
-    "https://x.com/"
-  ],
-  [
-    "twitch",
-    "Twitch",
-    "Channel name",
-    "https://www.twitch.tv/"
-  ],
-  [
-    "dlive",
-    "DLive",
-    "Channel name",
-    "https://dlive.tv/"
-  ]
+  ["xbox","Xbox","Gamertag","https://www.xbox.com/en-US/play/user/","Gaming",true],
+  ["playstation","PlayStation","Online ID","https://profile.playstation.com/","Gaming",true],
+  ["facebook","Facebook","Username","https://www.facebook.com/","Social",true],
+  ["youtube","YouTube","Handle","https://www.youtube.com/@","Video",true],
+  ["instagram","Instagram","Username","https://www.instagram.com/","Social",true],
+  ["tiktok","TikTok","Username","https://www.tiktok.com/@","Video",true],
+  ["x-twitter","X","Username","https://x.com/","Social",true],
+  ["twitch","Twitch","Channel name","https://www.twitch.tv/","Video",true],
+  ["dlive","DLive","Channel name","https://dlive.tv/","Video",true],
+  ["threads","Threads","Username","https://www.threads.com/@","Social"],
+  ["bluesky","Bluesky","Full handle","https://bsky.app/profile/","Social"],
+  ["reddit","Reddit","Username","https://www.reddit.com/user/","Social"],
+  ["pinterest","Pinterest","Username","https://www.pinterest.com/","Social"],
+  ["snapchat","Snapchat","Username","https://www.snapchat.com/add/","Social"],
+  ["discord","Discord","Public invite code","https://discord.gg/","Community"],
+  ["telegram","Telegram","Channel username","https://t.me/","Community"],
+  ["whatsapp","WhatsApp","Public channel code","https://www.whatsapp.com/channel/","Community"],
+  ["mastodon","Mastodon","Full public profile URL","","Social"],
+  ["linkedin","LinkedIn","Profile name","https://www.linkedin.com/in/","Work"],
+  ["github","GitHub","Username","https://github.com/","Work"],
+  ["behance","Behance","Username","https://www.behance.net/","Work"],
+  ["dribbble","Dribbble","Username","https://dribbble.com/","Work"],
+  ["googlemaps","Google Business Profile","Google Maps place or share URL","","Work"],
+  ["vinted","Vinted","Public member URL","","Shops"],
+  ["ebay","eBay","Seller username","https://www.ebay.com/usr/","Shops"],
+  ["etsy","Etsy","Shop name","https://www.etsy.com/shop/","Shops"],
+  ["shopify","Shopify","Storefront URL","","Shops"],
+  ["gumroad","Gumroad","Shop name","https://{handle}.gumroad.com/","Shops"],
+  ["depop","Depop","Shop username","https://www.depop.com/","Shops"],
+  ["patreon","Patreon","Creator name","https://www.patreon.com/","Creator support"],
+  ["kofi","Ko-fi","Page name","https://ko-fi.com/","Creator support"],
+  ["buymeacoffee","Buy Me a Coffee","Page name","https://buymeacoffee.com/","Creator support"],
+  ["bandcamp","Bandcamp","Artist name in your URL","https://{handle}.bandcamp.com/","Music"],
+  ["soundcloud","SoundCloud","Profile name","https://soundcloud.com/","Music"],
+  ["spotify","Spotify","Artist ID","https://open.spotify.com/artist/","Music"],
+  ["mixcloud","Mixcloud","Username","https://www.mixcloud.com/","Music"],
+  ["substack","Substack","Publication name","https://{handle}.substack.com/","Publishing"],
+  ["medium","Medium","Username","https://medium.com/@","Publishing"],
+  ["vimeo","Vimeo","Profile name","https://vimeo.com/","Video"],
+  ["kick","Kick","Channel name","https://kick.com/","Video"],
+  ["steam","Steam","Custom profile name","https://steamcommunity.com/id/","Gaming"],
+  ["itchdotio","itch.io","Creator name","https://{handle}.itch.io/","Gaming"],
+  ["linktree","Linktree","Username","https://linktr.ee/","Publishing"]
 ];
 export function profileAddress(base, raw) {
+  if (!base) {
+    const address = new URL(raw.trim());
+    if (address.protocol !== 'https:' || address.username || address.password || address.href.length > 1000)
+      throw Error('Enter the full HTTPS link to your public page.');
+    return address.href;
+  }
   const handle = raw.trim().replace(/^@/, '');
   if (!handle || handle.length > 100 || /[\/\\:?&%\u0000-\u001f]/.test(handle) || /^\.+$/.test(handle))
     throw Error('Enter the name you use on this service.');
+  if (base.includes('{handle}')) {
+    if (!/^[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/i.test(handle)) throw Error('Enter the name before the first dot in your page address.');
+    return base.replace('{handle}',handle.toLowerCase());
+  }
   return base + encodeURIComponent(handle);
 }
 class ServicePicker extends HTMLElement {
@@ -72,6 +72,32 @@ class ServicePicker extends HTMLElement {
     if (this.children.length) return;
     const grid = document.createElement('div');
     grid.className = 'service-grid';
+    const filters = document.createElement('div');
+    filters.className = 'service-filters';
+    const search = document.createElement('input');
+    search.type = 'search';
+    search.placeholder = 'Find a platform';
+    search.setAttribute('aria-label','Find a platform');
+    const category = document.createElement('select');
+    category.setAttribute('aria-label','Filter platforms by use');
+    category.add(new Option('All platforms',''));
+    for (const group of [...new Set(services.map(s=>s[4]))].sort()) category.add(new Option(group,group));
+    filters.append(search,category);
+    const empty = document.createElement('p');
+    empty.hidden = true;
+    empty.textContent = 'No matching platforms. Try another name or category.';
+    function filter() {
+      let count=0;
+      const term=search.value.trim().toLowerCase();
+      for(const tile of grid.children){
+        tile.hidden=!!((category.value && tile.dataset.group!==category.value) ||
+          !tile.dataset.search.includes(term));
+        if(!tile.hidden) count++;
+      }
+      empty.hidden=count!==0;
+    }
+    search.addEventListener('input',filter);
+    category.addEventListener('change',filter);
     const form = document.createElement('form');
     form.hidden = true;
     const label = document.createElement('label');
@@ -89,19 +115,34 @@ class ServicePicker extends HTMLElement {
     form.append(label,input,save);
     let selected;
     for (const service of services) {
-      const [id,name,field] = service;
+      const [id,name,field,base,group,consent] = service;
       const tile = document.createElement('button');
       tile.type = 'button';
       tile.dataset.service = id;
+      tile.dataset.group = group;
+      tile.dataset.search = (name+' '+group+' '+id).toLowerCase();
       tile.setAttribute('aria-pressed','false');
-      tile.innerHTML = '<svg aria-hidden="true" focusable="false"><use href="palm-icons.svg#'+id+'"></use></svg>';
+      tile.innerHTML = '<svg aria-hidden="true" focusable="false"><use href="palm-icons.svg?v=catalog43#'+id+'"></use></svg>';
       tile.append(document.createTextNode(name));
-      tile.setAttribute('aria-label','Connect '+name);
+      tile.setAttribute('aria-label',(consent?'Connect ':'Add ')+name);
       tile.onclick = async () => {
         selected = service;
         form.hidden = true;
         const session = localStorage.getItem('ccr-session');
         if (!session) { location.assign('signin.html?return=uidl'); return; }
+        if (!consent) {
+          for(const other of grid.children) other.setAttribute('aria-pressed',String(other===tile));
+          message.textContent = 'Save your '+name+' page to your private Socials ring.';
+          label.textContent = name+' · '+field;
+          input.value = '';
+          input.type = base ? 'text' : 'url';
+          input.placeholder = base ? field : 'https://';
+          form.hidden = false;
+          input.focus();
+          return;
+        }
+        input.type='text';
+        input.placeholder=field;
         for (const other of grid.children) {
           other.disabled = true;
           other.setAttribute('aria-pressed',String(other === tile));
@@ -146,7 +187,7 @@ class ServicePicker extends HTMLElement {
       } catch (error) { message.textContent = error.message; }
       finally { save.disabled = false; for (const tile of grid.children) tile.disabled = false; }
     };
-    this.append(grid,form,message);
+    this.append(filters,message,form,empty,grid);
   }
 }
 customElements.define('cc-service-picker',ServicePicker);
