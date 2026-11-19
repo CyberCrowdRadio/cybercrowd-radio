@@ -38,6 +38,51 @@
       const name = document.createElement('span');
       name.textContent = project.name;
       row.append(name);
+      if (!project.archived) {
+        const panel=document.createElement('details'), summary=document.createElement('summary');
+        summary.textContent='Public service card';
+        panel.append(summary);
+        const evidence=document.createElement('select');
+        evidence.setAttribute('aria-label','Public work evidence for '+project.name);
+        evidence.add(new Option('Publish project name only',''));
+        let loaded=false;
+        panel.addEventListener('toggle',async()=>{
+          if(!panel.open || loaded)return;
+          try {
+            const {capabilities}=await ask('ican-list');
+            const urls=new Set(capabilities.flatMap(c=>c.evidence || []));
+            for(const url of urls)evidence.add(new Option(url,url));
+            evidence.value=urls.has(project.publicEvidence)?project.publicEvidence:'';
+            loaded=true;
+          } catch(error){status.textContent=error.message;}
+        });
+        panel.append(evidence);
+        const published=project.publicUntil>Date.now();
+        if(published){
+          const link=document.createElement('a');
+          link.href='/service?ulid='+encodeURIComponent(project.serviceUlid);
+          link.textContent='Open public card · '+project.serviceUlid;
+          panel.append(link);
+        }
+        for(const action of published?['publish','withdraw']:['publish']){
+          const button=document.createElement('button');
+          button.type='button';
+          button.textContent=action==='withdraw'?'Withdraw public card':published?'Update public card':'Publish service card';
+          button.onclick=async()=>{
+            if(busy)return;
+            busy=true;
+            status.textContent='Saving…';
+            try {
+              const result=await window.CCAuthority.ask('/api/service',{session,id:project.id,action,evidence:evidence.value});
+              if(!result.success)throw Error(result.error || 'Publication unavailable.');
+              await reload();
+              status.textContent=action==='withdraw'?'Public card withdrawn.':'Service ULID: '+result.ulid;
+            }catch(error){status.textContent=error.message;}finally{busy=false;}
+          };
+          panel.append(button);
+        }
+        row.append(panel);
+      }
       for (const [action, label] of [
         project.archived ? ['restore', 'Restore as draft'] : ['archive', 'Archive channel'],
         ['delete', 'Delete channel']
