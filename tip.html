@@ -1,3 +1,10 @@
+<!--
+File repo: CyberCrowdRadio/cybercrowd-radio
+File name: tip.html
+Movements: Replace inert dollar and token labels with accessible amount selection; add custom dollar amount; mark unimplemented payment options unavailable; preserve the Tip Jar visual shell.
+Purpose: Prepare honest payment selection without presenting fake payment success or a mandatory token refill.
+Does NOT: Charge cards, create Stripe sessions, grant CRWD, alter UIDL, or change the radio stream.
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -66,9 +73,27 @@
         <span style="position:absolute;right:18px;top:50%;transform:translateY(-50%);color:#c9a227;font-size:1.8rem;font-weight:300;">+</span>
         <div style="font-size:3rem;margin-bottom:8px;">🫙</div>
         <p class="now-playing" style="color:#e9c979;margin:0 0 16px;">Balance: <span id="tipjarBalance">—</span></p>
-        <div><h3>Tip choices</h3><p>Dollars</p><p><button type="button">$1</button> <button type="button">$5</button> <button type="button">$10</button> <button type="button">$20</button></p><p>CRWD tokens</p><p><button type="button">1 CRWD</button> <button type="button">5 CRWD</button> <button type="button">10 CRWD</button> <button type="button">20 CRWD</button></p><p>No token-to-dollar rate is set in this build. Tip choices are labels only. No charge is made here.</p></div><button id="tipjarBtn" style="display:block;width:100%;padding:16px;margin-bottom:12px;font-size:1.15rem;font-weight:800;letter-spacing:0.08em;color:#2a1b0b;background:linear-gradient(180deg,#ffd700 0%,#ffaa00 50%,#cc8800 100%);border:2px solid #fff3c4;border-radius:10px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(255,215,0,0.5),inset 0 1px 0 rgba(255,255,255,0.5);">ADD A TIP</button>
+        <div id="tipChoices" aria-label="Choose a tip">
+          <h3>Tip choices</h3>
+          <fieldset style="border:0;padding:0;margin:12px 0;">
+            <legend style="margin:auto;">Dollars — Stripe</legend>
+            <label><input type="radio" name="tipAmount" value="100" data-currency="usd" checked> $1</label>
+            <label><input type="radio" name="tipAmount" value="500" data-currency="usd"> $5</label>
+            <label><input type="radio" name="tipAmount" value="1000" data-currency="usd"> $10</label>
+            <label><input type="radio" name="tipAmount" value="2000" data-currency="usd"> $20</label>
+            <label style="display:block;margin:12px 0;">Custom dollars <input id="tipCustomUsd" type="number" min="1" max="1000" step="0.01" inputmode="decimal" placeholder="Amount in USD" aria-label="Custom dollar tip"></label>
+          </fieldset>
+          <fieldset style="border:0;padding:0;margin:12px 0;">
+            <legend style="margin:auto;">CRWD tokens — not yet available</legend>
+            <label><input type="radio" name="tipAmount" value="1" data-currency="crwd" disabled> 1 CRWD</label>
+            <label><input type="radio" name="tipAmount" value="5" data-currency="crwd" disabled> 5 CRWD</label>
+            <label><input type="radio" name="tipAmount" value="10" data-currency="crwd" disabled> 10 CRWD</label>
+            <label><input type="radio" name="tipAmount" value="20" data-currency="crwd" disabled> 20 CRWD</label>
+          </fieldset>
+          <p id="tipDisclosure">Stripe checkout is being connected. No payment will be charged until checkout is enabled.</p>
+        </div><button id="tipjarBtn" disabled aria-disabled="true" style="display:block;width:100%;padding:16px;margin-bottom:12px;font-size:1.15rem;font-weight:800;letter-spacing:0.08em;color:#2a1b0b;background:linear-gradient(180deg,#ffd700 0%,#ffaa00 50%,#cc8800 100%);border:2px solid #fff3c4;border-radius:10px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(255,215,0,0.5),inset 0 1px 0 rgba(255,255,255,0.5);">ADD A TIP</button>
         <p class="signal-state" id="tipjarStatus" aria-live="polite" style="margin:12px 0 0;font-size:0.85rem;color:#888;">Loading...</p>
-        <p style="margin:16px 0 0;color:#c9a227;font-weight:700;letter-spacing:0.2em;font-size:0.9rem;">TIP JAR</p><p id="tipNoFunds">You have no funds. You need to refill before you can tip.</p><p><a href="https://moonshot.money">Refill in Moonshot</a></p><p><a href="station.html">Exit - Back to the radio station</a></p>
+        <p style="margin:16px 0 0;color:#c9a227;font-weight:700;letter-spacing:0.2em;font-size:0.9rem;">TIP JAR</p><p id="tipNoFunds">CRWD balance and token tipping are not yet connected. Dollar tips will not require a token balance.</p><p><a href="station.html">Exit - Back to the radio station</a></p>
       </div>
       <div id="coinBannerSlot" style="max-width:420px;margin:18px auto 0;"></div>
       <style>
