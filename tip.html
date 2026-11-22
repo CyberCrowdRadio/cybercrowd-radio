@@ -1,9 +1,9 @@
 <!--
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: tip.html
-Movements: Replace inert dollar and token labels with accessible amount selection; add custom dollar amount; mark unimplemented payment options unavailable; preserve the Tip Jar visual shell.
-Purpose: Prepare honest payment selection without presenting fake payment success or a mandatory token refill.
-Does NOT: Charge cards, create Stripe sessions, grant CRWD, alter UIDL, or change the radio stream.
+Movements: Restore CRWD amount selection and Solana Pay wallet handoff using the existing verified public receiving address; preserve Stripe dollar choices.
+Purpose: Offer separate Stripe dollar checkout and user-approved Solana CRWD token transfer.
+Does NOT: Hold private keys, sign transfers, claim token receipt, alter UIDL, or change the radio stream.
 -->
 <!DOCTYPE html>
 <html lang="en">
@@ -84,16 +84,16 @@ Does NOT: Charge cards, create Stripe sessions, grant CRWD, alter UIDL, or chang
             <label style="display:block;margin:12px 0;">Custom dollars <input id="tipCustomUsd" type="number" min="1" max="1000" step="0.01" inputmode="decimal" placeholder="Amount in USD" aria-label="Custom dollar tip"></label>
           </fieldset>
           <fieldset style="border:0;padding:0;margin:12px 0;">
-            <legend style="margin:auto;">CRWD tokens — not yet available</legend>
-            <label><input type="radio" name="tipAmount" value="1" data-currency="crwd" disabled> 1 CRWD</label>
-            <label><input type="radio" name="tipAmount" value="5" data-currency="crwd" disabled> 5 CRWD</label>
-            <label><input type="radio" name="tipAmount" value="10" data-currency="crwd" disabled> 10 CRWD</label>
-            <label><input type="radio" name="tipAmount" value="20" data-currency="crwd" disabled> 20 CRWD</label>
+            <legend style="margin:auto;">CRWD tokens — Solana wallet approval required</legend>
+            <label><input type="radio" name="tipAmount" value="1" data-currency="crwd"> 1 CRWD</label>
+            <label><input type="radio" name="tipAmount" value="5" data-currency="crwd"> 5 CRWD</label>
+            <label><input type="radio" name="tipAmount" value="10" data-currency="crwd"> 10 CRWD</label>
+            <label><input type="radio" name="tipAmount" value="20" data-currency="crwd"> 20 CRWD</label>
           </fieldset>
-          <p id="tipDisclosure">Dollar tips use secure Stripe Checkout. A tip is recorded only after Stripe confirms payment.</p>
+          <p id="tipDisclosure">Dollar tips use Stripe Checkout. CRWD tips open a compatible Solana wallet for review and approval; opening the wallet does not prove a transfer.</p>
         </div><button id="tipjarBtn" style="display:block;width:100%;padding:16px;margin-bottom:12px;font-size:1.15rem;font-weight:800;letter-spacing:0.08em;color:#2a1b0b;background:linear-gradient(180deg,#ffd700 0%,#ffaa00 50%,#cc8800 100%);border:2px solid #fff3c4;border-radius:10px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(255,215,0,0.5),inset 0 1px 0 rgba(255,255,255,0.5);">ADD A TIP</button>
         <p class="signal-state" id="tipjarStatus" aria-live="polite" style="margin:12px 0 0;font-size:0.85rem;color:#888;">Loading...</p>
-        <p style="margin:16px 0 0;color:#c9a227;font-weight:700;letter-spacing:0.2em;font-size:0.9rem;">TIP JAR</p><p id="tipNoFunds">CRWD balance and token tipping are not yet connected. Dollar tips will not require a token balance.</p><p><a href="station.html">Exit - Back to the radio station</a></p>
+        <p style="margin:16px 0 0;color:#c9a227;font-weight:700;letter-spacing:0.2em;font-size:0.9rem;">TIP JAR</p><p id="tipNoFunds">CRWD wallet balance is not connected to this page. CRWD transfers require a compatible Solana wallet and sufficient CRWD and SOL for fees.</p><p><a href="station.html">Exit - Back to the radio station</a></p>
       </div>
       <div id="coinBannerSlot" style="max-width:420px;margin:18px auto 0;"></div>
       <style>
