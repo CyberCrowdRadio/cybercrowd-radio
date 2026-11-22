@@ -148,9 +148,9 @@ class ServicePicker extends HTMLElement {
     let selected;
     const manual=document.createElement('button');
     manual.type='button';
-    manual.textContent='Save a public profile link';
+    manual.textContent='Attach my public profile';
     manual.hidden=true;
-    const ready=new Set(['steam']);
+    const ready=new Set();
     const quick=document.createElement('section');
     const quickTitle=document.createElement('h3');
     quickTitle.textContent='Link by signing in';
@@ -207,7 +207,7 @@ class ServicePicker extends HTMLElement {
         if(!session){signIntoRadio(id);return;}
         for(const other of grid.children) other.setAttribute('aria-pressed',String(other===tile));
         if(!consent){
-          message.textContent=name+' account sign-in is unavailable on CyberCrowd.';
+          message.textContent='Direct sign-in is not configured for '+name+'. You can still attach your public profile to your CyberCrowd UIDL.';
           manual.hidden=false;
           manual.focus();
           return;
@@ -221,9 +221,9 @@ class ServicePicker extends HTMLElement {
             sessionStorage.setItem('cc-social-pending',JSON.stringify({state:result.state,provider:id,back:location.pathname}));
             location.assign(result.url);return;
           }
-          message.textContent=result.unavailable ? name+' account sign-in is unavailable on CyberCrowd.' : result.error || 'Could not open sign-in. Try again.';
-          manual.hidden=!result.unavailable;
-        }catch{message.textContent='Could not open sign-in. Try again.';}
+          message.textContent=result.unavailable ? 'Direct sign-in is not configured for '+name+'. Attach your public profile instead.' : result.error || 'Sign-in could not be opened. You can attach a public profile instead.';
+          manual.hidden=false;
+        }catch{message.textContent='Sign-in could not be opened. You can attach a public profile instead.';manual.hidden=false;}
         finally{for(const other of grid.children) other.disabled=false;}
       };
       grid.append(tile);
