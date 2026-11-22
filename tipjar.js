@@ -44,7 +44,7 @@ Does NOT: Charge cards, change CRWD balances, record receipts, or modify station
 
   function updateUI() {
     if (balEl) balEl.textContent = balance.toFixed(2) + ' CRWD';
-    if (tipBtn) tipBtn.disabled = true;
+    if (tipBtn) tipBtn.disabled = false;
   }
 
   function setStatus(t) {
@@ -106,10 +106,40 @@ Does NOT: Charge cards, change CRWD balances, record receipts, or modify station
     tipBtn = document.getElementById('tipjarBtn');
 
     if (tipBtn) {
-      tipBtn.disabled = true;
-      tipBtn.setAttribute('aria-disabled', 'true');
-      tipBtn.addEventListener('click', function () { setStatus('Stripe checkout is not connected yet. No charge was made.'); });
+      tipBtn.disabled = false;
+      tipBtn.removeAttribute('aria-disabled');
+      tipBtn.addEventListener('click', async function () {
+        var custom = document.getElementById('tipCustomUsd');
+        var checked = document.querySelector('input[name="tipAmount"]:checked');
+        var amount = custom && custom.value.trim()
+          ? Math.round(Number(custom.value) * 100)
+          : checked ? Number(checked.value) : 0;
+        if (!Number.isSafeInteger(amount) || amount < 100 || amount > 100000) {
+          setStatus('Choose a dollar tip between $1 and $1,000.'); return;
+        }
+        tipBtn.disabled = true;
+        setStatus('Connecting to secure Stripe Checkout...');
+        try {
+          var response = await fetch('https://radio-authority.cybercrowdradio.workers.dev/api/tipjar/checkout', {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({kind:'radio',amountCents:amount})
+          });
+          var result = await response.json();
+          if (!response.ok || !result.url || !result.url.startsWith('https://checkout.stripe.com/'))
+            throw new Error(result.error || 'Checkout unavailable.');
+          window.location.assign(result.url);
+        } catch (error) {
+          setStatus((error && error.message) || 'Checkout unavailable. No tip was recorded.');
+          tipBtn.disabled = false;
+        }
+      });
     }
+    var query = new URLSearchParams(window.location.search);
+    if (query.get('checkout') === 'return')
+      setStatus('Returned from Stripe. Payment confirmation is verified separately; this page does not claim a completed tip.');
+    else if (query.get('checkout') === 'cancel')
+      setStatus('Checkout canceled. No tip was recorded by this page.');
+    else setStatus('Choose a dollar amount to continue to Stripe Checkout.');
     var buyBtn = document.getElementById('tipjarBuy');
     if (buyBtn) buyBtn.addEventListener('click', buyCoins);
 
@@ -118,7 +148,7 @@ Does NOT: Charge cards, change CRWD balances, record receipts, or modify station
       if (window.CCRadioConfig && window.CCRadioConfig.apiUrl) API = window.CCRadioConfig.apiUrl;
     } catch (e) {}
 
-    setStatus('Stripe checkout is not connected yet. No charge will be made.');
+
     // Do not query the legacy CRWD balance endpoint: it is not an authorized payment ledger.
   }
 
