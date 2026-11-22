@@ -1,9 +1,9 @@
 /*
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: tipjar.js
-Movements: Keep payment action disabled until a verified Stripe checkout endpoint exists; stop presenting unavailable legacy token balance as a payment prerequisite.
-Purpose: Prevent a false payment or token-refill experience while the real Stripe integration is built.
-Does NOT: Charge cards, change CRWD balances, record receipts, or modify station playback.
+Movements: Restore CRWD Solana Pay wallet handoff for selected token amounts while retaining the existing live Stripe checkout path.
+Purpose: Route selected CRWD amounts to wallet approval and dollar amounts to Stripe Checkout without mixing payment rails.
+Does NOT: Hold private keys, sign token transfers, assert payment completion, or modify station playback.
 */
 /* tipjar.js — Cybercrowd Radio tip jar
  * ONE JOB: one-tap tipping with CRWD. No wallets, no popups, no seed phrases.
@@ -111,9 +111,25 @@ Does NOT: Charge cards, change CRWD balances, record receipts, or modify station
       tipBtn.addEventListener('click', async function () {
         var custom = document.getElementById('tipCustomUsd');
         var checked = document.querySelector('input[name="tipAmount"]:checked');
-        var amount = custom && custom.value.trim()
+        var isCrwd = checked && checked.dataset.currency === 'crwd';
+        var amount = isCrwd ? Number(checked.value) : custom && custom.value.trim()
           ? Math.round(Number(custom.value) * 100)
           : checked ? Number(checked.value) : 0;
+        if (isCrwd) {
+          var cfg = window.STATION_CONFIG || {};
+          var address = String(cfg.crwdTipAddress || '').trim();
+          var mint = String(cfg.crwdMint || '').trim();
+          if (!address || !mint || !Number.isSafeInteger(amount) || amount <= 0) {
+            setStatus('CRWD wallet transfer is not configured. No tip was sent.'); return;
+          }
+          var paymentUrl = 'solana:' + address + '?amount=' + encodeURIComponent(String(amount))
+            + '&spl-token=' + encodeURIComponent(mint)
+            + '&label=' + encodeURIComponent('Cybercrowd Radio')
+            + '&message=' + encodeURIComponent('CRWD station tip');
+          setStatus('Opening a compatible Solana wallet. Review the address, token, amount and network fee before approving. No transfer is confirmed here.');
+          window.location.href = paymentUrl;
+          return;
+        }
         if (!Number.isSafeInteger(amount) || amount < 100 || amount > 100000) {
           setStatus('Choose a dollar tip between $1 and $1,000.'); return;
         }
@@ -139,7 +155,7 @@ Does NOT: Charge cards, change CRWD balances, record receipts, or modify station
       setStatus('Returned from Stripe. Payment confirmation is verified separately; this page does not claim a completed tip.');
     else if (query.get('checkout') === 'cancel')
       setStatus('Checkout canceled. No tip was recorded by this page.');
-    else setStatus('Choose a dollar amount to continue to Stripe Checkout.');
+    else setStatus('Choose dollars for Stripe Checkout or CRWD for Solana wallet approval.');
     var buyBtn = document.getElementById('tipjarBuy');
     if (buyBtn) buyBtn.addEventListener('click', buyCoins);
 
