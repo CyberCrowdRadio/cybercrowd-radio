@@ -90,8 +90,8 @@ Does NOT: Charge cards, create Stripe sessions, grant CRWD, alter UIDL, or chang
             <label><input type="radio" name="tipAmount" value="10" data-currency="crwd" disabled> 10 CRWD</label>
             <label><input type="radio" name="tipAmount" value="20" data-currency="crwd" disabled> 20 CRWD</label>
           </fieldset>
-          <p id="tipDisclosure">Stripe checkout is being connected. No payment will be charged until checkout is enabled.</p>
-        </div><button id="tipjarBtn" disabled aria-disabled="true" style="display:block;width:100%;padding:16px;margin-bottom:12px;font-size:1.15rem;font-weight:800;letter-spacing:0.08em;color:#2a1b0b;background:linear-gradient(180deg,#ffd700 0%,#ffaa00 50%,#cc8800 100%);border:2px solid #fff3c4;border-radius:10px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(255,215,0,0.5),inset 0 1px 0 rgba(255,255,255,0.5);">ADD A TIP</button>
+          <p id="tipDisclosure">Dollar tips use secure Stripe Checkout. A tip is recorded only after Stripe confirms payment.</p>
+        </div><button id="tipjarBtn" style="display:block;width:100%;padding:16px;margin-bottom:12px;font-size:1.15rem;font-weight:800;letter-spacing:0.08em;color:#2a1b0b;background:linear-gradient(180deg,#ffd700 0%,#ffaa00 50%,#cc8800 100%);border:2px solid #fff3c4;border-radius:10px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(255,215,0,0.5),inset 0 1px 0 rgba(255,255,255,0.5);">ADD A TIP</button>
         <p class="signal-state" id="tipjarStatus" aria-live="polite" style="margin:12px 0 0;font-size:0.85rem;color:#888;">Loading...</p>
         <p style="margin:16px 0 0;color:#c9a227;font-weight:700;letter-spacing:0.2em;font-size:0.9rem;">TIP JAR</p><p id="tipNoFunds">CRWD balance and token tipping are not yet connected. Dollar tips will not require a token balance.</p><p><a href="station.html">Exit - Back to the radio station</a></p>
       </div>
