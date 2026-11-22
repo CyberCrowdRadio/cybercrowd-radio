@@ -1,3 +1,10 @@
+/*
+File repo: CyberCrowdRadio/cybercrowd-radio
+File name: tipjar.js
+Movements: Keep payment action disabled until a verified Stripe checkout endpoint exists; stop presenting unavailable legacy token balance as a payment prerequisite.
+Purpose: Prevent a false payment or token-refill experience while the real Stripe integration is built.
+Does NOT: Charge cards, change CRWD balances, record receipts, or modify station playback.
+*/
 /* tipjar.js — Cybercrowd Radio tip jar
  * ONE JOB: one-tap tipping with CRWD. No wallets, no popups, no seed phrases.
  *
@@ -37,7 +44,7 @@
 
   function updateUI() {
     if (balEl) balEl.textContent = balance.toFixed(2) + ' CRWD';
-    if (tipBtn) tipBtn.disabled = false;
+    if (tipBtn) tipBtn.disabled = true;
   }
 
   function setStatus(t) {
@@ -99,7 +106,9 @@
     tipBtn = document.getElementById('tipjarBtn');
 
     if (tipBtn) {
-      tipBtn.addEventListener('click', function () { tip(1, 'sonny-daze'); });
+      tipBtn.disabled = true;
+      tipBtn.setAttribute('aria-disabled', 'true');
+      tipBtn.addEventListener('click', function () { setStatus('Stripe checkout is not connected yet. No charge was made.'); });
     }
     var buyBtn = document.getElementById('tipjarBuy');
     if (buyBtn) buyBtn.addEventListener('click', buyCoins);
@@ -109,7 +118,8 @@
       if (window.CCRadioConfig && window.CCRadioConfig.apiUrl) API = window.CCRadioConfig.apiUrl;
     } catch (e) {}
 
-    refreshBalance();
+    setStatus('Stripe checkout is not connected yet. No charge will be made.');
+    // Do not query the legacy CRWD balance endpoint: it is not an authorized payment ledger.
   }
 
   if (document.readyState === 'loading') {
