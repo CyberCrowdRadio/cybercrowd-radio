@@ -1,7 +1,7 @@
 <!--
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: crwd-tip.html
-Movements: Replace generic injected-wallet UI with a Solana Pay SPL-token request, QR, and reference-based on-chain verification.
+Movements: Automatically prepare the selected CRWD amount on arrival, removing the redundant prepare step; retain transaction verification and wallet fallback.
 Purpose: Let a payer open a compatible Solana Pay wallet for the exact CRWD mint, recipient, and amount; verify the payment on Solana.
 Does NOT: Claim Moonshot supports Solana Pay, require seed phrases, alter Stripe, or claim payment without on-chain verification.
 -->
@@ -9,7 +9,7 @@ Does NOT: Claim Moonshot supports Solana Pay, require seed phrases, alter Stripe
 <style>body{margin:0;background:#08090d;color:#f1e7c9;font:17px system-ui,sans-serif}main{max-width:430px;margin:24px auto;padding:22px;border:2px solid #c9a227;border-radius:18px;background:#111}h1{color:#f3d26e}button,a.pay{display:block;box-sizing:border-box;width:100%;padding:16px;margin:14px 0;border:1px solid #ffe28b;border-radius:10px;background:#eab529;color:#17120b;font-size:17px;font-weight:700;text-align:center;text-decoration:none}button:disabled{opacity:.5}a{color:#f3d26e}small{display:block;overflow-wrap:anywhere;color:#d0c6a8}#status{white-space:pre-wrap;overflow-wrap:anywhere}#qr{display:flex;justify-content:center;background:white;padding:12px;width:max-content;max-width:90%;margin:18px auto}#qr img,#qr canvas{max-width:100%;height:auto}input{width:85px;padding:8px;font-size:18px}</style></head>
 <body><main><a href="tip.html">← Back to Tip Jar</a><h1>TIP CRWD</h1><p>CyberCrowd Coin · Solana</p>
 <label>Amount <input id="amount" type="number" min="1" max="20" step="1" value="1"> CRWD</label>
-<button id="prepare">PREPARE CRWD TIP</button><div id="payment" hidden><a id="open" class="pay">OPEN SOLANA PAY WALLET</a><div id="qr" aria-label="Solana Pay QR code"></div>
+<button id="prepare" hidden>PREPARE CRWD TIP AGAIN</button><div id="payment" hidden><a id="open" class="pay">OPEN SOLANA PAY WALLET</a><div id="qr" aria-label="Solana Pay QR code"></div>
 <button id="verify">VERIFY CRWD TIP</button><button id="copy">COPY PAYMENT REQUEST</button></div>
 <p id="status" role="status" aria-live="polite">Prepare a tip to generate a Solana Pay request. A compatible wallet must approve the transfer.</p>
 <p><a id="explorer" hidden target="_blank" rel="noopener">View verified transaction</a></p>
@@ -57,5 +57,6 @@ const link=el('explorer');link.href='https://solscan.io/tx/'+encodeURIComponent(
 }}
 say('No matching confirmed CRWD transfer found yet. Do not assume the payment succeeded.');
 }catch(e){say('Could not verify payment: '+(e.message||String(e))+'. No payment confirmed.')}};
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>el('prepare').click(),{once:true});else el('prepare').click();
 })();
 </script></body></html>
