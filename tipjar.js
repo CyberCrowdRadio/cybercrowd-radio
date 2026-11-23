@@ -1,7 +1,7 @@
 /*
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: tipjar.js
-Movements: Clear stale Stripe status when CRWD is selected; keep existing CRWD routing and Stripe checkout unchanged.
+Movements: Display inline CRWD completion on currency selection, hide the duplicate main action for CRWD; preserve dollar checkout unchanged.
 Purpose: Replace unsupported solana: external protocol handoff with a first-party CRWD transfer application.
 Does NOT: Hold private keys, sign token transfers, guarantee Moonshot supports Solana Pay, assert payment completion, or modify station playback.
 */
@@ -146,11 +146,26 @@ Does NOT: Hold private keys, sign token transfers, guarantee Moonshot supports S
         }
       });
     }
+    // CRWD completes inside this same card; dollar checkout remains untouched.
+    var crwdInline = document.getElementById('crwdInline');
+    var crwdFrame = document.getElementById('crwdInlineFrame');
+    function displaySelectedCurrency() {
+      var selected = document.querySelector('input[name="tipAmount"]:checked');
+      var crwd = selected && selected.dataset.currency === 'crwd';
+      if (crwdInline) crwdInline.hidden = !crwd;
+      if (tipBtn) tipBtn.hidden = !!crwd;
+      if (crwd && crwdFrame) {
+        var url = 'crwd-tip.html?amount=' + encodeURIComponent(selected.value) + '&embedded=1';
+        if (crwdFrame.getAttribute('src') !== url) crwdFrame.setAttribute('src', url);
+      }
+    }
+    displaySelectedCurrency();
     // Keep the two currencies independent: a previous Stripe status must not
     // remain visible when the listener switches to a CRWD transfer.
     var choices = document.getElementById('tipChoices');
     if (choices) choices.addEventListener('change', function (event) {
       if (!event.target || event.target.name !== 'tipAmount') return;
+      displaySelectedCurrency();
       if (event.target.dataset.currency === 'crwd') {
         var custom = document.getElementById('tipCustomUsd');
         if (custom) custom.value = '';
