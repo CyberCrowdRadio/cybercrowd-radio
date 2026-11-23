@@ -1,7 +1,7 @@
 <!--
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: tip.html
-Movements: Host CRWD completion inside the existing Tip Jar card, avoiding navigation to a second customer page; preserve Stripe dollar choices.
+Movements: Explain manual Moonshot CRWD transfer inside the single station Tip Jar; remove embedded wallet app; preserve dollar checkout.
 Purpose: Offer separate Stripe dollar checkout and user-approved Solana CRWD token transfer.
 Does NOT: Hold private keys, sign transfers, claim token receipt, alter UIDL, or change the radio stream.
 -->
@@ -11,7 +11,7 @@ Does NOT: Hold private keys, sign transfers, claim token receipt, alter UIDL, or
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Tip Jar — Cybercrowd Radio</title>
-  <meta name="description" content="Tip the station — one tap, no wallets, just tip." />
+  <meta name="description" content="Tip CyberCrowd Radio in dollars through Stripe or manually send CRWD using Moonshot." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -66,7 +66,7 @@ Does NOT: Hold private keys, sign transfers, claim token receipt, alter UIDL, or
       <div class="section-head">
         <p class="eyebrow">Keep the signal alive</p>
         <h2>Tip&nbsp;Jar</h2>
-        <p class="section-sub">One tap. No wallets. Just tip.</p>
+        <p class="section-sub">Dollar tips use Stripe. CRWD tips are sent manually through Moonshot.</p>
       </div>
       <div id="tipJarCard" style="max-width:420px;margin:0 auto;background:#0a0a0a;border:3px solid #c9a227;border-radius:16px;padding:28px 24px;text-align:center;position:relative;box-shadow:0 4px 24px rgba(201,162,39,0.25);">
         <span style="position:absolute;left:18px;top:50%;transform:translateY(-50%);color:#c9a227;font-size:1.8rem;font-weight:300;">+</span>
@@ -84,17 +84,28 @@ Does NOT: Hold private keys, sign transfers, claim token receipt, alter UIDL, or
             <label style="display:block;margin:12px 0;">Custom dollars <input id="tipCustomUsd" type="number" min="1" max="1000" step="0.01" inputmode="decimal" placeholder="Amount in USD" aria-label="Custom dollar tip"></label>
           </fieldset>
           <fieldset style="border:0;padding:0;margin:12px 0;">
-            <legend style="margin:auto;">CRWD tokens — Solana wallet approval required</legend>
+            <legend style="margin:auto;">CRWD Coin — send with Moonshot</legend>
             <label><input type="radio" name="tipAmount" value="1" data-currency="crwd"> 1 CRWD</label>
             <label><input type="radio" name="tipAmount" value="5" data-currency="crwd"> 5 CRWD</label>
             <label><input type="radio" name="tipAmount" value="10" data-currency="crwd"> 10 CRWD</label>
             <label><input type="radio" name="tipAmount" value="20" data-currency="crwd"> 20 CRWD</label>
           </fieldset>
-          <p id="tipDisclosure">Dollar tips use Stripe Checkout. CRWD tips open a compatible Solana wallet for review and approval; opening the wallet does not prove a transfer.</p>
+          <p id="tipDisclosure">Dollar tips use Stripe Checkout. CRWD tips require leaving CyberCrowd Radio to send coins manually in Moonshot.</p>
         </div><button id="tipjarBtn" style="display:block;width:100%;padding:16px;margin-bottom:12px;font-size:1.15rem;font-weight:800;letter-spacing:0.08em;color:#2a1b0b;background:linear-gradient(180deg,#ffd700 0%,#ffaa00 50%,#cc8800 100%);border:2px solid #fff3c4;border-radius:10px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(255,215,0,0.5),inset 0 1px 0 rgba(255,255,255,0.5);">ADD A TIP</button>
-        <div id="crwdInline" hidden style="width:100%;margin:8px auto 12px;"><iframe id="crwdInlineFrame" title="Complete CRWD tip" loading="lazy" style="width:100%;height:510px;border:0;border-radius:12px;" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
+        <div id="crwdInline" hidden style="text-align:left;padding:14px;border:1px solid #c9a227;border-radius:10px;margin:10px 0;">
+<h3 style="margin:0 0 8px;color:#e9c979;">Send CRWD with Moonshot</h3>
+<p>Moonshot does not have a verified automatic connection to this Tip Jar. You will leave CyberCrowd Radio to finish sending your tip.</p>
+<p><strong>1.</strong> Copy the receiving address below.</p>
+<p><strong>2.</strong> Open Moonshot, choose <strong>Send</strong>, select <strong>CRWD</strong>, paste the address, and enter <strong id="crwdSelectedAmount">1 CRWD</strong>.</p>
+<p><strong>3.</strong> Review the address, token and amount in Moonshot, then approve Send. Return to CyberCrowd Radio when finished.</p>
+<label for="crwdReceiveAddress">CyberCrowd receiving address</label>
+<input id="crwdReceiveAddress" type="text" readonly aria-label="CyberCrowd CRWD receiving address" style="width:100%;box-sizing:border-box;padding:10px;margin:6px 0;background:#222;color:#fff;border:1px solid #c9a227;border-radius:5px;">
+<button id="crwdCopyAddress" type="button" style="width:100%;padding:12px;margin:6px 0;background:#c9a227;color:#111;font-weight:bold;border:0;border-radius:6px;">COPY RECEIVING ADDRESS</button>
+<a href="https://moonshot.money/" target="_blank" rel="noopener noreferrer" id="crwdOpenMoonshot" style="display:block;text-align:center;padding:14px;margin:8px 0;background:#c9a227;color:#111;font-weight:bold;border-radius:6px;">OPEN MOONSHOT TO SEND</a>
+<p id="crwdManualStatus" role="status" aria-live="polite" style="font-size:.85rem;">Opening Moonshot does not send coins. Only approve a transfer inside Moonshot. This page cannot automatically confirm a manual Moonshot payment.</p>
+</div>
         <p class="signal-state" id="tipjarStatus" aria-live="polite" style="margin:12px 0 0;font-size:0.85rem;color:#888;">Loading...</p>
-        <p style="margin:16px 0 0;color:#c9a227;font-weight:700;letter-spacing:0.2em;font-size:0.9rem;">TIP JAR</p><p id="tipNoFunds">CRWD wallet balance is not connected to this page. CRWD transfers require a compatible Solana wallet and sufficient CRWD and SOL for fees.</p><p><a href="station.html">Exit - Back to the radio station</a></p>
+        <p style="margin:16px 0 0;color:#c9a227;font-weight:700;letter-spacing:0.2em;font-size:0.9rem;">TIP JAR</p><p id="tipNoFunds">CRWD is sent from Moonshot to the existing CyberCrowd receiving address. This page does not hold coins or confirm manual transfers.</p><p><a href="station.html">Exit - Back to the radio station</a></p>
       </div>
       <div id="coinBannerSlot" style="max-width:420px;margin:18px auto 0;"></div>
       <style>
