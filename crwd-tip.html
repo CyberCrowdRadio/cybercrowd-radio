@@ -101,7 +101,7 @@ tx.recentBlockhash=block.value.blockhash;tx.feePayer=owner;
 say('Approve the CRWD transfer in your wallet.');
 let signature;
 if(provider.signAndSendTransaction){const result=await provider.signAndSendTransaction(tx);signature=typeof result==='string'?result:result.signature;}
-else{const signed=await provider.signTransaction(tx);signature=await call('sendTransaction',[Array.from(signed.serialize()).map(b=>String.fromCharCode(b)).join(''),{encoding:'base64'}]);}
+else{const signed=await provider.signTransaction(tx);signature=await call('sendTransaction',[btoa(Array.from(signed.serialize()).map(b=>String.fromCharCode(b)).join('')),{encoding:'base64'}]);}
 if(!signature)throw Error('Wallet did not return a transaction signature.');
 say('Transfer submitted. Waiting for Solana confirmation...');
 for(let attempt=0;attempt<12;attempt++){
