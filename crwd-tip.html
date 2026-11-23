@@ -1,12 +1,12 @@
 <!--
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: crwd-tip.html
-Movements: Replace five competing payment controls with one COMPLETE TIP action; show QR only if direct wallet authorization is unavailable; retain automatic confirmation.
+Movements: Support embedded single-action CRWD checkout inside the original Tip Jar, suppress redundant navigation and amount controls; retain verification.
 Purpose: Use the existing CRWD receiving address with wallet approval, QR fallback, and automatic confirmation polling.
 Does NOT: Claim Moonshot supports Solana Pay, require seed phrases, alter Stripe, or claim payment without on-chain verification.
 -->
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tip CRWD | CyberCrowd Radio</title>
-<style>[hidden]{display:none!important}body{margin:0;background:#08090d;color:#f1e7c9;font:17px system-ui,sans-serif}main{max-width:430px;margin:24px auto;padding:22px;border:2px solid #c9a227;border-radius:18px;background:#111}h1{color:#f3d26e}button,a.pay{display:block;box-sizing:border-box;width:100%;padding:16px;margin:14px 0;border:1px solid #ffe28b;border-radius:10px;background:#eab529;color:#17120b;font-size:17px;font-weight:700;text-align:center;text-decoration:none}button:disabled{opacity:.5}a{color:#f3d26e}small{display:block;overflow-wrap:anywhere;color:#d0c6a8}#status{white-space:pre-wrap;overflow-wrap:anywhere}#qr{display:flex;justify-content:center;background:white;padding:12px;width:max-content;max-width:90%;margin:18px auto}#qr img,#qr canvas{max-width:100%;height:auto}input{width:85px;padding:8px;font-size:18px}</style></head>
+<style>[hidden]{display:none!important}body.embedded{background:transparent}body.embedded main{margin:0;padding:12px;border:0;background:transparent}body.embedded main>a:first-child,body.embedded h1,body.embedded main>p:first-of-type,body.embedded main>label{display:none!important}body{margin:0;background:#08090d;color:#f1e7c9;font:17px system-ui,sans-serif}main{max-width:430px;margin:24px auto;padding:22px;border:2px solid #c9a227;border-radius:18px;background:#111}h1{color:#f3d26e}button,a.pay{display:block;box-sizing:border-box;width:100%;padding:16px;margin:14px 0;border:1px solid #ffe28b;border-radius:10px;background:#eab529;color:#17120b;font-size:17px;font-weight:700;text-align:center;text-decoration:none}button:disabled{opacity:.5}a{color:#f3d26e}small{display:block;overflow-wrap:anywhere;color:#d0c6a8}#status{white-space:pre-wrap;overflow-wrap:anywhere}#qr{display:flex;justify-content:center;background:white;padding:12px;width:max-content;max-width:90%;margin:18px auto}#qr img,#qr canvas{max-width:100%;height:auto}input{width:85px;padding:8px;font-size:18px}</style></head>
 <body><main><a href="tip.html">← Back to Tip Jar</a><h1>TIP CRWD</h1><p>CyberCrowd Coin · Solana</p>
 <label>Amount <input id="amount" type="number" min="1" max="20" step="1" value="1"> CRWD</label>
 <button id="wallet">COMPLETE TIP</button><button id="prepare" hidden>PREPARE CRWD TIP AGAIN</button><div id="payment" hidden><p>Wallet connection is unavailable in this browser. You can approve this payment with a Solana Pay-compatible wallet:</p><a id="open" class="pay">OPEN IN WALLET</a><div id="qr" aria-label="Solana Pay QR code"></div>
@@ -27,6 +27,8 @@ const ATA=new solanaWeb3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL
 const MEMO=new solanaWeb3.PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
 const ata=(owner,m)=>solanaWeb3.PublicKey.findProgramAddressSync([owner.toBuffer(),TOKEN.toBuffer(),m.toBuffer()],ATA)[0];
 const u64=n=>{const b=new Uint8Array(8);let v=n;for(let i=0;i<8;i++){b[i]=Number(v&255n);v>>=8n;}return b;};
+const embedded=new URLSearchParams(location.search).get('embedded')==='1';
+if(embedded){document.body.classList.add('embedded');}
 const initial=new URLSearchParams(location.search).get('amount');
 if(['1','5','10','20'].includes(initial))el('amount').value=initial;
 el('prepare').onclick=function(){try{
