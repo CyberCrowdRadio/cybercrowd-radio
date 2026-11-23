@@ -43,18 +43,6 @@
 
     </section>
 
-    <!-- ============ TIP JAR ============ -->
-    <section class="welcome-row" aria-label="Support the station">
-      <div class="tipjar" id="tipjar" aria-label="Tip jar — buy and tip CRWD">
-        <p class="tipjar-title">Tip the station</p>
-        <a href="https://moonshot.money/" target="_blank" rel="noopener noreferrer" aria-label="CRWD coin — open Moonshot in a new tab" style="display:block;">
-          <video src="https://media.cybercrowdradio.com/graphics-cybercrowdradio/2026-03-01-055431358.mp4" autoplay loop muted playsinline preload="metadata" aria-hidden="true" style="display:block;width:100%;max-width:140px;height:auto;margin:0 auto;object-fit:contain;"></video>
-        </a>
-        <a class="btn-brass tipjar-btn" id="buyCrwdBtn" href="#" target="_blank" rel="noopener">Buy CRWD</a>
-        <a class="btn-brass tipjar-btn" id="tipCrwdBtn" href="#">Tip CRWD</a>
-      </div>
-    </section>
-
     <!-- ============ LISTEN NOW ============ -->
     <section class="landing-section" aria-label="Listen now">
       <p class="eyebrow">Straight from the vault</p>
@@ -113,20 +101,6 @@
         soon.hidden = false;
       }
 
-      /* Tip jar: buy CRWD via Jupiter, copy tip address */
-      var mint = (cfg.crwdMint || "").trim();
-      var tipAddr = (cfg.crwdTipAddress || "").trim();
-      var buyBtn = document.getElementById("buyCrwdBtn");
-      if (buyBtn && mint) buyBtn.href = "https://jup.ag/swap/SOL-" + mint;
-      /* Tip button: Solana Pay URL — one tap opens their wallet with the
-         tip address and CRWD token pre-filled. Button-friendly for everyone. */
-      var tipBtn = document.getElementById("tipCrwdBtn");
-      if (tipBtn && tipAddr && mint) {
-        tipBtn.href = "solana:" + tipAddr
-          + "?spl-token=" + mint
-          + "&label=" + encodeURIComponent("Cybercrowd Radio")
-          + "&message=" + encodeURIComponent("Tip the station");
-      }
 
     })();
   </script>
