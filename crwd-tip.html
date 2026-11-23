@@ -2,7 +2,7 @@
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: crwd-tip.html
 Movements: Add connected-wallet CRWD authorization and transfer, with automatic Solana confirmation; preserve Solana Pay QR fallback.
-Purpose: Let a payer open a compatible Solana Pay wallet for the exact CRWD mint, recipient, and amount; verify the payment on Solana.
+Purpose: Use the existing CRWD receiving address with wallet approval, QR fallback, and automatic confirmation polling.
 Does NOT: Claim Moonshot supports Solana Pay, require seed phrases, alter Stripe, or claim payment without on-chain verification.
 -->
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Tip CRWD | CyberCrowd Radio</title>
@@ -67,7 +67,7 @@ try{
 if(!window.solanaWeb3)throw Error('Solana library unavailable.');
 const provider=window.phantom?.solana||window.solana;
 if(!provider?.connect||(!provider.signAndSendTransaction&&!provider.signTransaction))
-throw Error('No compatible connected wallet detected. Use the payment QR below with a Solana Pay wallet.');
+throw Error('No compatible wallet available in this browser. Use the QR payment request shown below; no new wallet is created.');
 el('prepare').click();
 if(!reference)throw Error('Payment request could not be prepared.');
 say('Connect your wallet and approve '+expected+' CRWD.');
@@ -105,7 +105,7 @@ else{const signed=await provider.signTransaction(tx);signature=await call('sendT
 if(!signature)throw Error('Wallet did not return a transaction signature.');
 say('Transfer submitted. Waiting for Solana confirmation...');
 for(let attempt=0;attempt<12;attempt++){
-if(await verifyTransfer())return;
+try{if(await verifyTransfer())return;}catch(err){if(attempt===11)throw err;}
 await new Promise(resolve=>setTimeout(resolve,2500));
 }
 say('Transaction submitted but not yet verified. Use CHECK TIP STATUS; do not send another tip until checked.');
@@ -114,25 +114,17 @@ finally{busy=false;el('wallet').disabled=false;}
 };
 
 el('verify').onclick=async()=>{try{
-if(!reference)throw Error('Prepare a payment first.');
+if(!reference)throw Error('Payment request unavailable.');
 say('Checking Solana for a matching CRWD transfer...');
-const signatures=await call('getSignaturesForAddress',[reference,{limit:30,commitment:'confirmed'}]);
-for(const entry of signatures||[]){if(entry.err)continue;
-const tx=await call('getTransaction',[entry.signature,{encoding:'jsonParsed',maxSupportedTransactionVersion:0,commitment:'confirmed'}]);
-if(!tx||tx.meta?.err)continue;
-const instructions=[...(tx.transaction?.message?.instructions||[])];
-for(const ix of instructions){if(ix.program!=='spl-token'||!ix.parsed)continue;
-const p=ix.parsed;if(p.type!=='transferChecked')continue;
-const info=p.info||{};
-if(info.mint!==mint||String(info.tokenAmount?.uiAmountString)!==String(expected))continue;
-const destination=info.destination;
-const accounts=await call('getTokenAccountsByOwner',[recipient,{mint:mint},{encoding:'jsonParsed',commitment:'confirmed'}]);
-if(!(accounts.value||[]).some(a=>a.pubkey===destination))continue;
-say('Verified on Solana: '+expected+' CRWD received. Transaction: '+entry.signature);
-const link=el('explorer');link.href='https://solscan.io/tx/'+encodeURIComponent(entry.signature);link.hidden=false;return;
-}}
-say('No matching confirmed CRWD transfer found yet. Do not assume the payment succeeded.');
-}catch(e){say('Could not verify payment: '+(e.message||String(e))+'. No payment confirmed.')}};
+if(!await verifyTransfer())say('Not yet confirmed. Do not send another tip until its status is known.');
+}catch(e){say('Could not verify tip: '+(e.message||String(e))+'. Do not resend until checked.')}};
+let pollBusy=false;
+async function pollTip(){
+if(pollBusy||!reference||document.hidden||!el('explorer').hidden)return;
+pollBusy=true;try{await verifyTransfer();}catch(e){}finally{pollBusy=false;}
+}
+setInterval(pollTip,5000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)pollTip();});
 if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>el('prepare').click(),{once:true});else el('prepare').click();
 })();
 </script></body></html>
