@@ -1,8 +1,8 @@
 /*
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: tipjar.js
-Movements: Repair Android Solana Pay handoff with a user-activated wallet link and visible copy-address fallback; retain Stripe checkout.
-Purpose: Let CRWD users retry a compatible wallet handoff or manually use the verified receiving address when Android does not open the link.
+Movements: Open the dedicated CRWD Solana transfer app for selected token tips; preserve Stripe checkout.
+Purpose: Replace unsupported solana: external protocol handoff with a first-party CRWD transfer application.
 Does NOT: Hold private keys, sign token transfers, guarantee Moonshot supports Solana Pay, assert payment completion, or modify station playback.
 */
 /* tipjar.js — Cybercrowd Radio tip jar
@@ -122,48 +122,8 @@ Does NOT: Hold private keys, sign token transfers, guarantee Moonshot supports S
           if (!address || !mint || !Number.isSafeInteger(amount) || amount <= 0) {
             setStatus('CRWD wallet transfer is not configured. No tip was sent.'); return;
           }
-          var paymentUrl = 'solana:' + address + '?amount=' + encodeURIComponent(String(amount))
-            + '&spl-token=' + encodeURIComponent(mint)
-            + '&label=' + encodeURIComponent('Cybercrowd Radio')
-            + '&message=' + encodeURIComponent('CRWD station tip');
-          // The browser may silently ignore solana: URLs. Always show a usable
-          // fallback rather than claiming that an external wallet opened.
-          var panel = document.getElementById('crwdWalletFallback');
-          if (!panel) {
-            panel = document.createElement('div');
-            panel.id = 'crwdWalletFallback';
-            panel.style.cssText = 'margin:16px 0;padding:14px;border:1px solid #c9a227;border-radius:10px;overflow-wrap:anywhere;';
-            tipBtn.insertAdjacentElement('afterend', panel);
-          }
-          panel.replaceChildren();
-          var heading = document.createElement('p');
-          heading.textContent = amount + ' CRWD — Solana wallet transfer';
-          panel.appendChild(heading);
-          var openLink = document.createElement('a');
-          openLink.href = paymentUrl;
-          openLink.textContent = 'OPEN COMPATIBLE WALLET';
-          openLink.style.cssText = 'display:block;padding:12px;margin:8px 0;color:#e9c979;text-decoration:underline;';
-          panel.appendChild(openLink);
-          var copyButton = document.createElement('button');
-          copyButton.type = 'button';
-          copyButton.textContent = 'COPY CRWD RECEIVING ADDRESS';
-          copyButton.style.cssText = 'padding:12px;margin:8px 0;max-width:100%;';
-          copyButton.addEventListener('click', async function () {
-            try {
-              await navigator.clipboard.writeText(address);
-              setStatus('Receiving address copied. In your wallet, send only CRWD on Solana to this address. Enter ' + amount + ' CRWD and verify before approving.');
-            } catch (_) {
-              setStatus('Clipboard unavailable. Select and copy the receiving address shown below.');
-            }
-          });
-          panel.appendChild(copyButton);
-          var addressText = document.createElement('p');
-          addressText.textContent = address;
-          panel.appendChild(addressText);
-          var note = document.createElement('p');
-          note.textContent = 'If Moonshot does not support this wallet link, use its Send feature if available. Verify the token, recipient, amount and network fee before approval. This page cannot confirm receipt.';
-          panel.appendChild(note);
-          setStatus('Wallet link ready. Tap OPEN COMPATIBLE WALLET. If Android does not open it, copy the receiving address instead. No transfer has been confirmed.');
+          setStatus('Opening CyberCrowd Solana Tip app for wallet approval. No transfer has been made.');
+          window.location.assign('crwd-tip.html?amount=' + encodeURIComponent(String(amount)));
           return;
         }
         if (!Number.isSafeInteger(amount) || amount < 100 || amount > 100000) {
