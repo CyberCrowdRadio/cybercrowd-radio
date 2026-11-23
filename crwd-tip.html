@@ -34,7 +34,7 @@ const system=solanaWeb3.SystemProgram.programId;
 const ata=(owner,token)=>solanaWeb3.PublicKey.findProgramAddressSync([owner.toBuffer(),tokenProgram.toBuffer(),token.toBuffer()],ataProgram)[0];
 connectBtn.onclick=async()=>{try{
 if(!window.solanaWeb3)throw Error('Solana transaction library unavailable.');
-wallet=provider();if(!wallet||!wallet.connect||!wallet.publicKey&&!wallet.isPhantom&&!wallet.isSolflare)throw Error('No compatible browser wallet detected. Open this page in a Solana wallet browser, or use the manual Send option.');
+wallet=provider();if(!wallet||!wallet.connect)throw Error('No compatible browser wallet detected. Open this page in a Solana wallet browser, or use the manual Send option.');
 await wallet.connect();sendBtn.disabled=false;say('Wallet connected: '+wallet.publicKey.toBase58()+'. Review the recipient and amount before sending.');
 }catch(e){say(e.message||'Wallet connection failed.')}};
 sendBtn.onclick=async()=>{sendBtn.disabled=true;try{
@@ -54,7 +54,7 @@ tx.add(new solanaWeb3.TransactionInstruction({programId:ataProgram,keys:[
 {pubkey:wallet.publicKey,isSigner:true,isWritable:true},{pubkey:dest,isSigner:false,isWritable:true},
 {pubkey:destOwner,isSigner:false,isWritable:false},{pubkey:token,isSigner:false,isWritable:false},
 {pubkey:system,isSigner:false,isWritable:false},{pubkey:tokenProgram,isSigner:false,isWritable:false}
-],data:Buffer.alloc(0)}));
+],data:new Uint8Array(0)}));
 }
 const data=new Uint8Array(10);data[0]=12;let raw=units;for(let i=1;i<=8;i++){data[i]=Number(raw&255n);raw>>=8n}data[9]=decimals;
 tx.add(new solanaWeb3.TransactionInstruction({programId:tokenProgram,keys:[
