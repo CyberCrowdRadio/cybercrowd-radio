@@ -1,7 +1,7 @@
 <!--
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: crwd-tip.html
-Movements: Attach unique Solana Pay reference to the CRWD transfer instruction and verify referenced transaction including inner instructions and recipient ownership.
+Movements: Replace five competing payment controls with one COMPLETE TIP action; show QR only if direct wallet authorization is unavailable; retain automatic confirmation.
 Purpose: Use the existing CRWD receiving address with wallet approval, QR fallback, and automatic confirmation polling.
 Does NOT: Claim Moonshot supports Solana Pay, require seed phrases, alter Stripe, or claim payment without on-chain verification.
 -->
@@ -9,11 +9,11 @@ Does NOT: Claim Moonshot supports Solana Pay, require seed phrases, alter Stripe
 <style>body{margin:0;background:#08090d;color:#f1e7c9;font:17px system-ui,sans-serif}main{max-width:430px;margin:24px auto;padding:22px;border:2px solid #c9a227;border-radius:18px;background:#111}h1{color:#f3d26e}button,a.pay{display:block;box-sizing:border-box;width:100%;padding:16px;margin:14px 0;border:1px solid #ffe28b;border-radius:10px;background:#eab529;color:#17120b;font-size:17px;font-weight:700;text-align:center;text-decoration:none}button:disabled{opacity:.5}a{color:#f3d26e}small{display:block;overflow-wrap:anywhere;color:#d0c6a8}#status{white-space:pre-wrap;overflow-wrap:anywhere}#qr{display:flex;justify-content:center;background:white;padding:12px;width:max-content;max-width:90%;margin:18px auto}#qr img,#qr canvas{max-width:100%;height:auto}input{width:85px;padding:8px;font-size:18px}</style></head>
 <body><main><a href="tip.html">← Back to Tip Jar</a><h1>TIP CRWD</h1><p>CyberCrowd Coin · Solana</p>
 <label>Amount <input id="amount" type="number" min="1" max="20" step="1" value="1"> CRWD</label>
-<button id="wallet">CONNECT WALLET &amp; TIP</button><button id="prepare" hidden>PREPARE CRWD TIP AGAIN</button><div id="payment" hidden><a id="open" class="pay">OPEN SOLANA PAY WALLET</a><div id="qr" aria-label="Solana Pay QR code"></div>
-<button id="verify">CHECK TIP STATUS</button><button id="copy">COPY PAYMENT REQUEST</button></div>
-<p id="status" role="status" aria-live="polite">Prepare a tip to generate a Solana Pay request. A compatible wallet must approve the transfer.</p>
+<button id="wallet">COMPLETE TIP</button><button id="prepare" hidden>PREPARE CRWD TIP AGAIN</button><div id="payment" hidden><p>Wallet connection is unavailable in this browser. You can approve this payment with a Solana Pay-compatible wallet:</p><a id="open" class="pay">OPEN IN WALLET</a><div id="qr" aria-label="Solana Pay QR code"></div>
+<button id="verify" hidden>CHECK TIP STATUS</button><button id="copy" hidden>COPY PAYMENT REQUEST</button></div>
+<p id="status" role="status" aria-live="polite">Select the amount and press COMPLETE TIP. Your wallet must approve the transfer.</p>
 <p><a id="explorer" hidden target="_blank" rel="noopener">View verified transaction</a></p>
-<small>Moonshot may not recognize Solana Pay links. A payment is not complete until a wallet approves it and Solana confirms the CRWD transfer.</small></main>
+<small>A wallet must approve the transfer. Moonshot support for Solana Pay links is unconfirmed. CyberCrowd only reports success after on-chain verification.</small></main>
 <script src="config.js"></script>
 <script src="https://unpkg.com/@solana/web3.js@1.98.4/lib/index.iife.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -36,7 +36,7 @@ new solanaWeb3.PublicKey(mint);new solanaWeb3.PublicKey(recipient);
 const bytes=new Uint8Array(32);crypto.getRandomValues(bytes);reference=new solanaWeb3.PublicKey(bytes).toBase58();expected=amount;
 const params=new URLSearchParams({amount:String(amount),'spl-token':mint,reference:reference,label:'CyberCrowd Radio',message:'CRWD tip'});
 request='solana:'+recipient+'?'+params.toString();
-el('open').href=request;el('payment').hidden=false;el('qr').replaceChildren();
+el('open').href=request;el('payment').hidden=true;el('qr').replaceChildren();
 new QRCode(el('qr'),{text:request,width:240,height:240,correctLevel:QRCode.CorrectLevel.L});
 el('explorer').hidden=true;say('Payment request ready for '+amount+' CRWD. Approve it in a Solana Pay compatible wallet, then verify here. No payment confirmed.');
 }catch(e){el('payment').hidden=true;say(e.message||'Unable to prepare tip.')}};
@@ -72,7 +72,7 @@ try{
 if(!window.solanaWeb3)throw Error('Solana library unavailable.');
 const provider=window.phantom?.solana||window.solana;
 if(!provider?.connect||(!provider.signAndSendTransaction&&!provider.signTransaction))
-throw Error('No compatible wallet available in this browser. Use the QR payment request shown below; no new wallet is created.');
+throw Error('No compatible wallet connection in this browser. Use the wallet link or QR shown below to authorize the prepared CRWD transfer.');
 el('prepare').click();
 if(!reference)throw Error('Payment request could not be prepared.');
 say('Connect your wallet and approve '+expected+' CRWD.');
@@ -114,8 +114,8 @@ for(let attempt=0;attempt<12;attempt++){
 try{if(await verifyTransfer())return;}catch(err){if(attempt===11)throw err;}
 await new Promise(resolve=>setTimeout(resolve,2500));
 }
-say('Transaction submitted but not yet verified. Use CHECK TIP STATUS; do not send another tip until checked.');
-}catch(e){say((e&&e.message)||'Tip could not be completed. No confirmed tip.');}
+say('Transaction submitted but not yet verified. CyberCrowd will keep checking automatically. Do not send another tip until its status is known.');
+}catch(e){if(reference && /No compatible wallet connection/.test(String(e&&e.message)))el('payment').hidden=false;say((e&&e.message)||'Tip could not be completed. No confirmed tip.');}
 finally{busy=false;el('wallet').disabled=false;}
 };
 
