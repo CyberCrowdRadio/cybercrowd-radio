@@ -1,7 +1,7 @@
 <!--
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: tip.html
-Movements: Explain manual Moonshot CRWD transfer inside the single station Tip Jar; remove embedded wallet app; preserve dollar checkout.
+Movements: Collect the USD value of a Moonshot CRWD tip with a $0.40 minimum.
 Purpose: Offer separate Stripe dollar checkout and user-approved Solana CRWD token transfer.
 Does NOT: Hold private keys, sign transfers, claim token receipt, alter UIDL, or change the radio stream.
 -->
@@ -84,11 +84,11 @@ Does NOT: Hold private keys, sign transfers, claim token receipt, alter UIDL, or
             <label style="display:block;margin:12px 0;">Custom dollars <input id="tipCustomUsd" type="number" min="1" max="1000" step="0.01" inputmode="decimal" placeholder="Amount in USD" aria-label="Custom dollar tip"></label>
           </fieldset>
           <fieldset style="border:0;padding:0;margin:12px 0;">
-            <legend style="margin:auto;">CRWD Coin — send with Moonshot</legend>
-            <label><input type="radio" name="tipAmount" value="1" data-currency="crwd"> 1 CRWD</label>
-            <label><input type="radio" name="tipAmount" value="5" data-currency="crwd"> 5 CRWD</label>
-            <label><input type="radio" name="tipAmount" value="10" data-currency="crwd"> 10 CRWD</label>
-            <label><input type="radio" name="tipAmount" value="20" data-currency="crwd"> 20 CRWD</label>
+            <legend style="margin:auto;">Tip in dollars with Moonshot</legend>
+            <label><input type="radio" name="tipAmount" value="moonshot" data-currency="crwd"> Pay with CRWD</label>
+            <label style="display:block;">Amount in USD ($0.40 minimum)
+              <input id="moonshotUsd" type="number" min="0.40" step="0.01" value="1.00" required inputmode="decimal">
+            </label>
           </fieldset>
           <p id="tipDisclosure">Dollar tips use Stripe Checkout. CRWD tips require leaving CyberCrowd Radio to send coins manually in Moonshot.</p>
         </div><button id="tipjarBtn" style="display:block;width:100%;padding:16px;margin-bottom:12px;font-size:1.15rem;font-weight:800;letter-spacing:0.08em;color:#2a1b0b;background:linear-gradient(180deg,#ffd700 0%,#ffaa00 50%,#cc8800 100%);border:2px solid #fff3c4;border-radius:10px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(255,215,0,0.5),inset 0 1px 0 rgba(255,255,255,0.5);">ADD A TIP</button>
@@ -96,7 +96,7 @@ Does NOT: Hold private keys, sign transfers, claim token receipt, alter UIDL, or
 <h3 style="margin:0 0 8px;color:#e9c979;">Send CRWD with Moonshot</h3>
 <p>Moonshot does not have a verified automatic connection to this Tip Jar. You will leave CyberCrowd Radio to finish sending your tip.</p>
 <p><strong>1.</strong> Copy the receiving address below.</p>
-<p><strong>2.</strong> Open Moonshot, choose <strong>Send</strong>, select <strong>CRWD</strong>, paste the address, and enter <strong id="crwdSelectedAmount">1 CRWD</strong>.</p>
+<p><strong>2.</strong> Open Moonshot, choose <strong>Send</strong>, select <strong>CRWD</strong>, paste the address, and use the dollar value <strong id="crwdSelectedAmount"></strong>. Review the equivalent CRWD amount shown by Moonshot.</p>
 <p><strong>3.</strong> Review the address, token and amount in Moonshot, then approve Send. Return to CyberCrowd Radio when finished.</p>
 <label for="crwdReceiveAddress">CyberCrowd receiving address</label>
 <input id="crwdReceiveAddress" type="text" readonly aria-label="CyberCrowd CRWD receiving address" style="width:100%;box-sizing:border-box;padding:10px;margin:6px 0;background:#222;color:#fff;border:1px solid #c9a227;border-radius:5px;">
@@ -109,6 +109,7 @@ Does NOT: Hold private keys, sign transfers, claim token receipt, alter UIDL, or
       </div>
       <div id="coinBannerSlot" style="max-width:420px;margin:18px auto 0;"></div>
       <style>
+        #tipjarBtn[hidden], #crwdOpenMoonshot[hidden] { display:none !important; }
         #tipjarBtn::after{content:"";position:absolute;top:0;left:-80%;width:60%;height:100%;background:linear-gradient(105deg,transparent,rgba(255,255,255,0.7),transparent);animation:tipjar-bling 2.5s ease-in-out infinite;}
         @keyframes tipjar-bling{0%{left:-80%;}55%{left:130%;}100%{left:130%;}}
         #tipjarBtn:hover{filter:brightness(1.1);}
@@ -137,7 +138,7 @@ Does NOT: Hold private keys, sign transfers, claim token receipt, alter UIDL, or
 
   <script src="config.js"></script>
   <script src="adworm.js"></script>
-  <script src="tipjar.js"></script>
+  <script src="tipjar.js?v=moonshot-usd-1"></script>
   <script src="cc-coin-banner.js"></script>
   <script>
     // Mount the CRWD coin light-ad banner in the tip jar
@@ -154,3 +155,4 @@ Does NOT: Hold private keys, sign transfers, claim token receipt, alter UIDL, or
   <script src="cc-page.js"></script>
 </body>
 </html>
+
