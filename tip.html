@@ -1,7 +1,7 @@
 <!--
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: tip.html
-Movements: Restore CRWD amount selection and Solana Pay wallet handoff using the existing verified public receiving address; preserve Stripe dollar choices.
+Movements: Host CRWD completion inside the existing Tip Jar card, avoiding navigation to a second customer page; preserve Stripe dollar choices.
 Purpose: Offer separate Stripe dollar checkout and user-approved Solana CRWD token transfer.
 Does NOT: Hold private keys, sign transfers, claim token receipt, alter UIDL, or change the radio stream.
 -->
@@ -92,6 +92,7 @@ Does NOT: Hold private keys, sign transfers, claim token receipt, alter UIDL, or
           </fieldset>
           <p id="tipDisclosure">Dollar tips use Stripe Checkout. CRWD tips open a compatible Solana wallet for review and approval; opening the wallet does not prove a transfer.</p>
         </div><button id="tipjarBtn" style="display:block;width:100%;padding:16px;margin-bottom:12px;font-size:1.15rem;font-weight:800;letter-spacing:0.08em;color:#2a1b0b;background:linear-gradient(180deg,#ffd700 0%,#ffaa00 50%,#cc8800 100%);border:2px solid #fff3c4;border-radius:10px;cursor:pointer;position:relative;overflow:hidden;box-shadow:0 2px 12px rgba(255,215,0,0.5),inset 0 1px 0 rgba(255,255,255,0.5);">ADD A TIP</button>
+        <div id="crwdInline" hidden style="width:100%;margin:8px auto 12px;"><iframe id="crwdInlineFrame" title="Complete CRWD tip" loading="lazy" style="width:100%;height:510px;border:0;border-radius:12px;" referrerpolicy="strict-origin-when-cross-origin"></iframe></div>
         <p class="signal-state" id="tipjarStatus" aria-live="polite" style="margin:12px 0 0;font-size:0.85rem;color:#888;">Loading...</p>
         <p style="margin:16px 0 0;color:#c9a227;font-weight:700;letter-spacing:0.2em;font-size:0.9rem;">TIP JAR</p><p id="tipNoFunds">CRWD wallet balance is not connected to this page. CRWD transfers require a compatible Solana wallet and sufficient CRWD and SOL for fees.</p><p><a href="station.html">Exit - Back to the radio station</a></p>
       </div>
