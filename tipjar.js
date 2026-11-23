@@ -1,7 +1,7 @@
 /*
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: tipjar.js
-Movements: Open the dedicated CRWD Solana transfer app for selected token tips; preserve Stripe checkout.
+Movements: Clear stale Stripe status when CRWD is selected; keep existing CRWD routing and Stripe checkout unchanged.
 Purpose: Replace unsupported solana: external protocol handoff with a first-party CRWD transfer application.
 Does NOT: Hold private keys, sign token transfers, guarantee Moonshot supports Solana Pay, assert payment completion, or modify station playback.
 */
@@ -146,6 +146,19 @@ Does NOT: Hold private keys, sign token transfers, guarantee Moonshot supports S
         }
       });
     }
+    // Keep the two currencies independent: a previous Stripe status must not
+    // remain visible when the listener switches to a CRWD transfer.
+    var choices = document.getElementById('tipChoices');
+    if (choices) choices.addEventListener('change', function (event) {
+      if (!event.target || event.target.name !== 'tipAmount') return;
+      if (event.target.dataset.currency === 'crwd') {
+        var custom = document.getElementById('tipCustomUsd');
+        if (custom) custom.value = '';
+        setStatus('CRWD selected. ADD A TIP prepares a Solana token transfer; Stripe is not used.');
+      } else {
+        setStatus('Dollar tip selected. ADD A TIP opens Stripe Checkout.');
+      }
+    });
     var query = new URLSearchParams(window.location.search);
     if (query.get('checkout') === 'return')
       setStatus('Returned from Stripe. Payment confirmation is verified separately; this page does not claim a completed tip.');
