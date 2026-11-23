@@ -1,8 +1,8 @@
 /*
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: tipjar.js
-Movements: Provide a manual Moonshot Send adapter with receiving address and amount; preserve Stripe checkout branch unchanged.
-Purpose: Replace unsupported solana: external protocol handoff with a first-party CRWD transfer application.
+Movements: Validate Moonshot tip amounts in USD with a $0.40 minimum.
+Purpose: Present dollar-denominated CRWD tips for manual approval in Moonshot and process Stripe checkout.
 Does NOT: Hold private keys, sign token transfers, guarantee Moonshot supports Solana Pay, assert payment completion, or modify station playback.
 */
 /* tipjar.js — Cybercrowd Radio tip jar
@@ -112,20 +112,10 @@ Does NOT: Hold private keys, sign token transfers, guarantee Moonshot supports S
         var custom = document.getElementById('tipCustomUsd');
         var checked = document.querySelector('input[name="tipAmount"]:checked');
         var isCrwd = checked && checked.dataset.currency === 'crwd';
-        var amount = isCrwd ? Number(checked.value) : custom && custom.value.trim()
+        if (isCrwd) return;
+        var amount = custom && custom.value.trim()
           ? Math.round(Number(custom.value) * 100)
           : checked ? Number(checked.value) : 0;
-        if (isCrwd) {
-          var cfg = window.STATION_CONFIG || {};
-          var address = String(cfg.crwdTipAddress || '').trim();
-          var mint = String(cfg.crwdMint || '').trim();
-          if (!address || !mint || !Number.isSafeInteger(amount) || amount <= 0) {
-            setStatus('CRWD wallet transfer is not configured. No tip was sent.'); return;
-          }
-          setStatus('Opening CyberCrowd Solana Tip app for wallet approval. No transfer has been made.');
-          window.location.assign('crwd-tip.html?amount=' + encodeURIComponent(String(amount)));
-          return;
-        }
         if (!Number.isSafeInteger(amount) || amount < 100 || amount > 100000) {
           setStatus('Choose a dollar tip between $1 and $1,000.'); return;
         }
@@ -175,12 +165,26 @@ Does NOT: Hold private keys, sign token transfers, guarantee Moonshot supports S
         if (status) status.textContent = 'Select and copy the highlighted receiving address before opening Moonshot.';
       }
     });
+    var usd = document.getElementById('moonshotUsd');
+    var openLink = document.getElementById('crwdOpenMoonshot');
+    function validMoonshotAmount() {
+      return usd && usd.validity.valid && /^(?:\d+|\d*\.\d{1,2})$/.test(usd.value) && usd.valueAsNumber >= 0.40;
+    }
+    if (usd) usd.addEventListener('input', function () {
+      document.querySelector('input[data-currency="crwd"]').checked = true;
+      setStatus('Review your dollar tip in Moonshot.');
+      displaySelectedCurrency();
+    });
     function displaySelectedCurrency() {
       var selected = document.querySelector('input[name="tipAmount"]:checked');
       var crwd = selected && selected.dataset.currency === 'crwd';
       if (crwdInline) crwdInline.hidden = !crwd;
       if (tipBtn) tipBtn.hidden = !!crwd;
-      if (crwdAmount && crwd) crwdAmount.textContent = selected.value + ' CRWD';
+      if (crwd) {
+        var valid = validMoonshotAmount();
+        crwdAmount.textContent = valid ? '$' + usd.valueAsNumber.toFixed(2) + ' USD' : '($0.40 minimum, in whole cents)';
+        openLink.hidden = !valid || !destination;
+      }
       if (crwd && !destination) {
         var status = document.getElementById('crwdManualStatus');
         if (status) status.textContent = 'Receiving address unavailable. Do not send a transfer.';
@@ -232,3 +236,4 @@ Does NOT: Hold private keys, sign token transfers, guarantee Moonshot supports S
     refresh: refreshBalance
   };
 })();
+
