@@ -1,7 +1,7 @@
 <!--
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: crwd-tip.html
-Movements: Add connected-wallet CRWD authorization and transfer, with automatic Solana confirmation; preserve Solana Pay QR fallback.
+Movements: Attach unique Solana Pay reference to the CRWD transfer instruction and verify referenced transaction including inner instructions and recipient ownership.
 Purpose: Use the existing CRWD receiving address with wallet approval, QR fallback, and automatic confirmation polling.
 Does NOT: Claim Moonshot supports Solana Pay, require seed phrases, alter Stripe, or claim payment without on-chain verification.
 -->
@@ -50,9 +50,14 @@ for(const entry of signatures||[]){if(entry.err)continue;
 const tx=await call('getTransaction',[entry.signature,{encoding:'jsonParsed',maxSupportedTransactionVersion:0,commitment:'confirmed'}]);
 if(!tx||tx.meta?.err)continue;
 const accounts=await call('getTokenAccountsByOwner',[recipient,{mint:mint},{encoding:'jsonParsed',commitment:'confirmed'}]);
-for(const ix of tx.transaction?.message?.instructions||[]){if(ix.program!=='spl-token'||ix.parsed?.type!=='transferChecked')continue;
+const messageKeys=(tx.transaction?.message?.accountKeys||[]).map(k=>typeof k==='string'?k:k.pubkey);
+if(!messageKeys.includes(reference))continue;
+const allInstructions=[...(tx.transaction?.message?.instructions||[]),...(tx.meta?.innerInstructions||[]).flatMap(g=>g.instructions||[])];
+for(const ix of allInstructions){if(ix.program!=='spl-token'||ix.parsed?.type!=='transferChecked')continue;
 const info=ix.parsed.info||{};
 if(info.mint!==mint||!((accounts.value||[]).some(a=>a.pubkey===info.destination)))continue;
+const destinationAccount=(accounts.value||[]).find(a=>a.pubkey===info.destination);
+if(destinationAccount?.account?.data?.parsed?.info?.owner!==recipient)continue;
 const decimals=Number(info.tokenAmount?.decimals);
 const raw=String(info.tokenAmount?.amount||'');
 if(!Number.isInteger(decimals)||decimals<0||decimals>18||raw!==(BigInt(expected)*10n**BigInt(decimals)).toString())continue;
@@ -91,7 +96,8 @@ if(!destInfo)tx.add(new solanaWeb3.TransactionInstruction({programId:ATA,keys:[
 ],data:new Uint8Array()}));
 tx.add(new solanaWeb3.TransactionInstruction({programId:TOKEN,keys:[
 {pubkey:source,isSigner:false,isWritable:true},{pubkey:mintKey,isSigner:false,isWritable:false},
-{pubkey:destination,isSigner:false,isWritable:true},{pubkey:owner,isSigner:true,isWritable:false}
+{pubkey:destination,isSigner:false,isWritable:true},{pubkey:owner,isSigner:true,isWritable:false},
+{pubkey:new solanaWeb3.PublicKey(reference),isSigner:false,isWritable:false}
 ],data:Uint8Array.from([12,...u64(units),decimals])}));
 tx.add(new solanaWeb3.TransactionInstruction({programId:MEMO,keys:[
 {pubkey:new solanaWeb3.PublicKey(reference),isSigner:false,isWritable:false}
