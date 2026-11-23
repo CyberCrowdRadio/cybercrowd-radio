@@ -1,7 +1,7 @@
 /*
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: tipjar.js
-Movements: Display inline CRWD completion on currency selection, hide the duplicate main action for CRWD; preserve dollar checkout unchanged.
+Movements: Provide a manual Moonshot Send adapter with receiving address and amount; preserve Stripe checkout branch unchanged.
 Purpose: Replace unsupported solana: external protocol handoff with a first-party CRWD transfer application.
 Does NOT: Hold private keys, sign token transfers, guarantee Moonshot supports Solana Pay, assert payment completion, or modify station playback.
 */
@@ -148,15 +148,44 @@ Does NOT: Hold private keys, sign token transfers, guarantee Moonshot supports S
     }
     // CRWD completes inside this same card; dollar checkout remains untouched.
     var crwdInline = document.getElementById('crwdInline');
-    var crwdFrame = document.getElementById('crwdInlineFrame');
+    var crwdAddress = document.getElementById('crwdReceiveAddress');
+    var crwdAmount = document.getElementById('crwdSelectedAmount');
+    var copyAddress = document.getElementById('crwdCopyAddress');
+    var cfg = window.STATION_CONFIG || {};
+    var destination = String(cfg.crwdTipAddress || '').trim();
+    if (crwdAddress) crwdAddress.value = destination;
+    if (copyAddress) copyAddress.addEventListener('click', async function () {
+      var status = document.getElementById('crwdManualStatus');
+      if (!destination) {
+        if (status) status.textContent = 'Receiving address unavailable. Do not send a transfer.';
+        return;
+      }
+      try {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          await navigator.clipboard.writeText(destination);
+        } else {
+          crwdAddress.focus();
+          crwdAddress.select();
+          if (!document.execCommand('copy')) throw new Error('Copy unavailable');
+        }
+        if (status) status.textContent = 'Receiving address copied. Open Moonshot, select CRWD and Send. Verify the address and amount before approving.';
+      } catch (_) {
+        crwdAddress.focus();
+        crwdAddress.select();
+        if (status) status.textContent = 'Select and copy the highlighted receiving address before opening Moonshot.';
+      }
+    });
     function displaySelectedCurrency() {
       var selected = document.querySelector('input[name="tipAmount"]:checked');
       var crwd = selected && selected.dataset.currency === 'crwd';
       if (crwdInline) crwdInline.hidden = !crwd;
       if (tipBtn) tipBtn.hidden = !!crwd;
-      if (crwd && crwdFrame) {
-        var url = 'crwd-tip.html?amount=' + encodeURIComponent(selected.value) + '&embedded=1';
-        if (crwdFrame.getAttribute('src') !== url) crwdFrame.setAttribute('src', url);
+      if (crwdAmount && crwd) crwdAmount.textContent = selected.value + ' CRWD';
+      if (crwd && !destination) {
+        var status = document.getElementById('crwdManualStatus');
+        if (status) status.textContent = 'Receiving address unavailable. Do not send a transfer.';
+        var open = document.getElementById('crwdOpenMoonshot');
+        if (open) open.hidden = true;
       }
     }
     displaySelectedCurrency();
@@ -169,7 +198,7 @@ Does NOT: Hold private keys, sign token transfers, guarantee Moonshot supports S
       if (event.target.dataset.currency === 'crwd') {
         var custom = document.getElementById('tipCustomUsd');
         if (custom) custom.value = '';
-        setStatus('CRWD selected. ADD A TIP prepares a Solana token transfer; Stripe is not used.');
+        setStatus('CRWD: copy the address, then open Moonshot and use Send. No transfer is automatic.');
       } else {
         setStatus('Dollar tip selected. ADD A TIP opens Stripe Checkout.');
       }
@@ -179,7 +208,7 @@ Does NOT: Hold private keys, sign token transfers, guarantee Moonshot supports S
       setStatus('Returned from Stripe. Payment confirmation is verified separately; this page does not claim a completed tip.');
     else if (query.get('checkout') === 'cancel')
       setStatus('Checkout canceled. No tip was recorded by this page.');
-    else setStatus('Choose dollars for Stripe Checkout or CRWD for Solana wallet approval.');
+    else setStatus('Choose dollars for Stripe Checkout or CRWD for manual Moonshot Send.');
     var buyBtn = document.getElementById('tipjarBuy');
     if (buyBtn) buyBtn.addEventListener('click', buyCoins);
 
