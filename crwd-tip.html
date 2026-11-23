@@ -1,7 +1,7 @@
 <!--
 File repo: CyberCrowdRadio/cybercrowd-radio
 File name: crwd-tip.html
-Movements: Automatically prepare the selected CRWD amount on arrival, removing the redundant prepare step; retain transaction verification and wallet fallback.
+Movements: Add connected-wallet CRWD authorization and transfer, with automatic Solana confirmation; preserve Solana Pay QR fallback.
 Purpose: Let a payer open a compatible Solana Pay wallet for the exact CRWD mint, recipient, and amount; verify the payment on Solana.
 Does NOT: Claim Moonshot supports Solana Pay, require seed phrases, alter Stripe, or claim payment without on-chain verification.
 -->
@@ -9,8 +9,8 @@ Does NOT: Claim Moonshot supports Solana Pay, require seed phrases, alter Stripe
 <style>body{margin:0;background:#08090d;color:#f1e7c9;font:17px system-ui,sans-serif}main{max-width:430px;margin:24px auto;padding:22px;border:2px solid #c9a227;border-radius:18px;background:#111}h1{color:#f3d26e}button,a.pay{display:block;box-sizing:border-box;width:100%;padding:16px;margin:14px 0;border:1px solid #ffe28b;border-radius:10px;background:#eab529;color:#17120b;font-size:17px;font-weight:700;text-align:center;text-decoration:none}button:disabled{opacity:.5}a{color:#f3d26e}small{display:block;overflow-wrap:anywhere;color:#d0c6a8}#status{white-space:pre-wrap;overflow-wrap:anywhere}#qr{display:flex;justify-content:center;background:white;padding:12px;width:max-content;max-width:90%;margin:18px auto}#qr img,#qr canvas{max-width:100%;height:auto}input{width:85px;padding:8px;font-size:18px}</style></head>
 <body><main><a href="tip.html">← Back to Tip Jar</a><h1>TIP CRWD</h1><p>CyberCrowd Coin · Solana</p>
 <label>Amount <input id="amount" type="number" min="1" max="20" step="1" value="1"> CRWD</label>
-<button id="prepare" hidden>PREPARE CRWD TIP AGAIN</button><div id="payment" hidden><a id="open" class="pay">OPEN SOLANA PAY WALLET</a><div id="qr" aria-label="Solana Pay QR code"></div>
-<button id="verify">VERIFY CRWD TIP</button><button id="copy">COPY PAYMENT REQUEST</button></div>
+<button id="wallet">CONNECT WALLET &amp; TIP</button><button id="prepare" hidden>PREPARE CRWD TIP AGAIN</button><div id="payment" hidden><a id="open" class="pay">OPEN SOLANA PAY WALLET</a><div id="qr" aria-label="Solana Pay QR code"></div>
+<button id="verify">CHECK TIP STATUS</button><button id="copy">COPY PAYMENT REQUEST</button></div>
 <p id="status" role="status" aria-live="polite">Prepare a tip to generate a Solana Pay request. A compatible wallet must approve the transfer.</p>
 <p><a id="explorer" hidden target="_blank" rel="noopener">View verified transaction</a></p>
 <small>Moonshot may not recognize Solana Pay links. A payment is not complete until a wallet approves it and Solana confirms the CRWD transfer.</small></main>
@@ -21,7 +21,12 @@ Does NOT: Claim Moonshot supports Solana Pay, require seed phrases, alter Stripe
 (function(){'use strict';
 const cfg=window.STATION_CONFIG||{},mint=cfg.crwdMint,recipient=cfg.crwdTipAddress;
 const el=id=>document.getElementById(id),say=s=>el('status').textContent=s;
-const rpc='https://api.mainnet-beta.solana.com';let reference=null,expected=0,request='';
+const rpc='https://api.mainnet-beta.solana.com';let reference=null,expected=0,request='',busy=false;
+const TOKEN=new solanaWeb3.PublicKey('TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA');
+const ATA=new solanaWeb3.PublicKey('ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL');
+const MEMO=new solanaWeb3.PublicKey('MemoSq4gqABAXKb96qnH8TysNcWxMyWCqXgDLGmfcHr');
+const ata=(owner,m)=>solanaWeb3.PublicKey.findProgramAddressSync([owner.toBuffer(),TOKEN.toBuffer(),m.toBuffer()],ATA)[0];
+const u64=n=>{const b=new Uint8Array(8);let v=n;for(let i=0;i<8;i++){b[i]=Number(v&255n);v>>=8n;}return b;};
 const initial=new URLSearchParams(location.search).get('amount');
 if(['1','5','10','20'].includes(initial))el('amount').value=initial;
 el('prepare').onclick=function(){try{
@@ -37,6 +42,77 @@ el('explorer').hidden=true;say('Payment request ready for '+amount+' CRWD. Appro
 }catch(e){el('payment').hidden=true;say(e.message||'Unable to prepare tip.')}};
 el('copy').onclick=async()=>{try{await navigator.clipboard.writeText(request);say('Solana Pay request copied. No payment confirmed.')}catch(e){say('Clipboard unavailable. Use the QR code.')}};
 async function call(method,params){const r=await fetch(rpc,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({jsonrpc:'2.0',id:1,method,params})});if(!r.ok)throw Error('Solana RPC unavailable');const j=await r.json();if(j.error)throw Error(j.error.message);return j.result}
+
+async function verifyTransfer(){
+if(!reference)return false;
+const signatures=await call('getSignaturesForAddress',[reference,{limit:30,commitment:'confirmed'}]);
+for(const entry of signatures||[]){if(entry.err)continue;
+const tx=await call('getTransaction',[entry.signature,{encoding:'jsonParsed',maxSupportedTransactionVersion:0,commitment:'confirmed'}]);
+if(!tx||tx.meta?.err)continue;
+const accounts=await call('getTokenAccountsByOwner',[recipient,{mint:mint},{encoding:'jsonParsed',commitment:'confirmed'}]);
+for(const ix of tx.transaction?.message?.instructions||[]){if(ix.program!=='spl-token'||ix.parsed?.type!=='transferChecked')continue;
+const info=ix.parsed.info||{};
+if(info.mint!==mint||!((accounts.value||[]).some(a=>a.pubkey===info.destination)))continue;
+const decimals=Number(info.tokenAmount?.decimals);
+const raw=String(info.tokenAmount?.amount||'');
+if(!Number.isInteger(decimals)||decimals<0||decimals>18||raw!==(BigInt(expected)*10n**BigInt(decimals)).toString())continue;
+say('TIP SUCCESSFUL — '+expected+' CRWD verified on Solana.');
+const link=el('explorer');link.href='https://solscan.io/tx/'+encodeURIComponent(entry.signature);link.hidden=false;return true;
+}}
+return false;
+}
+el('wallet').onclick=async()=>{
+if(busy)return;busy=true;el('wallet').disabled=true;
+try{
+if(!window.solanaWeb3)throw Error('Solana library unavailable.');
+const provider=window.phantom?.solana||window.solana;
+if(!provider?.connect||(!provider.signAndSendTransaction&&!provider.signTransaction))
+throw Error('No compatible connected wallet detected. Use the payment QR below with a Solana Pay wallet.');
+el('prepare').click();
+if(!reference)throw Error('Payment request could not be prepared.');
+say('Connect your wallet and approve '+expected+' CRWD.');
+const connected=await provider.connect();
+const owner=new solanaWeb3.PublicKey(connected.publicKey||provider.publicKey);
+const mintKey=new solanaWeb3.PublicKey(mint),receiver=new solanaWeb3.PublicKey(recipient);
+const source=ata(owner,mintKey),destination=ata(receiver,mintKey);
+const mintInfo=await call('getAccountInfo',[mint,{encoding:'jsonParsed',commitment:'confirmed'}]);
+const decimals=Number(mintInfo?.value?.data?.parsed?.info?.decimals);
+if(!Number.isInteger(decimals)||decimals<0||decimals>18)throw Error('Could not verify CRWD mint decimals.');
+const sourceInfo=await call('getAccountInfo',[source.toBase58(),{encoding:'jsonParsed',commitment:'confirmed'}]);
+const balance=BigInt(sourceInfo?.value?.data?.parsed?.info?.tokenAmount?.amount||'0');
+const units=BigInt(expected)*10n**BigInt(decimals);
+if(balance<units)throw Error('Wallet has insufficient CRWD.');
+const tx=new solanaWeb3.Transaction();
+const destInfo=await call('getAccountInfo',[destination.toBase58(),{encoding:'base64',commitment:'confirmed'}]);
+if(!destInfo)tx.add(new solanaWeb3.TransactionInstruction({programId:ATA,keys:[
+{pubkey:owner,isSigner:true,isWritable:true},{pubkey:destination,isSigner:false,isWritable:true},
+{pubkey:receiver,isSigner:false,isWritable:false},{pubkey:mintKey,isSigner:false,isWritable:false},
+{pubkey:solanaWeb3.SystemProgram.programId,isSigner:false,isWritable:false},{pubkey:TOKEN,isSigner:false,isWritable:false}
+],data:new Uint8Array()}));
+tx.add(new solanaWeb3.TransactionInstruction({programId:TOKEN,keys:[
+{pubkey:source,isSigner:false,isWritable:true},{pubkey:mintKey,isSigner:false,isWritable:false},
+{pubkey:destination,isSigner:false,isWritable:true},{pubkey:owner,isSigner:true,isWritable:false}
+],data:Uint8Array.from([12,...u64(units),decimals])}));
+tx.add(new solanaWeb3.TransactionInstruction({programId:MEMO,keys:[
+{pubkey:new solanaWeb3.PublicKey(reference),isSigner:false,isWritable:false}
+],data:new TextEncoder().encode('CyberCrowd CRWD tip')}));
+const block=await call('getLatestBlockhash',[{commitment:'confirmed'}]);
+tx.recentBlockhash=block.value.blockhash;tx.feePayer=owner;
+say('Approve the CRWD transfer in your wallet.');
+let signature;
+if(provider.signAndSendTransaction){const result=await provider.signAndSendTransaction(tx);signature=typeof result==='string'?result:result.signature;}
+else{const signed=await provider.signTransaction(tx);signature=await call('sendTransaction',[Array.from(signed.serialize()).map(b=>String.fromCharCode(b)).join(''),{encoding:'base64'}]);}
+if(!signature)throw Error('Wallet did not return a transaction signature.');
+say('Transfer submitted. Waiting for Solana confirmation...');
+for(let attempt=0;attempt<12;attempt++){
+if(await verifyTransfer())return;
+await new Promise(resolve=>setTimeout(resolve,2500));
+}
+say('Transaction submitted but not yet verified. Use CHECK TIP STATUS; do not send another tip until checked.');
+}catch(e){say((e&&e.message)||'Tip could not be completed. No confirmed tip.');}
+finally{busy=false;el('wallet').disabled=false;}
+};
+
 el('verify').onclick=async()=>{try{
 if(!reference)throw Error('Prepare a payment first.');
 say('Checking Solana for a matching CRWD transfer...');
