@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>Receiver of Lost LPs — Cybercrowd Radio</title>
+  <title>Wall of Honor &amp; Vinyl Archive — CyberCrowd Radio</title>
   <meta name="description" content="Mail in your forgotten records — every spin credits you by name." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -67,25 +67,24 @@
           <p class="credit-example">"Thanks to Bobby Sue, we have this for you."</p>
           <p class="mail-line" id="mailLine">Mailing address coming soon — the caretaker's desk is still being built.</p>
         </div>
-        <form class="archive-form" id="donorForm">
-          <h3>Log a donation</h3>
-          <p class="form-sub">Tell us what's coming. Your name goes up on the wall when it arrives.</p>
-          <div class="field">
-            <label for="donorName">Your name (as credited on air)</label>
-            <input id="donorName" name="name" type="text" placeholder="Bobby Sue" required maxlength="60" />
-          </div>
-          <div class="field">
-            <label for="donorRecord">Artist — Record</label>
-            <input id="donorRecord" name="record" type="text" placeholder="e.g. Fleetwood Mac — Rumours" required maxlength="120" />
-          </div>
-          <button class="btn-brass" type="submit">Log it with the caretaker</button>
-          <p class="form-msg" id="donorMsg" role="status" aria-live="polite" hidden></p>
-        </form>
+        <div id="keeperDesk" hidden>
+          <form class="archive-form" id="donorForm">
+            <h3>Add to Wall of Honor</h3>
+            <label for="donorName">Name to put on the wall</label>
+            <input id="donorName" maxlength="100" required />
+            <label for="dedication">Dedication or gift description (optional)</label>
+            <input id="dedication" maxlength="300" />
+            <button class="btn-brass" type="submit">Add to Wall of Honor</button>
+            <p id="donorMsg" role="status"></p>
+          </form>
+        </div>
       </div>
-      <div class="donor-wall">
-        <h3>The Hall of Donors</h3>
-        <p class="form-sub">Every donor becomes part of the archive forever. Your name on the wall, no exceptions.</p>
-        <ul class="plaques" id="donorWall"></ul>
+      <div class="donor-wall" id="wall-of-honor">
+        <h2>Wall of Honor</h2>
+        <button type="button" class="btn-brass" id="shareWall">Share Wall</button>
+        <p id="shareStatus" role="status"></p>
+        <p id="wallStatus" role="status">Loading the wall…</p>
+        <ol class="plaques" id="donorWall"></ol>
       </div>
     </section>
   </main>
@@ -110,6 +109,7 @@
 
   <script src="config.js"></script>
   <script src="adworm.js"></script>
+  <script src="cc-authority.js"></script>
   <script src="cc-archive-page.js"></script>
   <script src="cc-page.js"></script>
 </body>
