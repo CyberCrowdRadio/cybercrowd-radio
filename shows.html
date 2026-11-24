@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>On the Air — Cybercrowd Radio</title>
+  <title>TV Guide — CyberCrowd Radio</title>
   <meta name="description" content="The weekly cycle — every night has a sound." />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -21,15 +21,15 @@
       <span class="brand-word">CYBERCROWD&nbsp;RADIO</span>
     </a>
     <nav class="nav" aria-label="Primary">
-      <a href="station.html">Listen</a>
-      <a href="easel.html">The Easel</a>
+      <a href="/archive#wall-of-honor" target="_blank" rel="noopener">Wall of Honor</a>
+      <a href="request.html">Request</a>
       <a href="channels.html">Channels</a>
       <a href="shows.html">Shows</a>
-      <a href="archive.html">Archive</a>
-      <a href="request.html">Request Line</a>
+      <a href="station.html">Listen</a>
+      <a href="easel.html">Station Cameras</a>
       <a href="join.html">Join</a>
       <a href="adworm.html">Advertise</a>
-      <a href="https://www.patreon.com/c/cybercrowd" target="_blank" rel="noopener">Patreon</a>
+      <a href="https://www.gofundme.com/f/help-build-independent-radio-cybercrowd" target="_blank" rel="noopener">GoFundMe</a>
     </nav>
     <div class="topbar-right">
       <a class="handle-pill" id="handlePill" href="create-account.html" title="Your handle — tap to set it">
@@ -43,16 +43,16 @@
     </div>
   </header>
   <nav class="mobile-nav" id="mobileNav" aria-label="Mobile">
-    <a href="station.html">Listen</a>
-    <a href="easel.html">The Easel</a>
-    <a href="channels.html">Channels</a>
-    <a href="shows.html">Shows</a>
-    <a href="archive.html">Archive</a>
-    <a href="request.html">Request Line</a>
-    <a href="join.html">Join</a>
-    <a href="adworm.html">Advertise</a>
-    <a href="https://www.patreon.com/c/cybercrowd" target="_blank" rel="noopener">Patreon</a>
-  </nav>
+      <a href="/archive#wall-of-honor" target="_blank" rel="noopener">Wall of Honor</a>
+      <a href="request.html">Request</a>
+      <a href="channels.html">Channels</a>
+      <a href="shows.html">Shows</a>
+      <a href="station.html">Listen</a>
+      <a href="easel.html">Station Cameras</a>
+      <a href="join.html">Join</a>
+      <a href="adworm.html">Advertise</a>
+      <a href="https://www.gofundme.com/f/help-build-independent-radio-cybercrowd" target="_blank" rel="noopener">GoFundMe</a>
+    </nav>
 
   <main id="content">
 <!-- adWorm banner: mid -->
@@ -60,11 +60,11 @@
 
 <section class="section section-alt" id="shows" aria-label="Weekly shows">
       <div class="section-head">
-        <p class="eyebrow">The weekly cycle</p>
-        <h2>On&nbsp;the&nbsp;Air</h2>
-        <p class="section-sub">Every night has a sound. <span class="live-now" id="liveNow" hidden>● <span id="liveNowName"></span> is on now</span></p>
+        <p class="eyebrow">Shows</p>
+        <h2>TV Guide</h2>
+        <p class="section-sub">Weekly station schedule · Central time. <span class="live-now" id="liveNow" hidden>● <span id="liveNowName"></span> is scheduled now</span></p>
       </div>
-      <div class="shows" id="showsGrid"></div>
+      <ol class="shows" style="display:grid;grid-template-columns:1fr;list-style:none;padding:0" id="showsGrid"></ol>
       <details class="retired">
         <summary>Retired originals — kept in the archive as segments</summary>
         <ul id="retiredList"></ul>

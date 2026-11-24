@@ -11,13 +11,15 @@
   if (!grid) return;
 
   var now = new Date();
-  var day = now.getDay();
-  var hour = now.getHours() + now.getMinutes() / 60;
+  var clock = new Intl.DateTimeFormat("en-US", {timeZone:"America/Chicago", weekday:"short", hour:"2-digit", minute:"2-digit", hourCycle:"h23"}).formatToParts(now);
+  function part(type) { return clock.find(function (item) { return item.type === type; }).value; }
+  var day = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"].indexOf(part("weekday"));
+  var hour = Number(part("hour")) + Number(part("minute")) / 60;
   var liveShow = null;
 
   (cfg.shows || []).forEach(function (s) {
     var days = s.day || [];
-    var el = document.createElement("article");
+    var el = document.createElement("li");
     el.className = "show";
     if (days.indexOf(day) !== -1) el.classList.add("today");
     if (days.indexOf(day) !== -1 && hour >= s.start && hour < s.end) {
@@ -25,10 +27,9 @@
       liveShow = s;
     }
     el.innerHTML =
-      '<p class="show-time">' + esc(s.time) + '</p>' +
+      '<p class="show-time">' + esc(s.days) + " · " + esc(s.time) + '</p>' +
       "<h3>" + esc(s.name) + "</h3>" +
-      "<p>" + esc(s.blurb) + "</p>" +
-      '<span class="show-days">' + esc(s.days) + "</span>";
+      "<p>" + esc(s.blurb) + "</p>";
     grid.appendChild(el);
   });
 
