@@ -71,10 +71,15 @@
           <form class="archive-form" id="donorForm">
             <h3>Add to Wall of Honor</h3>
             <label for="donorName">Name to put on the wall</label>
-            <input id="donorName" maxlength="100" required />
-            <label for="dedication">Dedication or gift description (optional)</label>
-            <input id="dedication" maxlength="300" />
-            <button class="btn-brass" type="submit">Add to Wall of Honor</button>
+            <input id="donorName" autocorrect="off" autocapitalize="off" spellcheck="false" maxlength="100" required />
+            <label for="dedication1">Dedication line 1</label>
+            <input id="dedication1" maxlength="300" autocorrect="off" autocapitalize="off" spellcheck="false" />
+            <label for="dedication2">Dedication line 2</label>
+            <input id="dedication2" maxlength="300" autocorrect="off" autocapitalize="off" spellcheck="false" />
+            <label for="dedication3">Dedication line 3</label>
+            <input id="dedication3" maxlength="300" autocorrect="off" autocapitalize="off" spellcheck="false" />
+            <button id="savePlaque" class="btn-brass" type="submit">Add to Wall of Honor</button>
+            <button id="cancelEdit" type="button" hidden>Cancel edit</button>
             <p id="donorMsg" role="status"></p>
           </form>
         </div>

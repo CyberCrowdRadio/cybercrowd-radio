@@ -2,6 +2,8 @@
    Serves the static station site, validates Turnstile tokens server-side,
    and sends signup verification emails through Postmark. */
 
+import { honorShare } from "./honor-share.js";
+
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000; /* verification links live 24h */
 
 /* ---- Signed verification tokens (HMAC, no KV needed) ---- */
@@ -255,6 +257,8 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
+    const plaque = /^\/honor\/([1-9]\d{0,12})(\.png)?$/.exec(url.pathname);
+    if (plaque && ["GET","HEAD"].includes(request.method)) return honorShare(request, Number(plaque[1]), Boolean(plaque[2]));
     if (url.pathname === "/" && (request.method === "GET" || request.method === "HEAD")) {
       return serveStationEntrance(request, env.ASSETS);
     }

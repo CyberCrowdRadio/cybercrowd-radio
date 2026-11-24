@@ -18,7 +18,8 @@ Does NOT: Seed donor names or rank donations.
 
   async function share(anchor, title) {
     const url = new URL(location.pathname, location.origin);
-    url.hash = anchor;
+    if (/^honor-\d+$/.test(anchor)) url.pathname = "/honor/" + anchor.slice(6);
+    else url.hash = anchor;
     try {
       if (navigator.share) {
         await navigator.share({title, url:url.href});
@@ -32,7 +33,27 @@ Does NOT: Seed donor names or rank donations.
   }
   byId("shareWall").onclick = () => share("wall-of-honor", "CyberCrowd Radio Wall of Honor");
 
+  const lines = [1, 2, 3].map(number => byId("dedication" + number));
+  let editing = null;
+  let owner = false;
+  let displayed = [];
+  function edit(entry) {
+    editing = entry;
+    ticket = null;
+    form.reset();
+    byId("savePlaque").textContent = entry ? "Save changes" : "Add to Wall of Honor";
+    byId("cancelEdit").hidden = !entry;
+    byId("donorMsg").textContent = "";
+    if (entry) {
+      byId("donorName").value = entry.name;
+      const existing = entry.dedication.split("\n");
+      lines.forEach((field, index) => { field.value = existing[index] || ""; });
+      byId("donorName").focus();
+    }
+  }
+  byId("cancelEdit").onclick = () => edit(null);
   function render(entries) {
+    displayed = entries;
     wall.replaceChildren();
     status.textContent = entries.length ? "" : "The Wall of Honor is empty. No donations yet.";
     for (const entry of entries) {
@@ -40,11 +61,12 @@ Does NOT: Seed donor names or rank donations.
       plaque.className = "plaque";
       plaque.id = "honor-" + entry.position;
       const link = document.createElement("a");
-      link.href = "#" + plaque.id;
+      link.href = "/honor/" + entry.position;
       link.textContent = entry.position + ". " + entry.name;
       plaque.append(link);
       if (entry.dedication) {
         const line = document.createElement("span");
+        line.style.whiteSpace = "pre-wrap";
         line.textContent = entry.dedication;
         plaque.append(line);
       }
@@ -53,6 +75,14 @@ Does NOT: Seed donor names or rank donations.
       button.textContent = "Share dedication";
       button.onclick = () => share(plaque.id, entry.name + " — Wall of Honor");
       plaque.append(button);
+      if (owner) {
+        const change = document.createElement("button");
+        change.type = "button";
+        change.textContent = "Edit";
+        change.setAttribute("aria-label", "Edit " + entry.name);
+        change.onclick = () => edit(entry);
+        plaque.append(change);
+      }
       wall.append(plaque);
     }
   }
@@ -63,25 +93,30 @@ Does NOT: Seed donor names or rank donations.
   }).then(async () => {
     if (!session()) return;
     const access = await ask("/api/admin", {action:"status", scope:"radio", session:session()});
-    byId("keeperDesk").hidden = access.result?.role !== "owner";
+    owner = access.result?.role === "owner";
+    byId("keeperDesk").hidden = !owner;
+    if (owner) render(displayed);
   });
   let ticket;
   form.addEventListener("input", () => { ticket = null; });
   form.addEventListener("submit", async event => {
     event.preventDefault();
-    const button = form.querySelector("button");
+    const button = byId("savePlaque");
     if (button.disabled) return;
     const name = byId("donorName").value.trim();
     if (!name) { byId("donorMsg").textContent = "Enter the name to put on the wall."; return; }
     ticket ||= crypto.randomUUID();
     for (const field of form.elements) field.disabled = true;
     try {
-      const result = await ask("/api/honor-wall", {action:"add", session:session(), ticket, name, dedication:byId("dedication").value.trim()});
+      const dedication = lines.map(field => field.value).join("\n").replace(/\n+$/, "");
+      const change = editing ? {action:"edit", position:editing.position, previousName:editing.name,
+        previousDedication:editing.dedication} : {action:"add", ticket};
+      const result = await ask("/api/honor-wall", {...change, session:session(), name, dedication});
       if (!result.success) throw Error(result.error || "Try again.");
       render(result.entries);
-      form.reset();
-      ticket = null;
-      byId("donorMsg").textContent = name + " was added to the wall.";
+      const message = editing ? "Changes saved." : name + " was added to the wall.";
+      edit(null);
+      byId("donorMsg").textContent = message;
     } catch (e) {
       byId("donorMsg").textContent = "Could not confirm the entry. " + e.message;
     } finally {
