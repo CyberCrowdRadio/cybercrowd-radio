@@ -62,7 +62,7 @@ Does NOT: Seed donor names or rank donations.
       plaque.id = "honor-" + entry.position;
       const link = document.createElement("a");
       link.href = "/honor/" + entry.position;
-      link.textContent = entry.position + ". " + entry.name;
+      link.textContent = entry.name;
       plaque.append(link);
       if (entry.dedication) {
         const line = document.createElement("span");

@@ -417,6 +417,16 @@ a { color: var(--brass-hi); }
 }
 .plaque strong { display: block; font-family: var(--serif); font-weight: 400; font-size: 19px; color: var(--brass-hi); margin-bottom: 6px; }
 .plaque span { font-size: 13px; color: var(--cream-dim); }
+#donorWall { display: flex; flex-wrap: wrap; justify-content: center; }
+#donorWall > .plaque {
+  flex: 0 1 320px;
+  min-width: 0;
+  max-width: 100%;
+  text-align: center;
+  overflow-wrap: anywhere;
+}
+#donorWall > .plaque > a,
+#donorWall > .plaque > span { display: block; margin-bottom: 8px; }
 .plaque-empty {
   grid-column: 1 / -1; border-style: dashed; color: var(--ink-soft);
   font-family: var(--serif); font-style: italic; font-size: 17px;
