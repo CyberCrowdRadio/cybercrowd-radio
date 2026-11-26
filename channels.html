@@ -9,7 +9,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
-  <link rel="stylesheet" href="cc-channels-console.css?v=ring-actions" />
+  <link rel="stylesheet" href="cc-channels-console.css?v=inline-social" />
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect x='8' y='8' width='84' height='84' rx='6' fill='%231a120b' stroke='%23c9a227' stroke-width='5'/><circle cx='50' cy='50' r='22' fill='none' stroke='%23c9a227' stroke-width='4'/><circle cx='50' cy='50' r='5' fill='%23a93226'/></svg>" />
 </head>
 <body>
@@ -172,6 +172,18 @@
         <a href="uidl.html">Account</a>
       </nav>
       </div>
+      <section id="social-content-viewer" aria-labelledby="social-content-title" hidden>
+        <header>
+          <h2 id="social-content-title" tabindex="-1"></h2>
+          <button type="button" id="social-content-close">Close</button>
+        </header>
+        <p role="status"></p>
+        <form hidden>
+          <input type="url" aria-label="Public social link" placeholder="https://" required />
+          <button type="submit">View</button>
+        </form>
+        <div><iframe title="Social content" sandbox allow="fullscreen" hidden></iframe></div>
+      </section>
       <div class="cc-doors">
         <div><a href="#channelsGrid">Watch</a><p>Watch public channels free. Chat, comments and likes with membership.</p></div>
         <div><a href="uidl.html">Build</a><p>Build and preview free. Publish, share and enter rotation with membership.</p></div>
@@ -203,7 +215,8 @@
   <script type="module" src="service-picker.js?v=direct-signin"></script>
   <script src="config.js"></script>
   <script src="cc-authority.js"></script>
-  <script src="cc-channels-page.js?v=ring-actions"></script>
+  <script src="cc-social-viewer.js?v=inline-social"></script>
+  <script src="cc-channels-page.js?v=inline-social"></script>
   <script src="cc-eq-engine.js"></script>
   <script src="cc-eq-rail.js"></script>
   <script src="cc-eq-faders.js"></script>

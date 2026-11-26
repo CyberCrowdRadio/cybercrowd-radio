@@ -14,6 +14,10 @@ Does NOT: Publish drafts or expose an observer's private follows or likes.
   const viewer = byId('selectedChannelLink');
   const stage = byId('channelDetails');
   const placeholder = byId('channelEmptyInfo');
+  stage.addEventListener('click', event => {
+    const link = event.target.closest('a[href]');
+    if (link && window.CCSocialViewer?.open(link.href, link)) event.preventDefault();
+  });
   function secure(value) {
     try {
       const url = new URL(value);
@@ -111,6 +115,7 @@ Does NOT: Publish drafts or expose an observer's private follows or likes.
       turn(dx < 0 ? 1 : -1);
     });
     function show(item) {
+      viewer.onclick = null;
       if (item.personal) {
         byId('selectedChannelName').textContent = item.label;
         byId('selectedChannelDescription').textContent = item.href;
@@ -120,13 +125,22 @@ Does NOT: Publish drafts or expose an observer's private follows or likes.
       } else selectChannel(item.index);
       viewer.textContent = item.href ? 'Open ' + item.label : 'Enter channel';
       if (item.href) viewer.href = item.href;
+      const platform = window.CCSocialViewer?.platformFor(item.href);
+      if (!platform) return false;
+      viewer.textContent = 'View ' + platform;
+      viewer.href = '#social-content-viewer';
+      viewer.onclick = event => {
+        event.preventDefault();
+        window.CCSocialViewer.open(item.href, viewer);
+      };
+      return window.CCSocialViewer.open(item.href, face);
     }
     face.addEventListener('click', event => {
       const now = performance.now(), item = items[position];
       if (now < ignoreUntil) return;
       if (!item) { openEmpty(); return; }
-      show(item);
-      if (event.detail === 2 || (event.pointerType === 'touch' && now - lastTap < 350)) viewer.click();
+      const inPage = show(item);
+      if (!inPage && (event.detail === 2 || (event.pointerType === 'touch' && now - lastTap < 350))) viewer.click();
       lastTap = now;
     });
     const dialog = byId('ring-prompt');
