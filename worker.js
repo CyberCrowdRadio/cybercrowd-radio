@@ -146,7 +146,14 @@ async function getRotation(env) {
     for (var i = 0; i < res.objects.length; i++) {
       var o = res.objects[i];
       if (!isAudioKey(o.key)) continue;
-      tracks.push({ id: String(n++), title: titleFromKey(o.key), duration: estimateDuration(o.size), key: o.key });
+      tracks.push({
+        id: String(n++),
+        title: titleFromKey(o.key),
+        duration: estimateDuration(o.size),
+        key: o.key,
+        uploadedAtMs: o.uploaded.getTime(),
+        revision: o.etag
+      });
     }
     if (res.truncated) { cursor = res.cursor; } else { break; }
   }
@@ -180,14 +187,20 @@ async function streamTrack(request, env, id) {
   var tracks = await getRotation(env);
   var track = tracks[parseInt(id, 10)];
   if (!track) return new Response('Not found', { status: 404 });
-  var key = track.key;
+  return streamTrackKey(request, env, track.key);
+}
+
+async function streamTrackKey(request, env, key, revision) {
   var head = await env.MEDIA.head(key);
   if (!head) return new Response('Not found', { status: 404 });
+  if (revision && head.etag !== revision) return new Response('Track has changed', { status: 412 });
+  var onlyIf = revision ? { etagMatches: revision } : undefined;
   var size = head.size, rangeHeader = request.headers.get('range');
   if (rangeHeader) {
     var r = parseRange(rangeHeader, size);
     if (!r) return new Response('Range not satisfiable', { status: 416, headers: { 'Content-Range': 'bytes */' + size } });
-    var obj = await env.MEDIA.get(key, { range: { offset: r.start, length: r.end - r.start + 1 } });
+    var obj = await env.MEDIA.get(key, { onlyIf, range: { offset: r.start, length: r.end - r.start + 1 } });
+    if (!obj || !obj.body) return new Response('Track unavailable', { status: 404 });
     var s = obj.range.offset, e = obj.range.offset + obj.range.length - 1;
     var headers = new Headers();
     headers.set('Content-Type', contentTypeFor(key));
@@ -198,7 +211,8 @@ async function streamTrack(request, env, id) {
     headers.set('Access-Control-Allow-Origin', '*');
     return new Response(obj.body, { status: 206, headers: headers });
   }
-  var full = await env.MEDIA.get(key);
+  var full = await env.MEDIA.get(key, { onlyIf });
+  if (!full || !full.body) return new Response('Track unavailable', { status: 404 });
   var fullHeaders = new Headers();
   fullHeaders.set('Content-Type', contentTypeFor(key));
   fullHeaders.set('Accept-Ranges', 'bytes');
@@ -281,12 +295,23 @@ export default {
       // Full track list for sequential playback.
       var allTracks = await getRotation(env);
       return jsonResp(allTracks.map(function (t) {
-        return { id: t.id, title: t.title, duration: t.duration };
+        return {
+          id: t.id, title: t.title, duration: t.duration,
+          key: t.key, uploadedAtMs: t.uploadedAtMs, revision: t.revision
+        };
       }));
     }
     var tm = url.pathname.match(/^\/t\/(\d+)$/);
     if (tm) {
       return streamTrack(request, env, tm[1]);
+    }
+    if (url.pathname === '/track-by-key') {
+      var key = url.searchParams.get('key');
+      var revision = url.searchParams.get('revision');
+      if (!key || !key.startsWith(MUSIC_PREFIX) || !isAudioKey(key) || !revision) {
+        return new Response('Not found', { status: 404 });
+      }
+      return streamTrackKey(request, env, key, revision);
     }
 
     /* Standalone Turnstile check (kept for diagnostics). */
