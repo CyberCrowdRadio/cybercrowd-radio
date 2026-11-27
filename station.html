@@ -126,6 +126,47 @@
       </div>
     </section>
 
+    <details id="stationFacebook" style="max-width:500px;margin:16px auto;padding:0 12px">
+      <summary class="btn btn-secondary" style="cursor:pointer">Facebook</summary>
+      <div id="stationFacebookPage" style="margin-top:12px"></div>
+      <button type="button" class="btn btn-secondary" id="stationFacebookClose">Close</button>
+    </details>
+    <script>
+      (function () {
+        const viewer = document.getElementById("stationFacebook");
+        const page = document.getElementById("stationFacebookPage");
+        const close = document.getElementById("stationFacebookClose");
+        viewer.addEventListener("toggle", function () {
+          if (!viewer.open) {
+            page.replaceChildren();
+            return;
+          }
+          if (page.childElementCount) return;
+          const width = Math.min(500, Math.max(180, Math.floor(page.clientWidth)));
+          const settings = new URLSearchParams({
+            href: "https://www.facebook.com/cybercrowd.net",
+            tabs: "timeline",
+            width: String(width),
+            height: "560",
+            show_facepile: "false",
+            adapt_container_width: "true"
+          });
+          const frame = document.createElement("iframe");
+          frame.title = "Facebook Page";
+          frame.setAttribute("sandbox", "allow-scripts allow-same-origin");
+          frame.setAttribute("allow", "autoplay 'none'");
+          frame.style.cssText = "display:block;width:100%;height:560px;border:0;margin:0 auto 12px";
+          frame.src = "https://www.facebook.com/plugins/page.php?" + settings;
+          page.append(frame);
+        });
+        close.addEventListener("click", function () {
+          viewer.open = false;
+          page.replaceChildren();
+          viewer.querySelector("summary").focus();
+        });
+      })();
+    </script>
+
     <!-- adWorm banner: top -->
     <div class="adworm-banner" data-adworm="banner-top" role="complementary" aria-label="Advertisement"></div>
 
