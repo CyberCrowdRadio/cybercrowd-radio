@@ -125,15 +125,15 @@ Does NOT: Publish drafts or expose an observer's private follows or likes.
       } else selectChannel(item.index);
       viewer.textContent = item.href ? 'Open ' + item.label : 'Enter channel';
       if (item.href) viewer.href = item.href;
-      const platform = window.CCSocialViewer?.platformFor(item.href);
+      const platform = window.CCSocialViewer?.platformFor(item.href) || (item.personal ? 'Public profile' : null);
       if (!platform) return false;
       viewer.textContent = 'View ' + platform;
       viewer.href = '#social-content-viewer';
       viewer.onclick = event => {
         event.preventDefault();
-        window.CCSocialViewer.open(item.href, viewer);
+        window.CCSocialViewer.open(item.href, viewer, platform);
       };
-      return window.CCSocialViewer.open(item.href, face);
+      return window.CCSocialViewer.open(item.href, face, platform);
     }
     face.addEventListener('click', event => {
       const now = performance.now(), item = items[position];
@@ -181,7 +181,7 @@ Does NOT: Publish drafts or expose an observer's private follows or likes.
       if (!dialog.open) dialog.showModal();
       if (!actionLink.hidden) actionLink.focus();
     }
-    async function refreshSocials(afterSave=false) {
+    async function refreshSocials(attachedUrl=null) {
       const session=localStorage.getItem('ccr-session');
       if (!session) return;
       socialState='loading';
@@ -196,22 +196,27 @@ Does NOT: Publish drafts or expose an observer's private follows or likes.
           const own=result.urls.map(secure).filter(Boolean).map(href=>({
             label:new URL(href).host.replace(/^www\./,'')+new URL(href).pathname.replace(/\/$/,''),href,personal:true
           }));
+          window.CCSocialViewer?.remember(own.map(item => item.href));
           items.splice(0,items.length,...own,...creatorLinks);
           stops=Math.max(10,items.length);
-          if(afterSave || position>=stops) position=0;
+          if (attachedUrl) {
+            const selected = own.findIndex(item => item.href === secure(attachedUrl));
+            if (selected >= 0) position = selected;
+          }
+          if (position >= stops) position = 0;
           socialState='ready';
         }
       } catch { socialState='error'; }
       paint();
       if (isOpen()) {
-        if(afterSave && socialState==='ready' && items[0]?.personal) {dialog.close();show(items[0]);}
+        if(attachedUrl && socialState==='ready' && items[position]?.href === secure(attachedUrl)) {dialog.close();show(items[position]);}
         else openEmpty();
       }
     }
     paint();
     if(lane==='socials'){
       refreshSocials();
-      picker.addEventListener('cc-profile-attached',()=>refreshSocials(true));
+      picker.addEventListener('cc-profile-attached',event=>refreshSocials(event.detail?.url));
     }
     if (restored >= 0) show(items[restored]);
   }
