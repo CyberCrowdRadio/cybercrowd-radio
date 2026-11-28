@@ -242,7 +242,7 @@ class ServicePicker extends HTMLElement {
         message.textContent = name+' profile attached to your Socials ring.';
         form.hidden = true;
         for (const tile of grid.children) tile.setAttribute('aria-pressed','false');
-        this.dispatchEvent(new CustomEvent('cc-profile-attached',{bubbles:true}));
+        this.dispatchEvent(new CustomEvent('cc-profile-attached',{bubbles:true,detail:{url,provider:id}}));
       } catch (error) { message.textContent = error.message; }
       finally { save.disabled = false; for (const tile of grid.children) tile.disabled = false; }
     };
@@ -265,4 +265,6 @@ class ServicePicker extends HTMLElement {
     renderMenu();
   }
 }
+window.CCServiceCatalog = {services, profileAddress};
+window.dispatchEvent(new Event('cc-service-catalog-ready'));
 customElements.define('cc-service-picker',ServicePicker);
