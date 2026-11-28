@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Channels Department — CyberCrowd Radio</title><link rel="stylesheet" href="style.css"><style>
 .department{max-width:760px;margin:auto;padding:24px}.department label{display:block;margin:14px 0}.department input:not([type=checkbox]),.department textarea{display:block;width:100%;max-width:650px;padding:10px;box-sizing:border-box}.department button{padding:12px}.department fieldset{margin:18px 0}
-</style></head><body><main class="department">
+#channelInputs select{max-width:100%;padding:8px}#channelInputs img,#channelInputs video{display:block;max-width:100%;max-height:260px;margin:12px 0}#channelInputs button{margin:4px}#channelInputs input[type=range]{width:100%}</style></head><body><main class="department">
 <a href="palm.html">My Palm</a><h1>Channels Department</h1>
 <p>Manage your channel using your existing CyberCrowd account. A channel is your show/project identity, not a second account.</p>
 <p id="channelDepartmentStatus" role="status" aria-live="polite">Checking account…</p>
@@ -18,7 +18,19 @@
 </fieldset>
 <button id="channelSave" type="submit" disabled>Save channel settings</button>
 <button id="channelPreview" type="button" disabled>Preview my channel box</button>
-</form><section id="channelPreviewPanel" hidden aria-label="Channel preview"><h2>Channel preview</h2><p id="channelPreviewStatus" role="status"></p><div id="channelMedia"></div><p><button id="channelStop" type="button">Stop preview</button></p></section><p>Saving does not start a broadcast, authorize public publishing, or change the 24/7 radio stream.</p>
+</form>
+<fieldset id="channelInputs" disabled style="background-size:cover;background-position:center">
+<legend>Live inputs</legend>
+<p>Set up this channel on this device. Connect each source to test it privately.</p>
+<label>Input type <select class="input-type"></select></label>
+<button type="button" class="input-add">Add input</button>
+<button type="button" class="input-devices">Find devices</button>
+<div class="inputs-list"></div>
+<label>Control panel background <input class="input-background" type="file" accept="image/*"></label>
+<button type="button" class="input-reset">Clear background</button>
+<p role="status"></p>
+</fieldset>
+<section id="channelPreviewPanel" hidden aria-label="Channel preview"><h2>Channel preview</h2><p id="channelPreviewStatus" role="status"></p><div id="channelMedia"></div><p><button id="channelStop" type="button">Stop preview</button></p></section><p>Saving does not start a broadcast, authorize public publishing, or change the 24/7 radio stream.</p>
 <button type="button" id="recover">Preview earlier channel settings</button><a href="market.html">Creator Market</a></div>
 </main>
 
@@ -26,4 +38,4 @@
 
 
 <script src="cc-authority.js"></script><script src="cc-owner-tools.js"></script><script src="cc-channel-department.js?v=uidl"></script>
-</body></html>
+<script src="cc-channel-inputs.js"></script></body></html>
