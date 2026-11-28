@@ -20,7 +20,17 @@ Does NOT: Change playback, sign in to providers, or change saved links.
     try {
       const url = new URL(href);
       if (url.protocol !== 'https:' || url.username || url.password || url.port) return null;
-      return providers.get(url.hostname.replace(/^www\./, '')) || null;
+      const host = url.hostname.replace(/^www\./, '');
+      const alias = providers.get(host) || ({'youtu.be':'YouTube','vm.tiktok.com':'TikTok','threads.net':'Threads'})[host];
+      if (typeof alias === 'string') return alias;
+      for (const [, name,, base] of window.CCServiceCatalog?.services || []) {
+        if (!base) continue;
+        const domain = new URL(base.replace('{handle}', 'cc-placeholder')).hostname.replace(/^www\./, '');
+        if (host === domain || (domain.startsWith('cc-placeholder.') && host.endsWith(domain.slice(14)))) return name;
+      }
+      if (/(^|\.)myshopify\.com$/.test(host)) return 'Shopify';
+      if (/^vinted\.(com|co\.uk|fr|de)$/.test(host)) return 'Vinted';
+      return null;
     } catch {
       return null;
     }
@@ -76,6 +86,14 @@ Does NOT: Change playback, sign in to providers, or change saved links.
       return widget('<blockquote class="instagram-media" data-instgrm-permalink="' + link +
         '"><a href="' + link + '">View on Instagram</a></blockquote>', 'https://www.instagram.com/embed.js');
     }
+    if (platform === 'YouTube') {
+      const id = url.hostname === 'youtu.be' ? path.slice(1) : url.searchParams.get('v') || path.match(/^\/(?:shorts|live|embed)\/([^/]+)/)?.[1];
+      return /^[A-Za-z0-9_-]{11}$/.test(id || '') ? {src:'https://www.youtube-nocookie.com/embed/' + id} : {help:'Enter a public YouTube video link.'};
+    }
+    if (platform === 'Spotify' && /^\/(artist|album|track|playlist|episode|show)\/[A-Za-z0-9]+$/.test(path)) return {src:'https://open.spotify.com/embed' + path};
+    if (platform === 'Vimeo' && /^\/\d+$/.test(path)) return {src:'https://player.vimeo.com/video' + path};
+    if (platform === 'SoundCloud') return {src:'https://w.soundcloud.com/player/?url=' + encodeURIComponent(href)};
+    if (platform !== 'TikTok') return {src:href, generic:true};
     match = /^\/@([a-z\d_.]+)(?:\/(?:video|photo)\/(\d+))?$/i.exec(path);
     if (!match) return { help: 'Enter a public TikTok creator or post link.' };
     if (match[2]) return { src: 'https://www.tiktok.com/player/v1/' + match[2] + '?autoplay=0' };
@@ -92,31 +110,53 @@ Does NOT: Change playback, sign in to providers, or change saved links.
   const field = form.querySelector('input');
   const note = panel.querySelector('[role="status"]');
   let previousFocus;
-  let activePlatform;
+  const select = panel.querySelector('#social-content-platform');
+  const recent = new Map();
+  function populate() {
+    select.replaceChildren(new Option('Choose a platform', ''));
+    for (const [,name,,,category] of window.CCServiceCatalog?.services || []) {
+      let group = Array.from(select.children).find(el => el.label === category);
+      if (!group) {group=document.createElement('optgroup');group.label=category;select.append(group);}
+      group.append(new Option(name,name));
+    }
+  }
+  populate();
+  window.addEventListener('cc-service-catalog-ready', populate);
+  document.getElementById('browse-social-platforms').onclick = event => {
+    previousFocus = event.currentTarget;
+    clearFrame(); frame.hidden = true; panel.hidden = false; form.hidden = false;
+    title.textContent = 'Socials'; select.value = ''; field.value = ''; note.textContent = '';
+    select.focus(); panel.scrollIntoView({block:'nearest'});
+  };
 
   function clearFrame() {
     frame.removeAttribute('src');
     frame.removeAttribute('srcdoc');
   }
 
-  function open(href, trigger) {
-    const platform = platformFor(href);
+  function open(href, trigger, chosen) {
+    const platform = platformFor(href) || chosen;
     if (!platform) return false;
+    let checked;
+    try {checked = new URL(href);} catch {return false;}
+    if (checked.protocol !== 'https:' || checked.username || checked.password || checked.port || checked.origin === location.origin) return false;
     if (trigger) previousFocus = trigger;
     else if (panel.hidden) previousFocus = document.activeElement;
-    activePlatform = platform;
+    if (platform === 'Public profile' && !Array.from(select.options).some(option => option.value === platform)) select.add(new Option(platform, platform));
+    select.value = platform;
+    recent.set(platform, href);
     panel.hidden = false;
     const content = destination(href, platform, Math.round(frame.parentElement.clientWidth));
     clearFrame();
     title.textContent = platform;
     frame.title = platform + ' content';
     frame.dataset.platform = platform;
-    form.hidden = !content.help;
+    form.hidden = false;
     frame.hidden = Boolean(content.help);
-    note.textContent = content.help || '';
-    field.value = '';
+    note.textContent = content.help || (content.generic ? 'Public page preview. This service controls whether it can display here.' : '');
+    field.value = href;
     if (content.src) {
-      frame.setAttribute('sandbox', 'allow-scripts allow-same-origin');
+      frame.setAttribute('sandbox', content.generic ? 'allow-scripts' : 'allow-scripts allow-same-origin');
       frame.src = content.src;
     } else if (content.html) {
       frame.setAttribute('sandbox', 'allow-scripts');
@@ -132,11 +172,35 @@ Does NOT: Change playback, sign in to providers, or change saved links.
     panel.hidden = true;
     previousFocus?.focus();
   });
+  select.onchange = () => {
+    const platform = select.value;
+    if (recent.has(platform)) {open(recent.get(platform));return;}
+    clearFrame();
+    frame.hidden = true;
+    title.textContent = platform;
+    note.textContent = platform === 'Reddit' ? 'Enter a public post link.' : 'Enter a username or public link.';
+    field.value = '';
+    field.focus();
+  };
   form.addEventListener('submit', event => {
     event.preventDefault();
-    const href = field.value.trim();
-    if (platformFor(href) === activePlatform) open(href);
-    else note.textContent = 'Enter a link from ' + activePlatform + '.';
+    let href = field.value.trim();
+    const catalog = window.CCServiceCatalog;
+    const service = catalog?.services.find(row => row[1] === select.value);
+    try {
+      if (!/^https:\/\//i.test(href)) {
+        if (!service) throw Error('Choose a platform first.');
+        href = catalog.profileAddress(service[3], href);
+      }
+      const known = platformFor(href);
+      const custom = service && !service[3] ? service[1] : null;
+      if (!open(href, null, known || custom)) throw Error('Enter a public HTTPS link for the selected platform.');
+    } catch (error) {note.textContent = error.message;}
   });
-  window.CCSocialViewer = { platformFor, open };
+  window.CCSocialViewer = {platformFor, open, remember(urls) {
+    for (const href of urls) {
+      const platform = platformFor(href);
+      if (platform && !recent.has(platform)) recent.set(platform, href);
+    }
+  }};
 })();
