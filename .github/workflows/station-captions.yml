@@ -1,0 +1,48 @@
+name: Transcribe station recordings
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 */6 * * *'
+  push:
+    branches: [main]
+    paths:
+      - '.github/station-cc/**'
+      - '.github/workflows/station-captions.yml'
+concurrency:
+  group: station-caption-catalog
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  transcribe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    env:
+      CAPTION_MODEL: deepdml/faster-whisper-large-v3-turbo-ct2
+      CAPTION_SEPARATOR: /tmp/station-cc-instrumental.onnx
+      OPENBLAS_NUM_THREADS: '1'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - id: catalog
+        run: |
+          pending=$(python .github/station-cc/refresh.py --check)
+          echo "pending=$pending" >> "$GITHUB_OUTPUT"
+        shell: bash
+      - if: steps.catalog.outputs.pending == 'yes'
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y ffmpeg
+          python -m pip install --quiet numpy scipy onnxruntime faster-whisper==1.2.1
+          curl -fLsS --retry 3 https://github.com/TRvlvr/model_repo/releases/download/all_public_uvr_models/UVR-MDX-NET-Inst_HQ_3.onnx -o "$CAPTION_SEPARATOR"
+          echo "317554b07fe1ea5279a77f2b1520a41ea4b93432560c4ffd08792c30fddf9adc  $CAPTION_SEPARATOR" | sha256sum -c -
+          python .github/station-cc/refresh.py
+          if ! git diff --quiet -- station-captions.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add station-captions.json
+            git commit -m "Publish completed station captions"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
