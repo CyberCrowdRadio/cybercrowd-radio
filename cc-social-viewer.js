@@ -112,6 +112,49 @@ Does NOT: Change playback, sign in to providers, or change saved links.
   let previousFocus;
   const select = panel.querySelector('#social-content-platform');
   const recent = new Map();
+  const saved = new Map();
+  const savedSelect = document.getElementById('social-saved-profiles');
+  const guestKey = 'cc-channels-guest-profiles-v1';
+  const session = localStorage.getItem('ccr-session');
+  const saveButton = form.querySelector('[type=submit]');
+  function rememberOne(href, hint) {
+    let url;
+    try {url = new URL(href);} catch {return;}
+    if (url.protocol !== 'https:' || url.username || url.password || url.port) return;
+    const platform = platformFor(url.href) || hint || 'Public profile';
+    saved.set(url.href, platform);
+    if (!recent.has(platform)) recent.set(platform, url.href);
+    if (!Array.from(savedSelect.options).some(o => o.value === url.href)) {
+      savedSelect.add(new Option(platform + ' · ' + url.hostname + url.pathname + url.search, url.href));
+    }
+    document.getElementById('social-saved-label').hidden = false;
+  }
+  savedSelect.add(new Option('Choose a saved profile', ''));
+  savedSelect.onchange = () => {
+    const href = savedSelect.value;
+    if (href) open(href, savedSelect, saved.get(href));
+  };
+  function restoreGuest() {
+    if (session) return;
+    try {
+      const entries = JSON.parse(localStorage.getItem(guestKey) || '[]');
+      for (const [url, provider] of entries) rememberOne(url, provider);
+    } catch {}
+  }
+  async function attach(href, provider) {
+    if (session !== localStorage.getItem('ccr-session')) throw Error('Reload Channels to use the current account.');
+    if (saved.has(href)) return;
+    if (session) {
+      const result = await window.CCAuthority.ask('/api/channel-projects', {session,action:'attach-social',url:href});
+      if (!result.success) throw Error(result.error || 'Your profile could not be saved. Sign in and try again.');
+    } else {
+      const links = new Map(JSON.parse(localStorage.getItem(guestKey) || '[]'));
+      links.set(href, provider);
+      localStorage.setItem(guestKey, JSON.stringify([...links]));
+    }
+    rememberOne(href, provider);
+    if (session) document.getElementById('ring-picker')?.dispatchEvent(new CustomEvent('cc-profile-attached',{bubbles:true,detail:{url:href}}));
+  }
   function populate() {
     select.replaceChildren(new Option('Choose a platform', ''));
     for (const [,name,,,category] of window.CCServiceCatalog?.services || []) {
@@ -121,7 +164,8 @@ Does NOT: Change playback, sign in to providers, or change saved links.
     }
   }
   populate();
-  window.addEventListener('cc-service-catalog-ready', populate);
+  restoreGuest();
+  window.addEventListener('cc-service-catalog-ready', () => {populate();restoreGuest();});
   document.getElementById('browse-social-platforms').onclick = event => {
     previousFocus = event.currentTarget;
     clearFrame(); frame.hidden = true; panel.hidden = false; form.hidden = false;
@@ -155,6 +199,8 @@ Does NOT: Change playback, sign in to providers, or change saved links.
     frame.hidden = Boolean(content.help);
     note.textContent = content.help || (content.generic ? 'Public page preview. This service controls whether it can display here.' : '');
     field.value = href;
+    savedSelect.value = saved.has(href) ? href : '';
+    saveButton.textContent = saved.has(href) ? 'View' : 'Save and view';
     if (content.src) {
       frame.setAttribute('sandbox', content.generic ? 'allow-scripts' : 'allow-scripts allow-same-origin');
       frame.src = content.src;
@@ -172,7 +218,10 @@ Does NOT: Change playback, sign in to providers, or change saved links.
     panel.hidden = true;
     previousFocus?.focus();
   });
+  field.oninput = () => {saveButton.textContent = 'Save and view';};
   select.onchange = () => {
+    savedSelect.value = '';
+    saveButton.textContent = 'Save and view';
     const platform = select.value;
     if (recent.has(platform)) {open(recent.get(platform));return;}
     clearFrame();
@@ -182,7 +231,7 @@ Does NOT: Change playback, sign in to providers, or change saved links.
     field.value = '';
     field.focus();
   };
-  form.addEventListener('submit', event => {
+  form.addEventListener('submit', async event => {
     event.preventDefault();
     let href = field.value.trim();
     const catalog = window.CCServiceCatalog;
@@ -194,13 +243,18 @@ Does NOT: Change playback, sign in to providers, or change saved links.
       }
       const known = platformFor(href);
       const custom = service && !service[3] ? service[1] : null;
-      if (!open(href, null, known || custom)) throw Error('Enter a public HTTPS link for the selected platform.');
-    } catch (error) {note.textContent = error.message;}
+      const platform = known || custom;
+      const address = new URL(href);
+      if (!platform || address.protocol !== 'https:' || address.username || address.password || address.port || address.origin === location.origin) throw Error('Enter a public HTTPS link for the selected platform.');
+      saveButton.disabled = true;
+      await attach(address.href, platform);
+      if (!panel.hidden) open(address.href, null, platform);
+    } catch (error) {note.textContent = error.message;} finally {saveButton.disabled = false;}
   });
   window.CCSocialViewer = {platformFor, open, remember(urls) {
     for (const href of urls) {
       const platform = platformFor(href);
-      if (platform && !recent.has(platform)) recent.set(platform, href);
+      rememberOne(href, platform);
     }
   }};
 })();
