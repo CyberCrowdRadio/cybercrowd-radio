@@ -44,6 +44,7 @@
     const item = active.get(id);
     if (!item) return;
     active.delete(id);
+    cancelAnimationFrame(item.meterFrame);
     item.player?.pause();
     item.stream?.getTracks().forEach(track => track.stop());
     for (const node of item.nodes) node.disconnect();
@@ -137,6 +138,20 @@
           splitter.connect(item.gain, s.channel - 1);
         } else item.input.connect(item.gain);
         item.gain.connect(mix);
+        item.analyser = context.createAnalyser();
+        item.analyser.fftSize = 512;
+        item.nodes.push(item.analyser);
+        item.gain.connect(item.analyser);
+        const samples = new Float32Array(item.analyser.fftSize);
+        function updateMeter() {
+          if (active.get(s.id) !== item) return;
+          item.analyser.getFloatTimeDomainData(samples);
+          let peak = 0;
+          for (const value of samples) peak = Math.max(peak, Math.abs(value));
+          if (item.meter) item.meter.value = peak;
+          item.meterFrame = requestAnimationFrame(updateMeter);
+        }
+        updateMeter();
         setGain(s);
         if (item.player) await item.player.play();
       }
@@ -183,6 +198,10 @@
         }
       }
       if(!image && !camera){
+        if (item?.analyser) {
+          item.meter=field(row,'Signal level ',document.createElement('meter'));
+          item.meter.min=0;item.meter.max=1;item.meter.high=0.9;
+        }
         const volume=field(row,'Level',document.createElement('input'));volume.type='range';volume.min=0;volume.max=2;volume.step=.01;volume.value=s.level;
         volume.oninput=()=>{s.level=Number(volume.value);setGain(s);};volume.onchange=save;
         const mute=button(row,s.muted?'Unmute':'Mute',()=>{s.muted=!s.muted;setGain(s);save();render();});
