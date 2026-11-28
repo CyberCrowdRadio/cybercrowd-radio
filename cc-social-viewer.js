@@ -48,6 +48,13 @@ Does NOT: Change playback, sign in to providers, or change saved links.
     const link = escape(url.origin + path + '/');
     let match;
     if (platform === 'Facebook') {
+      const source = encodeURIComponent(url.href);
+      if (/^\/(?:[^/]+\/posts\/[^/]+|permalink\.php|story\.php)$/.test(path)) {
+        return {src:'https://www.facebook.com/plugins/post.php?show_text=true&href=' + source};
+      }
+      if (/^\/(?:[^/]+\/videos\/\d+|reel\/\d+)$/.test(path) || (path === '/watch' && /^\d+$/.test(url.searchParams.get('v') || ''))) {
+        return {src:'https://www.facebook.com/plugins/video.php?autoplay=false&href=' + source};
+      }
       const id = url.searchParams.get('id');
       const name = /^\/[a-z\d.\-]+$/i.test(path) &&
         !/^\/(?:login|share|sharer\.php|profile\.php|groups|reel|watch|marketplace|settings|home\.php)$/i.test(path);
@@ -59,7 +66,7 @@ Does NOT: Change playback, sign in to providers, or change saved links.
         href: page, tabs: 'timeline', width: String(Math.max(180, Math.min(500, width))),
         height: '600', adapt_container_width: 'true', show_facepile: 'false'
       });
-      return { src: 'https://www.facebook.com/plugins/page.php?' + query };
+      return { page, src: 'https://www.facebook.com/plugins/page.php?' + query };
     }
     if (platform === 'X') {
       match = /^\/([a-z\d_]{1,15})(?:\/status\/(\d+))?$/i.exec(path);
@@ -168,12 +175,18 @@ Does NOT: Change playback, sign in to providers, or change saved links.
   window.addEventListener('cc-service-catalog-ready', () => {populate();restoreGuest();});
   document.getElementById('browse-social-platforms').onclick = event => {
     previousFocus = event.currentTarget;
-    clearFrame(); frame.hidden = true; panel.hidden = false; form.hidden = false;
+    clearFrame(); frame.hidden = true; showPanel(); form.hidden = false;
     title.textContent = 'Socials'; select.value = ''; field.value = ''; note.textContent = '';
-    select.focus(); panel.scrollIntoView({block:'nearest'});
+    select.focus({preventScroll:true});
   };
 
+  let viewVersion = 0;
+  function showPanel() {
+    panel.hidden = false;
+    if (!panel.open) panel.showModal();
+  }
   function clearFrame() {
+    viewVersion++;
     frame.removeAttribute('src');
     frame.removeAttribute('srcdoc');
   }
@@ -189,7 +202,7 @@ Does NOT: Change playback, sign in to providers, or change saved links.
     if (platform === 'Public profile' && !Array.from(select.options).some(option => option.value === platform)) select.add(new Option(platform, platform));
     select.value = platform;
     recent.set(platform, href);
-    panel.hidden = false;
+    showPanel();
     const content = destination(href, platform, Math.round(frame.parentElement.clientWidth));
     clearFrame();
     title.textContent = platform;
@@ -201,7 +214,22 @@ Does NOT: Change playback, sign in to providers, or change saved links.
     field.value = href;
     savedSelect.value = saved.has(href) ? href : '';
     saveButton.textContent = saved.has(href) ? 'View' : 'Save and view';
-    if (content.src) {
+    if (content.page) {
+      const version = viewVersion;
+      frame.hidden = true;
+      note.textContent = 'Opening Facebook Page…';
+      fetch('/api/facebook-page-status?page=' + encodeURIComponent(content.page))
+        .then(response => response.json()).then(result => {
+          if (viewVersion !== version) return;
+          if (result.available === false) {
+            note.textContent = 'Facebook supplied no public Page preview for this address. Enter a public Facebook Page, post, or video link above.';
+            return;
+          }
+          frame.setAttribute('sandbox','allow-scripts allow-same-origin');
+          frame.src = content.src; frame.hidden = false;
+          note.textContent = 'Facebook public Page. If the preview is blank, enter a public post or video link above.';
+        }).catch(() => {if (version === viewVersion) note.textContent = 'Facebook could not be reached. Select View to reopen this Page.';});
+    } else if (content.src) {
       frame.setAttribute('sandbox', content.generic ? 'allow-scripts' : 'allow-scripts allow-same-origin');
       frame.src = content.src;
     } else if (content.html) {
@@ -209,14 +237,15 @@ Does NOT: Change playback, sign in to providers, or change saved links.
       frame.srcdoc = content.html;
     }
     title.focus({ preventScroll: true });
-    panel.scrollIntoView({ block: 'nearest' });
+
     return true;
   }
 
-  panel.querySelector('#social-content-close').addEventListener('click', () => {
+  panel.querySelector('#social-content-close').addEventListener('click', () => panel.close());
+  panel.addEventListener('close', () => {
     clearFrame();
     panel.hidden = true;
-    previousFocus?.focus();
+    previousFocus?.focus({preventScroll:true});
   });
   field.oninput = () => {saveButton.textContent = 'Save and view';};
   select.onchange = () => {
