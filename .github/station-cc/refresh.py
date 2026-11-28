@@ -7,7 +7,6 @@ import sys
 import tempfile
 from pathlib import Path
 from urllib.parse import quote
-from urllib.request import urlopen
 
 CATALOG = "https://cybercrowdradio.com/tracks"
 MEDIA = "https://media.cybercrowdradio.com/"
@@ -20,8 +19,7 @@ def main():
     parser.add_argument("--check", action="store_true")
     parser.add_argument("--limit", type=int, default=3)
     args = parser.parse_args()
-    with urlopen(CATALOG, timeout=30) as response:
-        tracks = json.load(response)
+    tracks = json.loads(subprocess.check_output(["curl", "-fLsS", "--retry", "3", "--max-time", "45", CATALOG]))
     if not isinstance(tracks, list) or not tracks:
         raise ValueError("The station catalog is unavailable")
     published = json.loads(OUTPUT.read_text())
@@ -35,7 +33,6 @@ def main():
         print("yes" if pending or removed else "no")
         return
     from package_record import build
-    from urllib.error import URLError
     for key in removed:
         del published[key]
     successes = 0
@@ -44,14 +41,14 @@ def main():
             with tempfile.TemporaryDirectory() as folder:
                 audio = Path(folder, "recording")
                 captions = Path(folder, "captions.vtt")
-                with urlopen(MEDIA + quote(track["key"]), timeout=90) as r:
-                    tag = r.headers.get("ETag", "").strip('"')
-                    if tag != track["revision"]:
-                        print("Catalog revision changed", track["key"])
-                        continue
-                    with audio.open("wb") as f:
-                        import shutil
-                        shutil.copyfileobj(r, f)
+                headers = Path(folder, "headers")
+                subprocess.run(["curl", "-fLsS", "--retry", "3", "--max-time", "180",
+                                "-D", str(headers), "-o", str(audio), MEDIA + quote(track["key"])], check=True)
+                tags = [line.split(":", 1)[1].strip().strip('"') for line in headers.read_text().splitlines()
+                        if line.lower().startswith("etag:")]
+                if not tags or tags[-1] != track["revision"]:
+                    print("Catalog revision changed", track["key"])
+                    continue
                 result = subprocess.run([sys.executable, str(ROOT / "transcribe.py"), str(audio), str(captions),
                                 "--model", os.environ["CAPTION_MODEL"], "--separator", os.environ["CAPTION_SEPARATOR"],
                                 "--threads", "3"], capture_output=True, text=True)
@@ -63,7 +60,7 @@ def main():
                 published[track["key"]] = dict(build(str(audio), captions), revision=track["revision"])
                 successes += 1
                 print("Captioned", track["key"], flush=True)
-        except (URLError, OSError, RuntimeError, subprocess.SubprocessError) as exc:
+        except (OSError, RuntimeError, subprocess.SubprocessError) as exc:
             print("Caption processing failed", track["key"], exc, flush=True)
             continue
     if successes or removed:
