@@ -340,3 +340,17 @@
 #social-content-viewer [hidden] { display: none; }
 #social-content-viewer form:not([hidden]) { display: flex; gap: 8px; }
 #social-content-viewer input { flex: 1; min-width: 0; }
+
+#social-content-viewer[open] {
+  position: fixed; inset: 0; box-sizing: border-box; margin: auto;
+  width: min(96vw, 780px); max-height: 94dvh; overflow: auto; overscroll-behavior: contain;
+}
+#social-content-viewer::backdrop { background: rgb(0 0 0 / 72%); }
+#social-content-viewer header { position: sticky; top: 0; z-index: 1; background: #0b1c24; }
+#social-content-viewer form:not([hidden]) { flex-wrap: wrap; align-items: end; }
+#social-content-viewer :is(label,select,input) { min-width: 0; max-width: 100%; box-sizing: border-box; }
+#social-content-viewer iframe { height: min(54dvh, 560px); }
+@media (max-width: 600px) {
+  #social-content-viewer form:not([hidden]) { display: grid; grid-template-columns: minmax(0,1fr); }
+  #social-content-viewer :is(select,input) { width: 100%; min-height: 44px; }
+}
