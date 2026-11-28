@@ -267,9 +267,30 @@ async function serveStationEntrance(request, assets) {
   });
 }
 
+// Check Facebook's public Page widget before displaying it in Channels.
+async function facebookPageStatus(request, url) {
+  const page = url.searchParams.get("page") || "";
+  if (request.method !== "GET" || !/^https:\/\/www\.facebook\.com\/(?:[a-z0-9.-]{1,100}|profile\.php\?id=\d{1,32})$/i.test(page)) {
+    return Response.json({available: false}, {status: 400});
+  }
+  const widget = new URL("https://www.facebook.com/plugins/page.php");
+  widget.search = new URLSearchParams({href: page, tabs: "timeline", width: "360", height: "560"});
+  try {
+    const response = await fetch(widget, {signal: AbortSignal.timeout(6000), cf: {cacheTtl: 300, cacheEverything: true}});
+    if (!response.ok) throw Error();
+    let available = false;
+    const checked = new HTMLRewriter().on("a[href]", {element(el) {
+      if (/[?&]ref=embed_page(?:&|$)/.test(el.getAttribute("href") || "")) available = true;
+    }}).transform(response);
+    await checked.arrayBuffer();
+    return Response.json({available}, {headers: {"Cache-Control": "public, max-age=300"}});
+  } catch {return Response.json({available: null}, {status: 503});}
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
+    if (url.pathname === "/api/facebook-page-status") return facebookPageStatus(request, url);
 
     const plaque = /^\/honor\/([1-9]\d{0,12})(\.png)?$/.exec(url.pathname);
     if (plaque && ["GET","HEAD"].includes(request.method)) return honorShare(request, Number(plaque[1]), Boolean(plaque[2]));
